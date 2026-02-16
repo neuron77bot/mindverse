@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { MindverseNode, Connection, Category, TemporalState } from '../types';
 import type { LayoutDirection } from '../utils/layoutUtils';
-import { mockNodes, mockConnections, ROOT_NODE_ID } from '../data/mockData';
+import { ROOT_NODE_ID } from '../data/mockData';
+import { mockNodes, mockConnections } from '../data/ejemplo';
 
 interface MindverseStore {
   // Estado
