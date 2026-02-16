@@ -12,15 +12,8 @@ import {
 } from '../../data/mockData';
 
 const categories: Category[] = [
-  'HEALTH',
-  'WORK',
-  'LOVE',
-  'FAMILY',
-  'FINANCES',
-  'PERSONAL_GROWTH',
-  'LEISURE',
-  'SPIRITUALITY',
-  'SOCIAL',
+  'HEALTH', 'WORK', 'LOVE', 'FAMILY', 'FINANCES',
+  'PERSONAL_GROWTH', 'LEISURE', 'SPIRITUALITY', 'SOCIAL',
 ];
 
 const temporalStates: TemporalState[] = ['PAST', 'PRESENT', 'FUTURE'];
@@ -29,11 +22,14 @@ export default function NodeEditor() {
   const {
     isEditorOpen,
     selectedNode,
+    nodes,
+    connections,
     closeEditor,
     addNode,
     updateNode,
     deleteNode,
     addConnection,
+    deleteConnection,
     activeTemporalFilter,
   } = useMindverseStore();
 
@@ -42,8 +38,13 @@ export default function NodeEditor() {
   const [category, setCategory] = useState<Category>('HEALTH');
   const [temporalState, setTemporalState] = useState<TemporalState>('PRESENT');
   const [emotionalLevel, setEmotionalLevel] = useState<EmotionalLevel>('NEUTRALITY');
+  const [inNodeId, setInNodeId] = useState<string>(ROOT_NODE_ID);
+  const [outNodeId, setOutNodeId] = useState<string>('');
 
   const isRootNode = selectedNode?.id === ROOT_NODE_ID;
+
+  // Nodos disponibles para los combos (todos excepto el nodo actual)
+  const otherNodes = nodes.filter((n) => n.id !== selectedNode?.id);
 
   useEffect(() => {
     if (selectedNode) {
@@ -52,16 +53,24 @@ export default function NodeEditor() {
       setCategory(selectedNode.category);
       setTemporalState(selectedNode.temporalState);
       setEmotionalLevel(selectedNode.emotionalLevel || 'NEUTRALITY');
+
+      // Detectar IN: conexión donde target === selectedNode.id
+      const inConn = connections.find((c) => c.target === selectedNode.id);
+      setInNodeId(inConn?.source || '');
+
+      // Detectar OUT: conexión donde source === selectedNode.id
+      const outConn = connections.find((c) => c.source === selectedNode.id);
+      setOutNodeId(outConn?.target || '');
     } else {
       setContent('');
       setDescription('');
       setCategory('HEALTH');
-      setTemporalState(
-        activeTemporalFilter === 'ALL' ? 'PRESENT' : activeTemporalFilter
-      );
+      setTemporalState(activeTemporalFilter === 'ALL' ? 'PRESENT' : activeTemporalFilter);
       setEmotionalLevel('NEUTRALITY');
+      setInNodeId(ROOT_NODE_ID);
+      setOutNodeId('');
     }
-  }, [selectedNode, activeTemporalFilter]);
+  }, [selectedNode, activeTemporalFilter, connections]);
 
   const handleSave = () => {
     if (!content.trim()) return;
@@ -75,6 +84,22 @@ export default function NodeEditor() {
         emotionalLevel,
         color: isRootNode ? '#FBBF24' : CATEGORY_COLORS[category],
       });
+
+      if (!isRootNode) {
+        // Actualizar conexión IN
+        const oldInConn = connections.find((c) => c.target === selectedNode.id);
+        if (oldInConn?.source !== inNodeId) {
+          if (oldInConn) deleteConnection(oldInConn.id);
+          if (inNodeId) addConnection({ id: uuidv4(), source: inNodeId, target: selectedNode.id });
+        }
+
+        // Actualizar conexión OUT
+        const oldOutConn = connections.find((c) => c.source === selectedNode.id);
+        if (oldOutConn?.target !== outNodeId) {
+          if (oldOutConn) deleteConnection(oldOutConn.id);
+          if (outNodeId) addConnection({ id: uuidv4(), source: selectedNode.id, target: outNodeId });
+        }
+      }
     } else {
       const newNode: MindverseNode = {
         id: uuidv4(),
@@ -89,12 +114,15 @@ export default function NodeEditor() {
         createdAt: new Date(),
       };
       addNode(newNode);
-      // Conectar automáticamente al nodo raíz (Casco Periférico)
-      addConnection({
-        id: uuidv4(),
-        source: ROOT_NODE_ID,
-        target: newNode.id,
-      });
+
+      // Conexión IN
+      if (inNodeId) {
+        addConnection({ id: uuidv4(), source: inNodeId, target: newNode.id });
+      }
+      // Conexión OUT
+      if (outNodeId) {
+        addConnection({ id: uuidv4(), source: newNode.id, target: outNodeId });
+      }
     }
 
     closeEditor();
@@ -109,6 +137,8 @@ export default function NodeEditor() {
 
   if (!isEditorOpen) return null;
 
+  const selectClass = "w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors";
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-slate-700 max-h-[90vh] flex flex-col">
@@ -116,20 +146,17 @@ export default function NodeEditor() {
         <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 shrink-0">
           <h2 className="text-xl font-bold text-white">
             {selectedNode
-              ? isRootNode
-                ? 'Casco Periférico'
-                : 'Editar Pensamiento'
+              ? isRootNode ? 'Casco Periférico' : 'Editar Pensamiento'
               : 'Nuevo Pensamiento'}
           </h2>
         </div>
 
         {/* Form */}
         <div className="p-6 space-y-4 overflow-y-auto">
+
           {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              Pensamiento *
-            </label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Pensamiento *</label>
             <input
               type="text"
               value={content}
@@ -142,9 +169,7 @@ export default function NodeEditor() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              Descripción
-            </label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Descripción</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -154,11 +179,54 @@ export default function NodeEditor() {
             />
           </div>
 
+          {/* IN / OUT connections */}
+          {!isRootNode && (
+            <div className="grid grid-cols-2 gap-3">
+              {/* IN */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
+                  <span className="text-indigo-400">→</span> IN
+                  <span className="text-slate-500 text-xs font-normal">(nodo entrante)</span>
+                </label>
+                <select
+                  value={inNodeId}
+                  onChange={(e) => setInNodeId(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">— Ninguno —</option>
+                  {otherNodes.map((n) => (
+                    <option key={n.id} value={n.id}>
+                      {n.content}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* OUT */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
+                  <span className="text-purple-400">→</span> OUT
+                  <span className="text-slate-500 text-xs font-normal">(nodo saliente)</span>
+                </label>
+                <select
+                  value={outNodeId}
+                  onChange={(e) => setOutNodeId(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">— Ninguno —</option>
+                  {otherNodes.map((n) => (
+                    <option key={n.id} value={n.id}>
+                      {n.content}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           {/* Emotional Level — Hawkins Scale */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Nivel Vibracional (Hawkins)
-            </label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Nivel Vibracional (Hawkins)</label>
             <div className="grid grid-cols-3 gap-1.5 max-h-[180px] overflow-y-auto pr-1">
               {HAWKINS_SCALE.map((level) => (
                 <button
@@ -186,9 +254,7 @@ export default function NodeEditor() {
           {/* Category */}
           {!isRootNode && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Categoría
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Categoría</label>
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => (
                   <button
@@ -199,11 +265,7 @@ export default function NodeEditor() {
                         ? 'text-white shadow-lg scale-105'
                         : 'text-slate-400 bg-slate-700 hover:bg-slate-600'
                     }`}
-                    style={
-                      category === cat
-                        ? { backgroundColor: CATEGORY_COLORS[cat] }
-                        : {}
-                    }
+                    style={category === cat ? { backgroundColor: CATEGORY_COLORS[cat] } : {}}
                   >
                     {CATEGORY_LABELS[cat]}
                   </button>
@@ -215,9 +277,7 @@ export default function NodeEditor() {
           {/* Temporal State */}
           {!isRootNode && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Línea Temporal
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Línea Temporal</label>
               <div className="flex gap-2">
                 {temporalStates.map((state) => (
                   <button
