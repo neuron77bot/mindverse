@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { MindverseNode, Connection, Category, TemporalState } from '../types';
+import type { LayoutDirection } from '../utils/layoutUtils';
 import { mockNodes, mockConnections, ROOT_NODE_ID } from '../data/mockData';
 
 interface MindverseStore {
@@ -11,6 +12,7 @@ interface MindverseStore {
   activeCategoryFilter: Category | 'ALL';
   selectedNode: MindverseNode | null;
   isEditorOpen: boolean;
+  layoutDirection: LayoutDirection;
 
   // Acciones - Pensamientos
   addNode: (node: MindverseNode) => void;
@@ -25,6 +27,7 @@ interface MindverseStore {
   // Acciones - Filtros
   setTemporalFilter: (filter: TemporalState | 'ALL') => void;
   setCategoryFilter: (filter: Category | 'ALL') => void;
+  setLayoutDirection: (direction: LayoutDirection) => void;
 
   // Acciones - Editor
   setSelectedNode: (node: MindverseNode | null) => void;
@@ -47,6 +50,7 @@ export const useMindverseStore = create<MindverseStore>()(
       activeCategoryFilter: 'ALL',
       selectedNode: null,
       isEditorOpen: false,
+      layoutDirection: 'LR',
 
       // Acciones - Nodos
       addNode: (node) =>
@@ -93,6 +97,8 @@ export const useMindverseStore = create<MindverseStore>()(
       setTemporalFilter: (filter) => set({ activeTemporalFilter: filter }),
 
       setCategoryFilter: (filter) => set({ activeCategoryFilter: filter }),
+
+      setLayoutDirection: (direction) => set({ layoutDirection: direction }),
 
       // Acciones - Editor
       setSelectedNode: (node) => set({ selectedNode: node }),

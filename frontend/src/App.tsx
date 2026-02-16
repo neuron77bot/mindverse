@@ -3,6 +3,7 @@ import MindverseCanvas from './components/Mindverse/MindverseCanvas';
 import NodeEditor from './components/Mindverse/NodeEditor';
 import TemporalFilter from './components/Filters/TemporalFilter';
 import CategoryFilter from './components/Filters/CategoryFilter';
+import LayoutFilter from './components/Filters/LayoutFilter';
 
 function App() {
   return (
@@ -13,9 +14,14 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Filters Bar */}
-        <div className="px-3 py-2 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-stretch sm:items-start gap-2 bg-slate-900">
-          <TemporalFilter />
-          <CategoryFilter />
+        <div className="px-3 py-2 sm:px-6 sm:py-4 flex flex-col gap-2 bg-slate-900">
+          {/* Fila superior: temporal + categorías */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-2">
+            <TemporalFilter />
+            <CategoryFilter />
+          </div>
+          {/* Fila inferior: layout */}
+          <LayoutFilter />
         </div>
 
         {/* Mind Map Canvas */}

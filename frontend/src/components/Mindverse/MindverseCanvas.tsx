@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
   MiniMap,
-  Panel,
   useNodesState,
   useEdgesState,
   addEdge,
@@ -46,7 +45,7 @@ function MindverseCanvasInner() {
   const updateNodePosition = useMindverseStore((s) => s.updateNodePosition);
   const addConnectionToStore = useMindverseStore((s) => s.addConnection);
 
-  const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>('LR');
+  const layoutDirection = useMindverseStore((s) => s.layoutDirection);
 
   // Filtrar pensamientos — el Casco Periférico siempre es visible
   const filteredNodes = useMemo(() => {
@@ -108,10 +107,9 @@ function MindverseCanvasInner() {
     setEdges(flowEdges);
   }, [flowNodes, flowEdges, setNodes, setEdges]);
 
-  // Aplicar auto-layout con dagre
+  // Aplicar auto-layout con dagre cuando cambia la dirección
   const onLayout = useCallback(
     (direction: LayoutDirection) => {
-      setLayoutDirection(direction);
       const { nodes: layoutedNodes, edges: layoutedEdges } = getAutoLayoutedElements(
         nodes,
         edges,
@@ -121,18 +119,22 @@ function MindverseCanvasInner() {
       setNodes([...layoutedNodes]);
       setEdges([...layoutedEdges]);
 
-      // Guardar las nuevas posiciones en el store
       layoutedNodes.forEach((node) => {
         updateNodePosition(node.id, node.position.x, node.position.y);
       });
 
-      // Ajustar la vista después del layout
       window.requestAnimationFrame(() => {
         fitView({ padding: 0.2 });
       });
     },
     [nodes, edges, setNodes, setEdges, updateNodePosition, fitView]
   );
+
+  // Reaccionar a cambios del layoutDirection en el store
+  useEffect(() => {
+    onLayout(layoutDirection);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layoutDirection]);
 
   // Manejar cambios de posición de nodos
   const onNodesChange = useCallback(
@@ -185,56 +187,6 @@ function MindverseCanvasInner() {
         maskColor="rgba(0,0,0,0.6)"
       />
       
-      {/* Layout Controls Panel */}
-      <Panel position="top-right" className="flex gap-2">
-        <div className="bg-slate-800 rounded-lg p-2 shadow-lg border border-slate-700 flex items-center gap-2">
-          <span className="text-xs text-slate-400 px-2">Layout:</span>
-          <button
-            onClick={() => onLayout('TB')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-              layoutDirection === 'TB'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
-            title="Top to Bottom"
-          >
-            ↓ TB
-          </button>
-          <button
-            onClick={() => onLayout('LR')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-              layoutDirection === 'LR'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
-            title="Left to Right"
-          >
-            → LR
-          </button>
-          <button
-            onClick={() => onLayout('BT')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-              layoutDirection === 'BT'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
-            title="Bottom to Top"
-          >
-            ↑ BT
-          </button>
-          <button
-            onClick={() => onLayout('RL')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
-              layoutDirection === 'RL'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
-            title="Right to Left"
-          >
-            ← RL
-          </button>
-        </div>
-      </Panel>
     </ReactFlow>
   );
 }
