@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useMindverseStore } from '../../store/mindverseStore';
-import type { Category, TemporalState, MindverseNode } from '../../types';
-import { CATEGORY_COLORS, CATEGORY_LABELS, TEMPORAL_LABELS } from '../../data/mockData';
+import type { Category, TemporalState, EmotionalLevel, MindverseNode } from '../../types';
+import {
+  CATEGORY_COLORS,
+  CATEGORY_LABELS,
+  TEMPORAL_LABELS,
+  HAWKINS_SCALE,
+  EMOTIONAL_COLORS,
+  ROOT_NODE_ID,
+} from '../../data/mockData';
 
 const categories: Category[] = [
   'HEALTH',
@@ -33,6 +40,9 @@ export default function NodeEditor() {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>('HEALTH');
   const [temporalState, setTemporalState] = useState<TemporalState>('PRESENT');
+  const [emotionalLevel, setEmotionalLevel] = useState<EmotionalLevel>('NEUTRALITY');
+
+  const isRootNode = selectedNode?.id === ROOT_NODE_ID;
 
   useEffect(() => {
     if (selectedNode) {
@@ -40,6 +50,7 @@ export default function NodeEditor() {
       setDescription(selectedNode.description || '');
       setCategory(selectedNode.category);
       setTemporalState(selectedNode.temporalState);
+      setEmotionalLevel(selectedNode.emotionalLevel || 'NEUTRALITY');
     } else {
       setContent('');
       setDescription('');
@@ -47,6 +58,7 @@ export default function NodeEditor() {
       setTemporalState(
         activeTemporalFilter === 'ALL' ? 'PRESENT' : activeTemporalFilter
       );
+      setEmotionalLevel('NEUTRALITY');
     }
   }, [selectedNode, activeTemporalFilter]);
 
@@ -59,7 +71,8 @@ export default function NodeEditor() {
         description,
         category,
         temporalState,
-        color: CATEGORY_COLORS[category],
+        emotionalLevel,
+        color: isRootNode ? '#FBBF24' : CATEGORY_COLORS[category],
       });
     } else {
       const newNode: MindverseNode = {
@@ -68,6 +81,7 @@ export default function NodeEditor() {
         description,
         category,
         temporalState,
+        emotionalLevel,
         positionX: Math.random() * 400 + 100,
         positionY: Math.random() * 300 + 100,
         color: CATEGORY_COLORS[category],
@@ -80,7 +94,7 @@ export default function NodeEditor() {
   };
 
   const handleDelete = () => {
-    if (selectedNode) {
+    if (selectedNode && !isRootNode) {
       deleteNode(selectedNode.id);
       closeEditor();
     }
@@ -90,27 +104,32 @@ export default function NodeEditor() {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-slate-700">
+      <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-slate-700 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600">
+        <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 shrink-0">
           <h2 className="text-xl font-bold text-white">
-            {selectedNode ? 'Editar Nodo' : 'Nuevo Nodo'}
+            {selectedNode
+              ? isRootNode
+                ? 'Casco Periférico'
+                : 'Editar Pensamiento'
+              : 'Nuevo Pensamiento'}
           </h2>
         </div>
 
         {/* Form */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 overflow-y-auto">
           {/* Content */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">
-              Título *
+              Pensamiento *
             </label>
             <input
               type="text"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="¿Qué representa este nodo?"
+              placeholder="¿Qué pensamiento quieres registrar?"
               className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              disabled={isRootNode}
             />
           </div>
 
@@ -122,66 +141,99 @@ export default function NodeEditor() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Añade más detalles..."
+              placeholder="Añade más contexto sobre este pensamiento..."
               rows={3}
               className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
             />
           </div>
 
-          {/* Category */}
+          {/* Emotional Level — Hawkins Scale */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Categoría
+              Nivel Vibracional (Hawkins)
             </label>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
+            <div className="grid grid-cols-3 gap-1.5 max-h-[180px] overflow-y-auto pr-1">
+              {HAWKINS_SCALE.map((level) => (
                 <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    category === cat
-                      ? 'text-white shadow-lg scale-105'
-                      : 'text-slate-400 bg-slate-700 hover:bg-slate-600'
+                  key={level.key}
+                  onClick={() => setEmotionalLevel(level.key)}
+                  className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-center ${
+                    emotionalLevel === level.key
+                      ? 'text-white shadow-lg scale-105 ring-2 ring-white/30'
+                      : 'text-slate-300 opacity-60 hover:opacity-100'
                   }`}
-                  style={
-                    category === cat
-                      ? { backgroundColor: CATEGORY_COLORS[cat] }
-                      : {}
-                  }
+                  style={{
+                    backgroundColor:
+                      emotionalLevel === level.key
+                        ? EMOTIONAL_COLORS[level.key]
+                        : `${EMOTIONAL_COLORS[level.key]}40`,
+                  }}
                 >
-                  {CATEGORY_LABELS[cat]}
+                  <span className="block font-bold">{level.calibration}</span>
+                  <span className="block text-[10px] leading-tight">{level.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Temporal State */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Estado Temporal
-            </label>
-            <div className="flex gap-2">
-              {temporalStates.map((state) => (
-                <button
-                  key={state}
-                  onClick={() => setTemporalState(state)}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    temporalState === state
-                      ? 'bg-indigo-600 text-white shadow-lg'
-                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
-                  }`}
-                >
-                  {TEMPORAL_LABELS[state]}
-                </button>
-              ))}
+          {/* Category */}
+          {!isRootNode && (
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Categoría
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      category === cat
+                        ? 'text-white shadow-lg scale-105'
+                        : 'text-slate-400 bg-slate-700 hover:bg-slate-600'
+                    }`}
+                    style={
+                      category === cat
+                        ? { backgroundColor: CATEGORY_COLORS[cat] }
+                        : {}
+                    }
+                  >
+                    {CATEGORY_LABELS[cat]}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Temporal State */}
+          {!isRootNode && (
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Línea Temporal
+              </label>
+              <div className="flex gap-2">
+                {temporalStates.map((state) => (
+                  <button
+                    key={state}
+                    onClick={() => setTemporalState(state)}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      temporalState === state
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
+                    }`}
+                  >
+                    {TEMPORAL_LABELS[state]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
-        <div className="px-6 py-4 bg-slate-900/50 flex justify-between border-t border-slate-700">
+        <div className="px-6 py-4 bg-slate-900/50 flex justify-between border-t border-slate-700 shrink-0">
           <div>
-            {selectedNode && (
+            {selectedNode && !isRootNode && (
               <button
                 onClick={handleDelete}
                 className="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium"

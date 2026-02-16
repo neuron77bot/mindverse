@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { MindverseNode, Connection, Category, TemporalState } from '../types';
-import { mockNodes, mockConnections } from '../data/mockData';
+import { mockNodes, mockConnections, ROOT_NODE_ID } from '../data/mockData';
 
 interface MindverseStore {
   // Estado
@@ -12,7 +12,7 @@ interface MindverseStore {
   selectedNode: MindverseNode | null;
   isEditorOpen: boolean;
 
-  // Acciones - Nodos
+  // Acciones - Pensamientos
   addNode: (node: MindverseNode) => void;
   updateNode: (id: string, updates: Partial<MindverseNode>) => void;
   deleteNode: (id: string) => void;
@@ -61,13 +61,15 @@ export const useMindverseStore = create<MindverseStore>()(
           ),
         })),
 
-      deleteNode: (id) =>
+      deleteNode: (id) => {
+        if (id === ROOT_NODE_ID) return;
         set((state) => ({
           nodes: state.nodes.filter((node) => node.id !== id),
           connections: state.connections.filter(
             (conn) => conn.source !== id && conn.target !== id
           ),
-        })),
+        }));
+      },
 
       updateNodePosition: (id, x, y) =>
         set((state) => ({
@@ -107,10 +109,11 @@ export const useMindverseStore = create<MindverseStore>()(
           isEditorOpen: false,
         }),
 
-      // Getters
+      // Getters — el nodo raíz (Casco Periférico) siempre es visible
       getFilteredNodes: () => {
         const { nodes, activeTemporalFilter, activeCategoryFilter } = get();
         return nodes.filter((node) => {
+          if (node.id === ROOT_NODE_ID) return true;
           const matchesTemporal =
             activeTemporalFilter === 'ALL' ||
             node.temporalState === activeTemporalFilter;

@@ -1,73 +1,42 @@
-# Mindverse - Frontend
+# Mindverse
 
-Frontend para visualizar y gestionar el estado mental de una persona a través de mapas mentales interactivos, permitiendo explorar diferentes lineas del tiempo en la vida de una persona, como su pasado, presente y futuro.
+Aplicación web para visualizar y gestionar el estado mental de una persona a través de mapas mentales interactivos. Permite explorar los pensamientos en diferentes líneas del tiempo — pasado y presente o futuro, estos son metadatos relacionados a un pensamiento, así como su categoría y su estado vibracional de emoción según la escala del Dr. David R. Hawkins.
 
----
+Todos los pensamientos parten de un nodo principal: el punto cero, llamado **Casco Periférico**.
 
 ## Objetivo
 
-Crear un prototipo funcional del frontend que permita:
-- Visualizar mapas mentales interactivos
-- Navegar entre estados temporales (Pasado, Presente, Futuro)
-- Filtrar por categorías de vida
-- Agregar, editar y eliminar nodos (persistidos en localStorage)
-
----
-
-## Stack Simplificado
-
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| **React** | 18.x | Biblioteca UI |
-| **Vite** | 5.x | Build tool y dev server |
-| **TypeScript** | 5.x | Tipado estático |
-| **React Flow** | 11.x | Visualización de mapas mentales |
-| **Zustand** | 4.x | Gestión de estado + persistencia localStorage |
-| **TailwindCSS** | 3.x | Estilos |
-| **Framer Motion** | 10.x | Animaciones fluidas |
-
----
+Ofrecer una herramienta visual e intuitiva para que cualquier persona pueda mapear su estado mental en un canvas interactivo, organizando pensamientos por línea temporal, categoría de vida y nivel vibracional emocional, facilitando la introspección, la reflexión y el autoconocimiento.
 
 ## Funcionalidades
 
-### Incluidas 1.0
-- [x] Visualización de mapa mental con React Flow
-- [x] Nodos personalizados con colores por categoría
-- [x] Filtro por estado temporal (Pasado/Presente/Futuro)
-- [x] Filtro por categoría de vida
-- [x] Drag & drop de nodos
-- [x] Zoom y pan del canvas
-- [x] Crear nuevos nodos
-- [x] Editar nodos existentes
-- [x] Eliminar nodos
-- [x] Crear conexiones entre nodos
-- [x] Eliminar conexiones
-- [x] Persistencia en localStorage
-- [x] Datos pre-cargados de ejemplo
-- [x] Botón para resetear a datos de ejemplo
+- **Casco Periférico (Punto Cero)** — Nodo raíz siempre visible del que parten todos los pensamientos; no puede eliminarse
+- **Mapa mental interactivo** — Canvas con zoom, pan y drag & drop de pensamientos usando React Flow
+- **Escala vibracional de Hawkins** — Cada pensamiento lleva un nivel emocional (20–700) según la escala del Dr. David R. Hawkins, con colores distintivos por calibración
+- **Línea temporal** — Filtra pensamientos por metadato temporal: Pasado, Presente o Futuro
+- **Categorías de vida** — 9 categorías con colores distintivos: Salud, Trabajo, Amor, Familia, Finanzas, Crecimiento Personal, Ocio, Espiritualidad y Social
+- **CRUD de pensamientos** — Crear, editar y eliminar pensamientos desde un editor modal con selector de nivel vibracional
+- **Conexiones entre pensamientos** — Crear relaciones con etiquetas arrastrando desde los handles
+- **Auto-layout** — Organización automática del grafo con Dagre en 4 direcciones (TB, LR, BT, RL)
+- **Minimapa** — Vista miniatura para navegar mapas grandes
+- **Persistencia local** — Todo el estado se guarda en localStorage automáticamente con Zustand
+- **Datos de ejemplo** — Set de pensamientos precargado con opción de resetear en cualquier momento
 
-### Excluidas 2.0
-- [ ] Autenticación de usuarios
-- [ ] Backend y base de datos real
-- [ ] Múltiples mapas mentales
-- [ ] Exportar como imagen
-- [ ] Compartir mapas
-- [ ] Colaboración en tiempo real
+## Tech Stack
 
-### Versión 3.0
-- [ ] Exportar mapas como imagen (PNG/SVG)
-- [ ] Compartir mapas con otros usuarios
-- [ ] Plantillas predefinidas
-- [ ] Modo oscuro/claro
-- [ ] Estadísticas y análisis de patrones
-- [ ] Historial de cambios
+| Tecnología | Propósito |
+|---|---|
+| React 19 | UI |
+| TypeScript | Tipado estático |
+| Vite 7 | Build tool y dev server |
+| React Flow 11 | Canvas de mapa mental |
+| Zustand 5 | Estado global + persistencia localStorage |
+| Dagre | Auto-layout de grafos |
+| TailwindCSS 4 | Estilos |
 
-### Versión 4.0
-- [ ] Colaboración en tiempo real
-- [ ] Integración con calendarios
-- [ ] Notificaciones y recordatorios
-- [ ] App móvil (React Native)
-- [ ] IA para sugerencias de conexiones
+## Inicio rápido
 
-
----
+```bash
+npm install
+npm run dev
+```

@@ -24,7 +24,7 @@ export default function Header() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-white">Mindverse</h1>
-          <p className="text-xs text-slate-400">Estado Mental Personal</p>
+          <p className="text-xs text-slate-400">Mapa de Estado Mental</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export default function Header() {
               d="M12 4v16m8-8H4"
             />
           </svg>
-          Nuevo Nodo
+          Nuevo Pensamiento
         </button>
       </div>
     </header>

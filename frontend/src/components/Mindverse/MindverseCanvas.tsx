@@ -16,6 +16,7 @@ import 'reactflow/dist/style.css';
 import { v4 as uuidv4 } from 'uuid';
 import { useMindverseStore } from '../../store/mindverseStore';
 import type { MindverseNode } from '../../types';
+import { ROOT_NODE_ID } from '../../data/mockData';
 import CustomNode from './CustomNode';
 import { getAutoLayoutedElements, type LayoutDirection } from '../../utils/layoutUtils';
 
@@ -47,9 +48,10 @@ function MindverseCanvasInner() {
 
   const [layoutDirection, setLayoutDirection] = useState<LayoutDirection>('LR');
 
-  // Filtrar nodos según los filtros activos
+  // Filtrar pensamientos — el Casco Periférico siempre es visible
   const filteredNodes = useMemo(() => {
     return storeNodes.filter((node) => {
+      if (node.id === ROOT_NODE_ID) return true;
       const matchesTemporal =
         activeTemporalFilter === 'ALL' || node.temporalState === activeTemporalFilter;
       const matchesCategory =
