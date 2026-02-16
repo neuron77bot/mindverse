@@ -13,13 +13,13 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Filters Bar */}
-        <div className="px-6 py-4 flex items-start justify-between gap-4 bg-slate-900">
+        <div className="px-3 py-2 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-stretch sm:items-start gap-2 bg-slate-900">
           <TemporalFilter />
           <CategoryFilter />
         </div>
 
         {/* Mind Map Canvas */}
-        <div className="flex-1 mx-6 mb-6 rounded-2xl overflow-hidden shadow-2xl border border-slate-700">
+        <div className="flex-1 mx-2 mb-2 sm:mx-6 sm:mb-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-700">
           <MindverseCanvas />
         </div>
       </div>
