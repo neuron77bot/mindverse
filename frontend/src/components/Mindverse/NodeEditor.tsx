@@ -33,6 +33,7 @@ export default function NodeEditor() {
     addNode,
     updateNode,
     deleteNode,
+    addConnection,
     activeTemporalFilter,
   } = useMindverseStore();
 
@@ -88,6 +89,12 @@ export default function NodeEditor() {
         createdAt: new Date(),
       };
       addNode(newNode);
+      // Conectar automáticamente al nodo raíz (Casco Periférico)
+      addConnection({
+        id: uuidv4(),
+        source: ROOT_NODE_ID,
+        target: newNode.id,
+      });
     }
 
     closeEditor();
