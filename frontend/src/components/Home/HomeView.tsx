@@ -40,6 +40,16 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
         </p>
       </div>
 
+      {/* Botón nuevo pensamiento — arriba del grid */}
+      <div className="mb-4">
+        <button
+          onClick={() => openEditor()}
+          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors font-medium text-sm shadow-lg shadow-indigo-500/25"
+        >
+          <span className="text-lg leading-none">+</span> Nuevo pensamiento
+        </button>
+      </div>
+
       {mainNodes.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 text-center">
           <div className="text-5xl mb-4">🧠</div>
