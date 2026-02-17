@@ -46,9 +46,18 @@ function MindverseCanvasInner() {
   const addConnectionToStore = useMindverseStore((s) => s.addConnection);
 
   const layoutDirection = useMindverseStore((s) => s.layoutDirection);
+  const focusedNodeId = useMindverseStore((s) => s.focusedNodeId);
 
-  // Filtrar pensamientos — el Casco Periférico siempre es visible
+  // Filtrar nodos — si hay focusedNodeId, mostrar solo ese nodo y sus hijos directos
   const filteredNodes = useMemo(() => {
+    if (focusedNodeId) {
+      const childIds = new Set(
+        storeConnections
+          .filter((c) => c.source === focusedNodeId)
+          .map((c) => c.target)
+      );
+      return storeNodes.filter((n) => n.id === focusedNodeId || childIds.has(n.id));
+    }
     return storeNodes.filter((node) => {
       if (node.id === ROOT_NODE_ID) return true;
       const matchesTemporal =
@@ -57,7 +66,7 @@ function MindverseCanvasInner() {
         activeCategoryFilter === 'ALL' || node.category === activeCategoryFilter;
       return matchesTemporal && matchesCategory;
     });
-  }, [storeNodes, activeTemporalFilter, activeCategoryFilter]);
+  }, [storeNodes, storeConnections, activeTemporalFilter, activeCategoryFilter, focusedNodeId]);
 
   // Filtrar conexiones según los nodos visibles
   const filteredConnections = useMemo(() => {

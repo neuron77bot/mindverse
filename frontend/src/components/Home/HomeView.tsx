@@ -15,7 +15,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 interface HomeViewProps {
-  onNavigateToMap: () => void;
+  onNavigateToMap: (nodeId?: string) => void;
   onNavigateToDetail: (node: MindverseNode) => void;
 }
 
@@ -121,7 +121,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
 
                     {/* Ver en mapa */}
                     <button
-                      onClick={onNavigateToMap}
+                      onClick={() => onNavigateToMap(node.id)}
                       className="text-xs text-slate-400 hover:text-white font-medium flex items-center gap-1 transition-colors"
                     >
                       Ver en mapa →

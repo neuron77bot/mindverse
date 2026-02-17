@@ -14,6 +14,7 @@ interface MindverseStore {
   selectedNode: MindverseNode | null;
   isEditorOpen: boolean;
   layoutDirection: LayoutDirection;
+  focusedNodeId: string | null;
 
   // Acciones - Pensamientos
   addNode: (node: MindverseNode) => void;
@@ -29,6 +30,7 @@ interface MindverseStore {
   setTemporalFilter: (filter: TemporalState | 'ALL') => void;
   setCategoryFilter: (filter: Category | 'ALL') => void;
   setLayoutDirection: (direction: LayoutDirection) => void;
+  setFocusedNode: (id: string | null) => void;
 
   // Acciones - Editor
   setSelectedNode: (node: MindverseNode | null) => void;
@@ -52,6 +54,7 @@ export const useMindverseStore = create<MindverseStore>()(
       selectedNode: null,
       isEditorOpen: false,
       layoutDirection: 'LR',
+      focusedNodeId: null,
 
       // Acciones - Nodos
       addNode: (node) =>
@@ -100,6 +103,8 @@ export const useMindverseStore = create<MindverseStore>()(
       setCategoryFilter: (filter) => set({ activeCategoryFilter: filter }),
 
       setLayoutDirection: (direction) => set({ layoutDirection: direction }),
+
+      setFocusedNode: (id) => set({ focusedNodeId: id }),
 
       // Acciones - Editor
       setSelectedNode: (node) => set({ selectedNode: node }),
