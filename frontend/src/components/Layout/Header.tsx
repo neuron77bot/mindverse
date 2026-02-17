@@ -8,7 +8,6 @@ interface HeaderProps {
 }
 
 export default function Header({ activeView, onViewChange }: HeaderProps) {
-  const openEditor = useMindverseStore((state) => state.openEditor);
   const resetToMockData = useMindverseStore((state) => state.resetToMockData);
 
   return (
@@ -65,17 +64,6 @@ export default function Header({ activeView, onViewChange }: HeaderProps) {
             />
           </svg>
           <span className="hidden sm:inline">Resetear</span>
-        </button>
-
-        <button
-          onClick={() => openEditor()}
-          className="px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors text-sm font-medium flex items-center gap-1.5 shadow-lg shadow-indigo-500/25"
-        >
-          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span className="hidden sm:inline">Nuevo Pensamiento</span>
-          <span className="sm:hidden">Nuevo</span>
         </button>
       </div>
     </header>
