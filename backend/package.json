@@ -14,6 +14,8 @@
   "dependencies": {
     "@fal-ai/client": "*",
     "@fastify/cors": "*",
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
     "dotenv": "*",
     "fastify": "*",
     "mongoose": "*"

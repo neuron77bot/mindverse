@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { fal } from '@fal-ai/client';
 import { imageRoutes } from './routes/images';
 import { thoughtRoutes } from './routes/thoughts';
@@ -26,6 +28,26 @@ async function main() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   });
 
+  // Swagger / OpenAPI
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Mindverse API',
+        description: 'Backend de Mindverse — gestión de pensamientos e imágenes IA',
+        version: '1.0.0',
+      },
+      tags: [
+        { name: 'thoughts', description: 'CRUD de pensamientos' },
+        { name: 'images',   description: 'Generación de imágenes con IA (fal.ai)' },
+        { name: 'health',   description: 'Estado del servicio' },
+      ],
+    },
+  });
+  await app.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: { docExpansion: 'list', deepLinking: true },
+  });
+
   // Rutas de imágenes
   await app.register(imageRoutes, { prefix: '/images' });
 
@@ -33,7 +55,13 @@ async function main() {
   await app.register(thoughtRoutes, { prefix: '/thoughts' });
 
   // Health check
-  app.get('/health', async () => ({ status: 'ok', service: 'mindverse-backend' }));
+  app.get('/health', {
+    schema: {
+      tags: ['health'],
+      summary: 'Estado del servicio',
+      response: { 200: { type: 'object', properties: { status: { type: 'string' }, service: { type: 'string' } } } },
+    },
+  }, async () => ({ status: 'ok', service: 'mindverse-backend' }));
 
   try {
     await connectDatabase();
