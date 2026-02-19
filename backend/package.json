@@ -1,0 +1,26 @@
+{
+  "name": "mindverse-backend",
+  "version": "1.0.0",
+  "description": "Mindverse API — Fastify + fal.ai",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node --esm src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fal-ai/client": "*",
+    "@fastify/cors": "*",
+    "dotenv": "*",
+    "fastify": "*"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "nodemon": "*",
+    "ts-node": "*",
+    "typescript": "*"
+  }
+}

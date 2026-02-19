@@ -1,6 +1,8 @@
 import { useMindverseStore } from '../../store/mindverseStore';
-import { CATEGORY_COLORS, CATEGORY_LABELS, ROOT_NODE_ID } from '../../data/mockData';
+import { CATEGORY_COLORS, CATEGORY_LABELS, EMOTIONAL_COLORS, HAWKINS_SCALE, ROOT_NODE_ID } from '../../data/mockData';
 import type { MindverseNode } from '../../types';
+import ExpandableText from '../UI/ExpandableText';
+import { getFreqLabel } from '../../utils/vibration';
 
 const TEMPORAL_ICONS: Record<string, string> = {
   PAST: '⏮️', PRESENT: '⏺️', FUTURE: '⏭️',
@@ -28,8 +30,21 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
 
   const mainNodes = nodes.filter((n) => rootConnectionTargets.includes(n.id));
 
-  const getStepCount = (nodeId: string) =>
-    connections.filter((c) => c.source === nodeId).length;
+  const getStepCount = (nodeId: string): number => {
+    const visited = new Set<string>([nodeId]);
+    let count = 0;
+    let current = nodeId;
+    while (true) {
+      const next = connections.find(
+        (c) => c.source === current && !visited.has(c.target)
+      )?.target;
+      if (!next) break;
+      visited.add(next);
+      count++;
+      current = next;
+    }
+    return count;
+  };
 
   return (
     <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
@@ -68,53 +83,82 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {mainNodes.map((node) => {
             const color = CATEGORY_COLORS[node.category] || '#6366F1';
+            const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || color;
+            const hawkins = HAWKINS_SCALE.find((l) => l.key === node.emotionalLevel);
+            const freq = hawkins ? getFreqLabel(hawkins.calibration) : null;
             const stepCount = getStepCount(node.id);
 
             return (
               <div
                 key={node.id}
-                className="group bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden transition-all duration-200 hover:border-slate-500 hover:shadow-xl hover:-translate-y-1"
+                className="group rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-xl hover:-translate-y-1"
+                style={{
+                  backgroundColor: `${vibColor}18`,
+                  borderColor: `${vibColor}40`,
+                }}
               >
-                <div className="h-1.5 w-full" style={{ backgroundColor: color }} />
+                <div className="h-1.5 w-full" style={{ backgroundColor: vibColor }} />
 
                 <div className="p-5">
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                  {/* Icono */}
+                  <div className="flex items-center gap-3 mb-3">
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
                       style={{ backgroundColor: `${color}25` }}
                     >
                       {CATEGORY_ICONS[node.category]}
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
-                        {TEMPORAL_ICONS[node.temporalState]}
-                        {TEMPORAL_LABELS_MAP[node.temporalState]}
-                      </span>
-                      <span
-                        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: `${color}20`, color }}
-                      >
-                        {CATEGORY_LABELS[node.category]}
-                      </span>
-                    </div>
                   </div>
 
-                  <h3 className="text-white font-bold text-base mb-1 leading-tight">
+                  <h3 className="text-white font-bold text-base mb-2 leading-tight">
                     {node.content}
                   </h3>
 
+                  {/* Labels: vibración + frecuencia + categoría + temporal */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                    {hawkins && (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold"
+                        style={{ borderColor: `${vibColor}50`, color: vibColor, backgroundColor: `${vibColor}15` }}
+                      >
+                        {hawkins.label} · {hawkins.calibration}
+                      </span>
+                    )}
+                    {freq && (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                        style={{ color: freq.color, backgroundColor: freq.bg }}
+                      >
+                        {freq.icon} {freq.label}
+                      </span>
+                    )}
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      style={{ backgroundColor: `${color}20`, color }}
+                    >
+                      {CATEGORY_ICONS[node.category]} {CATEGORY_LABELS[node.category]}
+                    </span>
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-700/60 text-[10px] text-slate-300 font-medium">
+                      {TEMPORAL_ICONS[node.temporalState]} {TEMPORAL_LABELS_MAP[node.temporalState]}
+                    </span>
+                  </div>
+
                   {node.description && (
-                    <p className="text-slate-400 text-sm leading-relaxed line-clamp-2 mb-4">
-                      {node.description}
-                    </p>
+                    <div className="mb-4">
+                      <ExpandableText
+                        text={node.description}
+                        className="text-slate-400 text-sm leading-relaxed"
+                        clamp={2}
+                      />
+                    </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-700 gap-2">
+                  <div className="flex items-center justify-between pt-3 border-t gap-2" style={{ borderColor: `${vibColor}25` }}>
                     {/* Ver detalle */}
                     <button
                       onClick={() => onNavigateToDetail(node)}
                       className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
-                      style={{ backgroundColor: `${color}15`, color }}
+                      style={{ backgroundColor: `${vibColor}25`, color: vibColor }}
                     >
                       📋 {stepCount} {stepCount === 1 ? 'paso' : 'pasos'}
                     </button>

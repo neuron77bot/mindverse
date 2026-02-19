@@ -48,15 +48,21 @@ function MindverseCanvasInner() {
   const layoutDirection = useMindverseStore((s) => s.layoutDirection);
   const focusedNodeId = useMindverseStore((s) => s.focusedNodeId);
 
-  // Filtrar nodos — si hay focusedNodeId, mostrar solo ese nodo y sus hijos directos
+  // Filtrar nodos — si hay focusedNodeId, mostrar ese nodo y TODOS sus descendientes
   const filteredNodes = useMemo(() => {
     if (focusedNodeId) {
-      const childIds = new Set(
+      const allIds = new Set<string>([focusedNodeId]);
+      const queue = [focusedNodeId];
+      while (queue.length > 0) {
+        const current = queue.shift()!;
         storeConnections
-          .filter((c) => c.source === focusedNodeId)
-          .map((c) => c.target)
-      );
-      return storeNodes.filter((n) => n.id === focusedNodeId || childIds.has(n.id));
+          .filter((c) => c.source === current && !allIds.has(c.target))
+          .forEach((c) => {
+            allIds.add(c.target);
+            queue.push(c.target);
+          });
+      }
+      return storeNodes.filter((n) => allIds.has(n.id));
     }
     return storeNodes.filter((node) => {
       if (node.id === ROOT_NODE_ID) return true;

@@ -8,11 +8,13 @@ import CategoryFilter from './components/Filters/CategoryFilter';
 import LayoutFilter from './components/Filters/LayoutFilter';
 import HomeView from './components/Home/HomeView';
 import DetailView from './components/Home/DetailView';
+import LoginView, { isAuthenticated } from './components/Auth/LoginView';
 import type { MindverseNode } from './types';
 
 type View = 'home' | 'detail' | 'mapa';
 
 function App() {
+  const [authenticated, setAuthenticated] = useState(isAuthenticated());
   const [activeView, setActiveView] = useState<View>('home');
   const [detailNode, setDetailNode] = useState<MindverseNode | null>(null);
   const setFocusedNode = useMindverseStore((s) => s.setFocusedNode);
@@ -44,6 +46,10 @@ function App() {
       setActiveView(view);
     }
   };
+
+  if (!authenticated) {
+    return <LoginView onSuccess={() => setAuthenticated(true)} />;
+  }
 
   return (
     <div className="h-screen flex flex-col bg-slate-900">

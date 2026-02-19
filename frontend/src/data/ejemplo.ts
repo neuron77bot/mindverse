@@ -213,6 +213,182 @@ export const mockNodes: MindverseNode[] = [
   },
 
   // =============================================
+  // 🔮 DOMOS EN CÓRDOBA
+  // =============================================
+  {
+    id: 'domos',
+    content: 'Domos en Córdoba',
+    description: 'Construir domos geodésicos en Córdoba para alquiler turístico, recreación o espacio comunitario. Un proyecto de vida con Pa, Enano y Jony.',
+    category: 'PERSONAL_GROWTH',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'JOY',
+    positionX: 300,
+    positionY: 1550,
+    color: CATEGORY_COLORS.PERSONAL_GROWTH,
+    createdAt: new Date('2026-02-17'),
+  },
+  {
+    id: 'domos-curso',
+    content: 'Tomar curso de construcción de domos',
+    description: 'Formarse técnicamente antes de invertir: aprender geometría geodésica, materiales, técnicas de ensamble y costos reales de construcción.',
+    category: 'PERSONAL_GROWTH',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'WILLINGNESS',
+    positionX: 50,
+    positionY: 1700,
+    color: CATEGORY_COLORS.PERSONAL_GROWTH,
+    createdAt: new Date('2026-02-17'),
+  },
+  {
+    id: 'domos-visitar',
+    content: 'Visitar proyectos de domos existentes',
+    description: 'Conocer de primera mano emprendimientos de domos en las sierras: ver funcionamiento real, hablar con constructores y entender el mercado.',
+    category: 'LEISURE',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'JOY',
+    positionX: 200,
+    positionY: 1700,
+    color: CATEGORY_COLORS.LEISURE,
+    createdAt: new Date('2026-02-17'),
+  },
+  {
+    id: 'domos-presupuesto',
+    content: 'Presupuestar construcción del primer domo',
+    description: 'Cotizar materiales (estructura metálica o madera, cobertura), mano de obra, instalaciones básicas y servicios. Definir inversión mínima viable.',
+    category: 'FINANCES',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'REASON',
+    positionX: 400,
+    positionY: 1700,
+    color: CATEGORY_COLORS.FINANCES,
+    createdAt: new Date('2026-02-17'),
+  },
+  {
+    id: 'domos-terreno',
+    content: 'Conseguir terreno para el primer domo',
+    description: 'Evaluar si usar el terreno en Córdoba ya disponible o conseguir uno en las sierras con mejor acceso turístico. Verificar habilitaciones municipales.',
+    category: 'FINANCES',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'COURAGE',
+    positionX: 600,
+    positionY: 1700,
+    color: CATEGORY_COLORS.FINANCES,
+    createdAt: new Date('2026-02-17'),
+  },
+  {
+    id: 'domos-socios',
+    content: 'Sumar a Pa, Enano y Jony al proyecto',
+    description: 'Presentar el proyecto a los socios, definir roles, porcentajes de inversión y responsabilidades de cada uno. Formalizar el acuerdo.',
+    category: 'SOCIAL',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'WILLINGNESS',
+    positionX: 800,
+    positionY: 1700,
+    color: CATEGORY_COLORS.SOCIAL,
+    createdAt: new Date('2026-02-17'),
+  },
+  {
+    id: 'domos-construccion',
+    content: 'Construir el primer domo prototipo',
+    description: 'Ejecutar la construcción del primer domo: validar tiempos, costos reales, aprendizajes técnicos y calidad del resultado final.',
+    category: 'PERSONAL_GROWTH',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'COURAGE',
+    positionX: 1000,
+    positionY: 1700,
+    color: CATEGORY_COLORS.PERSONAL_GROWTH,
+    createdAt: new Date('2026-02-17'),
+  },
+  {
+    id: 'domos-negocio',
+    content: 'Planificar modelo de negocio',
+    description: 'Definir si el destino del domo es alquiler temporario, turismo de experiencias, espacio recreacional o comunitario. Proyectar retorno de inversión.',
+    category: 'FINANCES',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'JOY',
+    positionX: 1200,
+    positionY: 1700,
+    color: CATEGORY_COLORS.FINANCES,
+    createdAt: new Date('2026-02-17'),
+  },
+
+  // =============================================
+  // ❤️ CONOZCO A MI NOVIA
+  // =============================================
+  {
+    id: 'novia',
+    content: 'Conozco a mi novia',
+    description: 'El proceso de abrirme a nuevas conexiones, disfrutar el camino y encontrar a alguien especial.',
+    category: 'LOVE',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'JOY',
+    positionX: 300,
+    positionY: 1900,
+    color: CATEGORY_COLORS.LOVE,
+    createdAt: new Date('2026-02-18'),
+  },
+  {
+    id: 'novia-salir',
+    content: 'Me permití salir y conocer gente nueva',
+    description: 'Decidí dejar de esperar y salir al mundo. Nuevos lugares, nuevas personas, nueva energía.',
+    category: 'SOCIAL',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'COURAGE',
+    positionX: 50,
+    positionY: 2050,
+    color: CATEGORY_COLORS.SOCIAL,
+    createdAt: new Date('2026-02-18'),
+  },
+  {
+    id: 'novia-interesantes',
+    content: 'Me presentan mujeres muy interesantes',
+    description: 'El universo empieza a conspirar. Me llegan presentaciones, encuentros, conversaciones que valen la pena.',
+    category: 'LOVE',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'WILLINGNESS',
+    positionX: 250,
+    positionY: 2050,
+    color: CATEGORY_COLORS.LOVE,
+    createdAt: new Date('2026-02-18'),
+  },
+  {
+    id: 'novia-amigas',
+    content: 'Hice buenas amigas en el proceso',
+    description: 'No todo termina en romance — algunas conexiones se convierten en amistades genuinas que también suman.',
+    category: 'SOCIAL',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'LOVE',
+    positionX: 450,
+    positionY: 2050,
+    color: CATEGORY_COLORS.SOCIAL,
+    createdAt: new Date('2026-02-18'),
+  },
+  {
+    id: 'novia-ella',
+    content: 'ELLA me encantó',
+    description: 'Algo diferente. Algo que se siente distinto a todo lo anterior. No sé bien por qué, pero sé que sí.',
+    category: 'LOVE',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'LOVE',
+    positionX: 650,
+    positionY: 2050,
+    color: CATEGORY_COLORS.LOVE,
+    createdAt: new Date('2026-02-18'),
+  },
+  {
+    id: 'novia-confirmo',
+    content: 'Confirmo: ELLA me encantó',
+    description: 'Ya no hay dudas. Lo que sentí la primera vez se confirma con el tiempo. Es ella.',
+    category: 'LOVE',
+    temporalState: 'FUTURE',
+    emotionalLevel: 'PEACE',
+    positionX: 850,
+    positionY: 2050,
+    color: CATEGORY_COLORS.LOVE,
+    createdAt: new Date('2026-02-18'),
+  },
+
+  // =============================================
   // 🏍️ COMPRAR MOTO EN CÓRDOBA
   // =============================================
   {
@@ -292,52 +468,51 @@ export const mockNodes: MindverseNode[] = [
 // ===== CONEXIONES =====
 export const mockConnections: Connection[] = [
   // Root → Tópicos principales
-  { id: 'c-root-terreno',  source: ROOT_NODE_ID, target: 'terreno' },
-  { id: 'c-root-ushuaia',  source: ROOT_NODE_ID, target: 'ushuaia' },
-  { id: 'c-root-gym',      source: ROOT_NODE_ID, target: 'gym' },
-  { id: 'c-root-moto',     source: ROOT_NODE_ID, target: 'moto' },
+  { id: 'c-root-terreno', source: ROOT_NODE_ID, target: 'terreno' },
+  { id: 'c-root-ushuaia', source: ROOT_NODE_ID, target: 'ushuaia' },
+  { id: 'c-root-gym',     source: ROOT_NODE_ID, target: 'gym' },
+  { id: 'c-root-moto',    source: ROOT_NODE_ID, target: 'moto' },
 
-  // Terreno → subtareas (orden lógico)
-  { id: 'c-terreno-papeles',      source: 'terreno', target: 'terreno-papeles' },
-  { id: 'c-terreno-impuestos',    source: 'terreno', target: 'terreno-impuestos' },
-  { id: 'c-terreno-cerco',        source: 'terreno', target: 'terreno-cerco' },
-  { id: 'c-terreno-nivelar',      source: 'terreno', target: 'terreno-nivelar' },
-  { id: 'c-terreno-edificacion',  source: 'terreno', target: 'terreno-edificacion' },
-  { id: 'c-terreno-alquiler',     source: 'terreno', target: 'terreno-alquiler' },
-  // Flujo secuencial del terreno
+  // 🏡 Terreno — cadena secuencial
+  { id: 'c-terreno-papeles',      source: 'terreno',             target: 'terreno-papeles' },
   { id: 'c-papeles-impuestos',    source: 'terreno-papeles',     target: 'terreno-impuestos' },
   { id: 'c-impuestos-cerco',      source: 'terreno-impuestos',   target: 'terreno-cerco' },
   { id: 'c-cerco-nivelar',        source: 'terreno-cerco',       target: 'terreno-nivelar' },
   { id: 'c-nivelar-edificacion',  source: 'terreno-nivelar',     target: 'terreno-edificacion' },
   { id: 'c-edificacion-alquiler', source: 'terreno-edificacion', target: 'terreno-alquiler' },
 
-  // Ushuaia → subtareas
-  { id: 'c-ushuaia-refaccion', source: 'ushuaia', target: 'ushuaia-refaccion' },
-  { id: 'c-ushuaia-gastos',    source: 'ushuaia', target: 'ushuaia-gastos' },
-  { id: 'c-ushuaia-alquiler',  source: 'ushuaia', target: 'ushuaia-alquiler' },
-  // Flujo secuencial Ushuaia
-  { id: 'c-gastos-refaccion',    source: 'ushuaia-gastos',   target: 'ushuaia-refaccion' },
-  { id: 'c-refaccion-alquiler',  source: 'ushuaia-refaccion', target: 'ushuaia-alquiler' },
+  // 🏠 Ushuaia — cadena secuencial
+  { id: 'c-ushuaia-gastos',     source: 'ushuaia',           target: 'ushuaia-gastos' },
+  { id: 'c-gastos-refaccion',   source: 'ushuaia-gastos',    target: 'ushuaia-refaccion' },
+  { id: 'c-refaccion-alquiler', source: 'ushuaia-refaccion', target: 'ushuaia-alquiler' },
 
-  // GYM → subtareas
-  { id: 'c-gym-peso',         source: 'gym', target: 'gym-peso' },
-  { id: 'c-gym-alimentacion', source: 'gym', target: 'gym-alimentacion' },
-  { id: 'c-gym-musculo',      source: 'gym', target: 'gym-musculo' },
-  // Alimentación impacta en peso y músculo
-  { id: 'c-alim-peso',    source: 'gym-alimentacion', target: 'gym-peso' },
-  { id: 'c-alim-musculo', source: 'gym-alimentacion', target: 'gym-musculo' },
+  // 💪 GYM — cadena secuencial
+  { id: 'c-gym-alimentacion', source: 'gym',               target: 'gym-alimentacion' },
+  { id: 'c-alim-peso',        source: 'gym-alimentacion',  target: 'gym-peso' },
+  { id: 'c-peso-musculo',     source: 'gym-peso',          target: 'gym-musculo' },
 
-  // Moto → subtareas
-  { id: 'c-moto-carnet',    source: 'moto', target: 'moto-carnet' },
-  { id: 'c-moto-movilidad', source: 'moto', target: 'moto-movilidad' },
-  { id: 'c-moto-sierras',   source: 'moto', target: 'moto-sierras' },
-  { id: 'c-moto-uber',      source: 'moto', target: 'moto-uber' },
-  { id: 'c-moto-contenido', source: 'moto', target: 'moto-contenido' },
-  // Carnet habilita todo
-  { id: 'c-carnet-movilidad', source: 'moto-carnet', target: 'moto-movilidad' },
-  { id: 'c-carnet-sierras',   source: 'moto-carnet', target: 'moto-sierras' },
-  { id: 'c-carnet-uber',      source: 'moto-carnet', target: 'moto-uber' },
-  // Uber y sierras → contenido
-  { id: 'c-sierras-contenido', source: 'moto-sierras', target: 'moto-contenido' },
-  { id: 'c-uber-contenido',    source: 'moto-uber',    target: 'moto-contenido' },
+  // ❤️ Novia — cadena secuencial
+  { id: 'c-root-novia',              source: ROOT_NODE_ID,          target: 'novia' },
+  { id: 'c-novia-salir',             source: 'novia',               target: 'novia-salir' },
+  { id: 'c-salir-interesantes',      source: 'novia-salir',         target: 'novia-interesantes' },
+  { id: 'c-interesantes-amigas',     source: 'novia-interesantes',  target: 'novia-amigas' },
+  { id: 'c-amigas-ella',             source: 'novia-amigas',        target: 'novia-ella' },
+  { id: 'c-ella-confirmo',           source: 'novia-ella',          target: 'novia-confirmo' },
+
+  // 🔮 Domos — cadena secuencial
+  { id: 'c-root-domos',            source: ROOT_NODE_ID,       target: 'domos' },
+  { id: 'c-domos-curso',           source: 'domos',            target: 'domos-curso' },
+  { id: 'c-curso-visitar',         source: 'domos-curso',      target: 'domos-visitar' },
+  { id: 'c-visitar-presupuesto',   source: 'domos-visitar',    target: 'domos-presupuesto' },
+  { id: 'c-presupuesto-terreno',   source: 'domos-presupuesto',target: 'domos-terreno' },
+  { id: 'c-terreno-socios',        source: 'domos-terreno',    target: 'domos-socios' },
+  { id: 'c-socios-construccion',   source: 'domos-socios',     target: 'domos-construccion' },
+  { id: 'c-construccion-negocio',  source: 'domos-construccion',target: 'domos-negocio' },
+
+  // 🏍️ Moto — cadena secuencial
+  { id: 'c-moto-carnet',      source: 'moto',          target: 'moto-carnet' },
+  { id: 'c-carnet-movilidad', source: 'moto-carnet',   target: 'moto-movilidad' },
+  { id: 'c-movilidad-sierras',source: 'moto-movilidad',target: 'moto-sierras' },
+  { id: 'c-sierras-uber',     source: 'moto-sierras',  target: 'moto-uber' },
+  { id: 'c-uber-contenido',   source: 'moto-uber',     target: 'moto-contenido' },
 ];
