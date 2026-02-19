@@ -1,4 +1,3 @@
-import { useMindverseStore } from '../../store/mindverseStore';
 import ProfileMenu from '../Auth/ProfileMenu';
 
 type View = 'home' | 'mapa';
@@ -12,8 +11,6 @@ interface HeaderProps {
 }
 
 export default function Header({ activeView, onViewChange, syncStatus = 'idle', onLogout, onProfile }: HeaderProps) {
-  const resetToMockData = useMindverseStore((state) => state.resetToMockData);
-
   return (
     <header className="bg-slate-800 border-b border-slate-700 px-3 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-3">
       {/* Logo + Nombre */}
@@ -68,21 +65,6 @@ export default function Header({ activeView, onViewChange, syncStatus = 'idle', 
 
       {/* Acciones */}
       <div className="flex items-center gap-2 shrink-0">
-        <button
-          onClick={() => resetToMockData()}
-          className="p-2 sm:px-3 sm:py-2 text-slate-400 hover:bg-slate-700 hover:text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
-          title="Resetear datos"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-          <span className="hidden sm:inline">Resetear</span>
-        </button>
-
-        <div className="w-px h-6 bg-slate-700" />
-
         <ProfileMenu onLogout={onLogout ?? (() => window.location.reload())} onProfile={onProfile} />
       </div>
     </header>

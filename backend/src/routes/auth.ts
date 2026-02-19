@@ -1,17 +1,19 @@
 import type { FastifyInstance } from 'fastify';
 import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
-const client = new OAuth2Client(CLIENT_ID);
+const CLIENT_ID  = process.env.GOOGLE_CLIENT_ID!;
+const JWT_SECRET = process.env.JWT_SECRET!;
+const client     = new OAuth2Client(CLIENT_ID);
 
 export async function authRoutes(app: FastifyInstance) {
 
-  // POST /auth/google — verifica el credential de Google y devuelve el perfil
+  // POST /auth/google — verifica credential de Google, devuelve perfil + JWT
   app.post<{ Body: { credential: string } }>('/google', {
     schema: {
       tags: ['auth'],
-      summary: 'Verificar Google ID Token y obtener perfil de usuario',
+      summary: 'Verificar Google ID Token y obtener perfil + JWT',
       body: {
         type: 'object',
         required: ['credential'],
@@ -22,13 +24,16 @@ export async function authRoutes(app: FastifyInstance) {
           type: 'object',
           properties: {
             success: { type: 'boolean' },
+            token:   { type: 'string', description: 'JWT para autenticación' },
             user: {
               type: 'object',
               properties: {
-                sub:     { type: 'string' },
-                name:    { type: 'string' },
-                email:   { type: 'string' },
-                picture: { type: 'string' },
+                sub:      { type: 'string' },
+                name:     { type: 'string' },
+                email:    { type: 'string' },
+                picture:  { type: 'string' },
+                bio:      { type: 'string' },
+                location: { type: 'string' },
               },
             },
           },
@@ -45,7 +50,7 @@ export async function authRoutes(app: FastifyInstance) {
       const payload = ticket.getPayload();
       if (!payload) return reply.status(401).send({ success: false, error: 'Token inválido' });
 
-      // Upsert del perfil en MongoDB
+      // Upsert perfil en MongoDB
       const profile = await User.findOneAndUpdate(
         { googleId: payload.sub },
         {
@@ -60,20 +65,27 @@ export async function authRoutes(app: FastifyInstance) {
         { upsert: true, new: true, runValidators: true }
       );
 
+      // Generar JWT (expira en 7 días)
+      const token = jwt.sign(
+        { sub: payload.sub, email: payload.email, name: payload.name },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
       return reply.send({
         success: true,
+        token,
         user: {
           sub:      payload.sub,
           name:     payload.name,
           email:    payload.email,
           picture:  payload.picture,
-          // Campos extendidos del perfil guardado
           bio:      profile.bio,
           location: profile.location,
           _id:      profile._id,
         },
       });
-    } catch (err: any) {
+    } catch {
       return reply.status(401).send({ success: false, error: 'Token inválido o expirado' });
     }
   });

@@ -1,4 +1,5 @@
 import { GoogleLogin } from '@react-oauth/google';
+import { setToken, removeToken } from '../../services/authHeaders';
 
 const STORAGE_KEY  = 'mv_auth';
 const USER_KEY     = 'mv_user';
@@ -29,6 +30,7 @@ export function getStoredUser(): GoogleUser | null {
 export function logout(): void {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(USER_KEY);
+  removeToken();
 }
 
 // ── Componente ────────────────────────────────────────────────────────────────
@@ -50,10 +52,11 @@ export default function LoginView({ onSuccess }: LoginViewProps) {
       });
 
       if (!res.ok) throw new Error('Error de autenticación');
-      const { user } = await res.json();
+      const { user, token } = await res.json();
 
       localStorage.setItem(STORAGE_KEY, '1');
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      if (token) setToken(token);
       onSuccess();
     } catch (err) {
       console.error('Login error:', err);

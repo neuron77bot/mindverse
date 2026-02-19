@@ -9,6 +9,7 @@ import { thoughtRoutes } from './routes/thoughts';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { connectDatabase } from './services/database';
+import { authMiddleware } from './middleware/auth';
 
 const FAL_KEY = process.env.FAL_KEY;
 const PORT    = Number(process.env.PORT) || 3001;
@@ -51,6 +52,9 @@ async function main() {
     routePrefix: '/docs',
     uiConfig: { docExpansion: 'list', deepLinking: true },
   });
+
+  // Auth middleware global (JWT) — excluye /auth, /health, /docs
+  app.addHook('preHandler', authMiddleware);
 
   // Rutas de autenticación
   await app.register(authRoutes, { prefix: '/auth' });

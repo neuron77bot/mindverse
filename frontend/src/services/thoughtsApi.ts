@@ -1,4 +1,5 @@
 import type { MindverseNode, Connection } from '../types';
+import { authHeaders } from './authHeaders';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -62,7 +63,7 @@ export function extractConnections(thoughts: BackendThought[]): Connection[] {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export async function apiGetThoughts(): Promise<BackendThought[]> {
-  const res = await fetch(`${API_BASE}/thoughts`);
+  const res = await fetch(`${API_BASE}/thoughts`, { headers: authHeaders() });
   if (!res.ok) throw new Error('Error al obtener pensamientos');
   const data = await res.json();
   return data.data as BackendThought[];
@@ -71,7 +72,7 @@ export async function apiGetThoughts(): Promise<BackendThought[]> {
 export async function apiCreateThought(node: MindverseNode, connections: Connection[]): Promise<void> {
   const res = await fetch(`${API_BASE}/thoughts`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({
       frontendId:     node.id,
       content:        node.content,
@@ -106,7 +107,7 @@ export async function apiUpdateThought(
   }
   const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -116,7 +117,7 @@ export async function apiUpdateThought(
 }
 
 export async function apiDeleteThought(nodeId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, { method: 'DELETE', headers: authHeaders() });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? 'Error al eliminar pensamiento');
@@ -140,7 +141,7 @@ export async function apiBulkSync(nodes: MindverseNode[], connections: Connectio
   }));
   const res = await fetch(`${API_BASE}/thoughts/bulk`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ thoughts }),
   });
   if (!res.ok) throw new Error('Error en bulk sync');

@@ -116,14 +116,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                   </span>
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              {/* Icono sobre la imagen */}
-              <div
-                className="absolute bottom-4 left-5 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-xl"
-                style={{ backgroundColor: `${vibColor}cc` }}
-              >
-                {CATEGORY_ICONS[node.category]}
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/5 to-transparent" />
             </div>
 
             {/* Info del pensamiento */}
@@ -147,20 +140,6 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                   />
                 </div>
               )}
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl p-3 bg-slate-800 border border-slate-700 text-center">
-                  <p className="text-2xl font-bold text-white">{steps.length}</p>
-                  <p className="text-slate-500 text-xs mt-0.5">Pasos</p>
-                </div>
-                <div className="rounded-xl p-3 bg-slate-800 border border-slate-700 text-center">
-                  <p className="text-2xl font-bold" style={{ color: vibColor }}>
-                    {HAWKINS_SCALE.find((l) => l.key === node.emotionalLevel)?.calibration ?? '—'}
-                  </p>
-                  <p className="text-slate-500 text-xs mt-0.5">Calibración</p>
-                </div>
-              </div>
 
               {/* Acciones */}
               <div className="flex gap-2 pt-1">
@@ -240,7 +219,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                             </span>
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
                         {/* Número badge */}
                         <div
                           className="absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg"

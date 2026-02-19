@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { authHeaders } from '../../services/authHeaders';
 import { useMindverseStore } from '../../store/mindverseStore';
 import type { Category, TemporalState, EmotionalLevel, MindverseNode } from '../../types';
 import {
@@ -128,7 +129,7 @@ export default function NodeEditor() {
             const dataUrl = await readAsDataURL(file);
             const uploadRes = await fetch(`${API_BASE}/images/upload`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: authHeaders(),
               body: JSON.stringify({ dataUrl }),
             });
             if (!uploadRes.ok) throw new Error(`Error al subir ${file.name}`);
@@ -139,7 +140,7 @@ export default function NodeEditor() {
 
         const res = await fetch(`${API_BASE}/images/image-to-image`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders(),
           body: JSON.stringify({
             prompt: imagePrompt,
             image_urls: uploadedUrls,
@@ -154,7 +155,7 @@ export default function NodeEditor() {
       } else {
         const res = await fetch(`${API_BASE}/images/text-to-image`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders(),
           body: JSON.stringify({ prompt: imagePrompt, aspect_ratio: '1:1', node }),
         });
         if (!res.ok) throw new Error('Error generando imagen');
@@ -302,6 +303,22 @@ export default function NodeEditor() {
           {/* ── Tab Vibración ────────────────────────────────────────────────── */}
           {activeTab === 'vibracion' && !isRootNode && (<>
 
+            {/* Temporal State */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Línea Temporal</label>
+              <div className="flex gap-2">
+                {temporalStates.map((state) => (
+                  <button key={state} onClick={() => setTemporalState(state)}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      temporalState === state ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
+                    }`}
+                  >
+                    {TEMPORAL_LABELS[state]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Emotional Level */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Nivel Vibracional (Hawkins)</label>
@@ -332,22 +349,6 @@ export default function NodeEditor() {
                     style={category === cat ? { backgroundColor: CATEGORY_COLORS[cat] } : {}}
                   >
                     {CATEGORY_LABELS[cat]}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Temporal State */}
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Línea Temporal</label>
-              <div className="flex gap-2">
-                {temporalStates.map((state) => (
-                  <button key={state} onClick={() => setTemporalState(state)}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                      temporalState === state ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
-                    }`}
-                  >
-                    {TEMPORAL_LABELS[state]}
                   </button>
                 ))}
               </div>
