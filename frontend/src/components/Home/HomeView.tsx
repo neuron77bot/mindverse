@@ -124,11 +124,11 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                 </div>
 
                 <div className="p-5">
-                  {/* Barra de acento inferior del banner */}
-                  <div className="h-0.5 w-8 rounded-full mb-3 -mt-1" style={{ backgroundColor: vibColor }} />
-
                   {/* Labels: vibración + frecuencia + categoría + temporal */}
                   <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-700/60 text-[10px] text-slate-300 font-medium">
+                      {TEMPORAL_ICONS[node.temporalState]} {TEMPORAL_LABELS_MAP[node.temporalState]}
+                    </span>
                     {hawkins && (
                       <span
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold"
@@ -150,9 +150,6 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                       style={{ backgroundColor: `${color}20`, color }}
                     >
                       {CATEGORY_ICONS[node.category]} {CATEGORY_LABELS[node.category]}
-                    </span>
-                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-700/60 text-[10px] text-slate-300 font-medium">
-                      {TEMPORAL_ICONS[node.temporalState]} {TEMPORAL_LABELS_MAP[node.temporalState]}
                     </span>
                   </div>
 

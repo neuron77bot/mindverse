@@ -125,12 +125,6 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
 
           <div className="p-5 sm:p-7">
             <div className="flex items-start gap-4">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
-                style={{ backgroundColor: `${vibColor}25` }}
-              >
-                {CATEGORY_ICONS[node.category]}
-              </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-3">
                   {node.content}
