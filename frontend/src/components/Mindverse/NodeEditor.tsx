@@ -36,7 +36,9 @@ export default function NodeEditor() {
   const [outNodeId, setOutNodeId]         = useState<string>('');
 
   // ── Imagen ────────────────────────────────────────────────────────────────
+  const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url'>('text');
   const [imagePrompt, setImagePrompt]       = useState('');
+  const [imageUrlInput, setImageUrlInput]   = useState('');
   const [refImageFiles, setRefImageFiles]   = useState<File[]>([]);
   const [refImagePreviews, setRefImagePreviews] = useState<string[]>([]);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -70,9 +72,11 @@ export default function NodeEditor() {
       setGeneratedImageUrl(null);
     }
     setImagePrompt('');
+    setImageUrlInput('');
     setRefImageFiles([]);
     setRefImagePreviews([]);
     setImageError(null);
+    setImageMode('text');
     setActiveTab('general');
   }, [selectedNode, activeTemporalFilter, connections]);
 
@@ -115,15 +119,19 @@ export default function NodeEditor() {
   };
 
   const handleGenerateImage = async () => {
-    if (!imagePrompt.trim()) return;
     setIsGenerating(true);
     setImageError(null);
-
     const node = buildNodePayload();
 
     try {
-      if (refImageFiles.length > 0) {
-        // ── Image-to-image: subir todos los archivos en paralelo ──────────────
+      if (imageMode === 'url') {
+        if (!imageUrlInput.trim()) throw new Error('Ingresá una URL de imagen');
+        setGeneratedImageUrl(imageUrlInput.trim());
+
+      } else if (imageMode === 'img2img') {
+        if (!imagePrompt.trim()) throw new Error('Escribí un prompt');
+        if (refImageFiles.length === 0) throw new Error('Seleccioná al menos una imagen de referencia');
+
         const uploadedUrls = await Promise.all(
           refImageFiles.map(async (file) => {
             const dataUrl = await readAsDataURL(file);
@@ -141,18 +149,15 @@ export default function NodeEditor() {
         const res = await fetch(`${API_BASE}/images/image-to-image`, {
           method: 'POST',
           headers: authHeaders(),
-          body: JSON.stringify({
-            prompt: imagePrompt,
-            image_urls: uploadedUrls,
-            aspect_ratio: '1:1',
-            node,
-          }),
+          body: JSON.stringify({ prompt: imagePrompt, image_urls: uploadedUrls, aspect_ratio: '1:1', node }),
         });
         if (!res.ok) throw new Error('Error generando imagen');
         const data = await res.json();
         setGeneratedImageUrl(data.images?.[0]?.url ?? null);
 
       } else {
+        // text-to-image
+        if (!imagePrompt.trim()) throw new Error('Escribí un prompt');
         const res = await fetch(`${API_BASE}/images/text-to-image`, {
           method: 'POST',
           headers: authHeaders(),
@@ -357,11 +362,28 @@ export default function NodeEditor() {
 
           {/* ── Tab Imagen ───────────────────────────────────────────────────── */}
           {activeTab === 'imagen' && !isRootNode && (
-        <div className="mt-0">
-          <div className="border border-slate-600 rounded-xl p-4 space-y-3 bg-slate-900/40">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🎨</span>
-              <span className="text-sm font-semibold text-slate-200">Imagen (thumbnail)</span>
+          <div className="space-y-4">
+
+            {/* Selector de modo */}
+            <div className="flex rounded-xl overflow-hidden border border-slate-700 bg-slate-900/60">
+              {([
+                { key: 'text',    label: 'Text to Image', icon: '✨' },
+                { key: 'img2img', label: 'Image to Image', icon: '🖼️' },
+                { key: 'url',     label: 'URL',            icon: '🔗' },
+              ] as { key: typeof imageMode; label: string; icon: string }[]).map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => { setImageMode(m.key); setImageError(null); }}
+                  className={`flex-1 py-2.5 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                    imageMode === m.key
+                      ? 'bg-violet-600 text-white shadow-inner'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <span>{m.icon}</span>
+                  <span className="hidden sm:inline">{m.label}</span>
+                </button>
+              ))}
             </div>
 
             {/* Vista previa actual */}
@@ -370,7 +392,7 @@ export default function NodeEditor() {
                 <img
                   src={generatedImageUrl}
                   alt="Thumbnail"
-                  className="w-full aspect-square object-cover rounded-lg border border-slate-600"
+                  className="w-full aspect-square object-cover rounded-xl border border-slate-600"
                 />
                 <button
                   onClick={() => setGeneratedImageUrl(null)}
@@ -379,87 +401,97 @@ export default function NodeEditor() {
               </div>
             )}
 
-            {/* Prompt */}
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Prompt de imagen</label>
-              <textarea
-                value={imagePrompt}
-                onChange={(e) => setImagePrompt(e.target.value)}
-                placeholder="Describí la imagen que querés generar..."
-                rows={2}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors resize-none"
-              />
-            </div>
-
-            {/* Imágenes de referencia */}
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">
-                Imágenes de referencia{' '}
-                <span className="text-slate-500">(opcional — activa image-to-image; podés agregar varias)</span>
-              </label>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg transition-colors border border-slate-600"
-                >
-                  📎 {refImageFiles.length > 0 ? `Agregar más (${refImageFiles.length} seleccionada${refImageFiles.length > 1 ? 's' : ''})` : 'Seleccionar imágenes'}
-                </button>
-                {refImageFiles.length > 0 && (
-                  <button
-                    onClick={() => { setRefImageFiles([]); setRefImagePreviews([]); }}
-                    className="text-slate-500 hover:text-red-400 text-xs transition-colors"
-                  >✕ quitar todas</button>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+            {/* ── Modo: Text to Image ── */}
+            {imageMode === 'text' && (
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Prompt</label>
+                <textarea
+                  value={imagePrompt}
+                  onChange={(e) => setImagePrompt(e.target.value)}
+                  placeholder="Describí la imagen que querés generar..."
+                  rows={3}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors resize-none"
+                />
               </div>
-
-              {/* Miniaturas de referencia */}
-              {refImagePreviews.length > 0 && (
-                <div className="flex gap-2 flex-wrap mt-2">
-                  {refImagePreviews.map((src, i) => (
-                    <div key={i} className="relative group">
-                      <img
-                        src={src}
-                        alt={`Ref ${i + 1}`}
-                        className="h-16 w-16 object-cover rounded-lg border border-slate-600"
-                      />
-                      <button
-                        onClick={() => removeRefImage(i)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-black/70 text-white rounded-full text-[9px] hover:bg-red-600 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
-                      >✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Error */}
-            {imageError && (
-              <p className="text-red-400 text-xs">{imageError}</p>
             )}
 
-            {/* Botón generar */}
+            {/* ── Modo: Image to Image ── */}
+            {imageMode === 'img2img' && (<>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Prompt</label>
+                <textarea
+                  value={imagePrompt}
+                  onChange={(e) => setImagePrompt(e.target.value)}
+                  placeholder="Describí qué querés generar a partir de la referencia..."
+                  rows={2}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Imágenes de referencia</label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg transition-colors border border-slate-600"
+                  >
+                    📎 {refImageFiles.length > 0 ? `Agregar más (${refImageFiles.length})` : 'Seleccionar imágenes'}
+                  </button>
+                  {refImageFiles.length > 0 && (
+                    <button
+                      onClick={() => { setRefImageFiles([]); setRefImagePreviews([]); }}
+                      className="text-slate-500 hover:text-red-400 text-xs transition-colors"
+                    >✕ quitar todas</button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+                </div>
+                {refImagePreviews.length > 0 && (
+                  <div className="flex gap-2 flex-wrap mt-2">
+                    {refImagePreviews.map((src, i) => (
+                      <div key={i} className="relative group/thumb">
+                        <img src={src} alt={`Ref ${i + 1}`} className="h-16 w-16 object-cover rounded-lg border border-slate-600" />
+                        <button
+                          onClick={() => removeRefImage(i)}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-black/70 text-white rounded-full text-[9px] hover:bg-red-600 transition-colors flex items-center justify-center opacity-0 group-hover/thumb:opacity-100"
+                        >✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>)}
+
+            {/* ── Modo: URL ── */}
+            {imageMode === 'url' && (
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">URL de imagen</label>
+                <input
+                  type="url"
+                  value={imageUrlInput}
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
+                />
+              </div>
+            )}
+
+            {/* Error */}
+            {imageError && <p className="text-red-400 text-xs">{imageError}</p>}
+
+            {/* Botón acción */}
             <button
               onClick={handleGenerateImage}
-              disabled={!imagePrompt.trim() || isGenerating}
-              className="w-full py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20"
+              disabled={isGenerating}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/20"
             >
               {isGenerating ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Generando…
                 </>
-              ) : (
-                <>
-                  {refImageFiles.length > 0
-                    ? `🖼️ Image-to-image (${refImageFiles.length} img${refImageFiles.length > 1 ? 's' : ''})`
-                    : '✨ Text-to-image'
-                  }
-                </>
-              )}
+              ) : imageMode === 'url' ? '🔗 Usar URL' : imageMode === 'img2img' ? '🖼️ Generar' : '✨ Generar'}
             </button>
-          </div>{/* fin border rounded-xl */}
-        </div>)}{/* fin tab imagen */}
+
+          </div>)}{/* fin tab imagen */}
 
         </div>{/* fin space-y-4 */}
         </div>{/* fin p-6 */}

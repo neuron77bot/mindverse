@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware';
 import type { MindverseNode, Connection, Category, TemporalState } from '../types';
 import type { LayoutDirection } from '../utils/layoutUtils';
 import { ROOT_NODE_ID } from '../data/mockData';
-import { mockNodes, mockConnections } from '../data/ejemplo';
 import {
   apiGetThoughts, apiCreateThought, apiUpdateThought,
   apiDeleteThought, apiBulkSync,
@@ -56,7 +55,6 @@ interface MindverseStore {
   // Acciones - Utilidades
   getFilteredNodes: () => MindverseNode[];
   getFilteredConnections: () => Connection[];
-  resetToMockData: () => void;
 
   // Acciones - Sync
   initFromBackend: () => Promise<void>;
@@ -66,8 +64,8 @@ export const useMindverseStore = create<MindverseStore>()(
   persist(
     (set, get) => ({
       // Estado inicial
-      nodes: mockNodes,
-      connections: mockConnections,
+      nodes: [],
+      connections: [],
       activeTemporalFilter: 'PRESENT',
       activeCategoryFilter: 'ALL',
       selectedNode: null,
@@ -161,8 +159,6 @@ export const useMindverseStore = create<MindverseStore>()(
           (conn) => nodeIds.has(conn.source) && nodeIds.has(conn.target)
         );
       },
-
-      resetToMockData: () => set({ nodes: mockNodes, connections: mockConnections }),
 
       // ── Sync con backend ──────────────────────────────────────────────────────
       initFromBackend: async () => {
