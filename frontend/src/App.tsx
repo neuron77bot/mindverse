@@ -60,7 +60,12 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-900">
-      <Header activeView={headerView} onViewChange={handleViewChange} syncStatus={syncStatus} />
+      <Header
+        activeView={headerView}
+        onViewChange={handleViewChange}
+        syncStatus={syncStatus}
+        onLogout={() => setAuthenticated(false)}
+      />
 
       {/* HOME */}
       {activeView === 'home' && (

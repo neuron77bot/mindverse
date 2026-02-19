@@ -1,4 +1,5 @@
 import { useMindverseStore } from '../../store/mindverseStore';
+import ProfileMenu from '../Auth/ProfileMenu';
 
 type View = 'home' | 'mapa';
 
@@ -6,9 +7,10 @@ interface HeaderProps {
   activeView: View;
   onViewChange: (view: View) => void;
   syncStatus?: 'idle' | 'syncing' | 'error';
+  onLogout?: () => void;
 }
 
-export default function Header({ activeView, onViewChange, syncStatus = 'idle' }: HeaderProps) {
+export default function Header({ activeView, onViewChange, syncStatus = 'idle', onLogout }: HeaderProps) {
   const resetToMockData = useMindverseStore((state) => state.resetToMockData);
 
   return (
@@ -67,8 +69,8 @@ export default function Header({ activeView, onViewChange, syncStatus = 'idle' }
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={() => resetToMockData()}
-          className="p-2 sm:px-4 sm:py-2 text-slate-300 hover:bg-slate-700 rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
-          title="Resetear"
+          className="p-2 sm:px-3 sm:py-2 text-slate-400 hover:bg-slate-700 hover:text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+          title="Resetear datos"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -77,6 +79,10 @@ export default function Header({ activeView, onViewChange, syncStatus = 'idle' }
           </svg>
           <span className="hidden sm:inline">Resetear</span>
         </button>
+
+        <div className="w-px h-6 bg-slate-700" />
+
+        <ProfileMenu onLogout={onLogout ?? (() => window.location.reload())} />
       </div>
     </header>
   );

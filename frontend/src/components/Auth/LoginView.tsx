@@ -7,6 +7,10 @@ export function isAuthenticated(): boolean {
   return localStorage.getItem(STORAGE_KEY) === '1';
 }
 
+export function logout(): void {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
 interface LoginViewProps {
   onSuccess: () => void;
 }
