@@ -43,6 +43,8 @@ export default function NodeEditor() {
   const [imageError, setImageError]         = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [activeTab, setActiveTab] = useState<'general' | 'vibracion' | 'imagen'>('general');
+
   const isRootNode  = selectedNode?.id === ROOT_NODE_ID;
   const otherNodes  = nodes.filter((n) => n.id !== selectedNode?.id);
 
@@ -70,6 +72,7 @@ export default function NodeEditor() {
     setRefImageFiles([]);
     setRefImagePreviews([]);
     setImageError(null);
+    setActiveTab('general');
   }, [selectedNode, activeTemporalFilter, connections]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -223,71 +226,101 @@ export default function NodeEditor() {
           </h2>
         </div>
 
+        {/* Tabs */}
+        {!isRootNode && (
+          <div className="flex border-b border-slate-700 shrink-0 px-6">
+            {([
+              { key: 'general',   label: 'General',   icon: '✏️' },
+              { key: 'vibracion', label: 'Vibración',  icon: '⚡' },
+              { key: 'imagen',    label: 'Imagen',     icon: '🎨' },
+            ] as { key: typeof activeTab; label: string; icon: string }[]).map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                  activeTab === tab.key
+                    ? 'border-indigo-500 text-indigo-400'
+                    : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Form */}
-        <div className="p-6 overflow-y-auto lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
+        <div className="p-6 overflow-y-auto">
         <div className="space-y-4">
 
-          {/* Content */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Pensamiento *</label>
-            <input
-              type="text" value={content} onChange={(e) => setContent(e.target.value)}
-              placeholder="¿Qué pensamiento querés registrar?"
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-              disabled={isRootNode}
-            />
-          </div>
+          {/* ── Tab General ─────────────────────────────────────────────────── */}
+          {(activeTab === 'general' || isRootNode) && (<>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Descripción</label>
-            <textarea
-              value={description} onChange={(e) => setDescription(e.target.value)}
-              placeholder="Añade más contexto..." rows={3}
-              className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
-            />
-          </div>
+            {/* Content */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Pensamiento *</label>
+              <input
+                type="text" value={content} onChange={(e) => setContent(e.target.value)}
+                placeholder="¿Qué pensamiento querés registrar?"
+                className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                disabled={isRootNode}
+              />
+            </div>
 
-          {/* IN / OUT */}
-          {!isRootNode && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">→ IN</label>
-                <select value={inNodeId} onChange={(e) => setInNodeId(e.target.value)} className={selectClass}>
-                  <option value="">— Ninguno —</option>
-                  {otherNodes.map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
-                </select>
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Descripción</label>
+              <textarea
+                value={description} onChange={(e) => setDescription(e.target.value)}
+                placeholder="Añade más contexto..." rows={4}
+                className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none"
+              />
+            </div>
+
+            {/* IN / OUT */}
+            {!isRootNode && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">→ IN</label>
+                  <select value={inNodeId} onChange={(e) => setInNodeId(e.target.value)} className={selectClass}>
+                    <option value="">— Ninguno —</option>
+                    {otherNodes.map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">→ OUT</label>
+                  <select value={outNodeId} onChange={(e) => setOutNodeId(e.target.value)} className={selectClass}>
+                    <option value="">— Ninguno —</option>
+                    {otherNodes.map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">→ OUT</label>
-                <select value={outNodeId} onChange={(e) => setOutNodeId(e.target.value)} className={selectClass}>
-                  <option value="">— Ninguno —</option>
-                  {otherNodes.map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
-                </select>
+            )}
+          </>)}
+
+          {/* ── Tab Vibración ────────────────────────────────────────────────── */}
+          {activeTab === 'vibracion' && !isRootNode && (<>
+
+            {/* Emotional Level */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Nivel Vibracional (Hawkins)</label>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                {HAWKINS_SCALE.map((level) => (
+                  <button key={level.key} onClick={() => setEmotionalLevel(level.key)}
+                    className={`px-2 py-2 rounded-lg text-xs font-medium transition-all text-center ${
+                      emotionalLevel === level.key ? 'text-white shadow-lg scale-105 ring-2 ring-white/30' : 'text-slate-300 opacity-60 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: emotionalLevel === level.key ? EMOTIONAL_COLORS[level.key] : `${EMOTIONAL_COLORS[level.key]}40` }}
+                  >
+                    <span className="block font-bold">{level.calibration}</span>
+                    <span className="block text-[10px] leading-tight">{level.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          )}
 
-          {/* Emotional Level */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Nivel Vibracional (Hawkins)</label>
-            <div className="grid grid-cols-3 gap-1.5 max-h-[180px] overflow-y-auto pr-1">
-              {HAWKINS_SCALE.map((level) => (
-                <button key={level.key} onClick={() => setEmotionalLevel(level.key)}
-                  className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all text-center ${
-                    emotionalLevel === level.key ? 'text-white shadow-lg scale-105 ring-2 ring-white/30' : 'text-slate-300 opacity-60 hover:opacity-100'
-                  }`}
-                  style={{ backgroundColor: emotionalLevel === level.key ? EMOTIONAL_COLORS[level.key] : `${EMOTIONAL_COLORS[level.key]}40` }}
-                >
-                  <span className="block font-bold">{level.calibration}</span>
-                  <span className="block text-[10px] leading-tight">{level.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Category */}
-          {!isRootNode && (
+            {/* Category */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Categoría</label>
               <div className="flex flex-wrap gap-2">
@@ -303,10 +336,8 @@ export default function NodeEditor() {
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Temporal State */}
-          {!isRootNode && (
+            {/* Temporal State */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Línea Temporal</label>
               <div className="flex gap-2">
@@ -321,12 +352,11 @@ export default function NodeEditor() {
                 ))}
               </div>
             </div>
-          )}
+          </>)}
 
-        </div>{/* fin columna izquierda */}
-
-        {/* ── Columna derecha: Generador de imagen ──────────────────────────── */}
-        <div className="mt-4 lg:mt-0">
+          {/* ── Tab Imagen ───────────────────────────────────────────────────── */}
+          {activeTab === 'imagen' && !isRootNode && (
+        <div className="mt-0">
           <div className="border border-slate-600 rounded-xl p-4 space-y-3 bg-slate-900/40">
             <div className="flex items-center gap-2">
               <span className="text-lg">🎨</span>
@@ -427,9 +457,11 @@ export default function NodeEditor() {
                 </>
               )}
             </button>
-          </div>
-        </div>{/* fin columna derecha */}
-        </div>{/* fin grid */}
+          </div>{/* fin border rounded-xl */}
+        </div>)}{/* fin tab imagen */}
+
+        </div>{/* fin space-y-4 */}
+        </div>{/* fin p-6 */}
 
         {/* Actions */}
         <div className="px-6 py-4 bg-slate-900/50 flex justify-between border-t border-slate-700 shrink-0">
