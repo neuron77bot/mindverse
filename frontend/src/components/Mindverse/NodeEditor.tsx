@@ -11,7 +11,7 @@ import {
   ROOT_NODE_ID,
 } from '../../data/mockData';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 const categories: Category[] = [
   'HEALTH', 'WORK', 'LOVE', 'FAMILY', 'FINANCES',
