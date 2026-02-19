@@ -6,6 +6,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import { fal } from '@fal-ai/client';
 import { imageRoutes } from './routes/images';
 import { thoughtRoutes } from './routes/thoughts';
+import { authRoutes } from './routes/auth';
 import { connectDatabase } from './services/database';
 
 const FAL_KEY = process.env.FAL_KEY;
@@ -37,6 +38,7 @@ async function main() {
         version: '1.0.0',
       },
       tags: [
+        { name: 'auth',     description: 'Autenticación con Google OAuth' },
         { name: 'thoughts', description: 'CRUD de pensamientos' },
         { name: 'images',   description: 'Generación de imágenes con IA (fal.ai)' },
         { name: 'health',   description: 'Estado del servicio' },
@@ -47,6 +49,9 @@ async function main() {
     routePrefix: '/docs',
     uiConfig: { docExpansion: 'list', deepLinking: true },
   });
+
+  // Rutas de autenticación
+  await app.register(authRoutes, { prefix: '/auth' });
 
   // Rutas de imágenes
   await app.register(imageRoutes, { prefix: '/images' });
