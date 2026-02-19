@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fal } from '@fal-ai/client';
 import { imageRoutes } from './routes/images';
+import { thoughtRoutes } from './routes/thoughts';
 import { connectDatabase } from './services/database';
 
 const FAL_KEY = process.env.FAL_KEY;
@@ -22,11 +23,14 @@ async function main() {
   // CORS
   await app.register(cors, {
     origin: '*',
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   });
 
   // Rutas de imágenes
   await app.register(imageRoutes, { prefix: '/images' });
+
+  // Rutas de pensamientos (CRUD)
+  await app.register(thoughtRoutes, { prefix: '/thoughts' });
 
   // Health check
   app.get('/health', async () => ({ status: 'ok', service: 'mindverse-backend' }));
