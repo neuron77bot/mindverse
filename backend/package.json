@@ -15,7 +15,8 @@
     "@fal-ai/client": "*",
     "@fastify/cors": "*",
     "dotenv": "*",
-    "fastify": "*"
+    "fastify": "*",
+    "mongoose": "*"
   },
   "devDependencies": {
     "@types/node": "*",

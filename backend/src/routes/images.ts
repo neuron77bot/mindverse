@@ -1,8 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import { fal } from '@fal-ai/client';
+import { GeneratedImage } from '../models/GeneratedImage';
 
 const TEXT_TO_IMAGE_MODEL  = 'fal-ai/nano-banana';
 const IMAGE_TO_IMAGE_MODEL = 'fal-ai/nano-banana/edit';
+
+// ── Node info (enviado opcionalmente desde el frontend) ───────────────────────
+interface NodeInfo {
+  nodeId: string;
+  nodeContent: string;
+  nodeCategory?: string;
+  nodeTemporalState?: string;
+  nodeEmotionalLevel?: string;
+}
 
 // ── Text-to-Image ─────────────────────────────────────────────────────────────
 interface TextToImageBody {
@@ -10,6 +20,7 @@ interface TextToImageBody {
   num_images?: number;
   aspect_ratio?: '21:9' | '16:9' | '3:2' | '4:3' | '5:4' | '1:1' | '4:5' | '3:4' | '2:3' | '9:16';
   output_format?: 'jpeg' | 'png' | 'webp';
+  node?: NodeInfo;
 }
 
 // ── Image-to-Image ────────────────────────────────────────────────────────────
@@ -19,6 +30,7 @@ interface ImageToImageBody {
   num_images?: number;
   aspect_ratio?: 'auto' | '21:9' | '16:9' | '3:2' | '4:3' | '5:4' | '1:1' | '4:5' | '3:4' | '2:3' | '9:16';
   output_format?: 'jpeg' | 'png' | 'webp';
+  node?: NodeInfo;
 }
 
 export async function imageRoutes(app: FastifyInstance) {
@@ -62,6 +74,7 @@ export async function imageRoutes(app: FastifyInstance) {
       num_images = 1,
       aspect_ratio = '1:1',
       output_format = 'png',
+      node,
     } = request.body;
 
     if (!prompt?.trim()) {
@@ -73,11 +86,27 @@ export async function imageRoutes(app: FastifyInstance) {
         input: { prompt, num_images, aspect_ratio, output_format },
       });
 
+      const images = (result.data as any)?.images ?? [];
+
+      if (node?.nodeId && images.length > 0) {
+        await GeneratedImage.create({
+          nodeId:             node.nodeId,
+          nodeContent:        node.nodeContent,
+          nodeCategory:       node.nodeCategory,
+          nodeTemporalState:  node.nodeTemporalState,
+          nodeEmotionalLevel: node.nodeEmotionalLevel,
+          prompt,
+          mode:     'text-to-image',
+          model:    TEXT_TO_IMAGE_MODEL,
+          imageUrl: images[0].url,
+        });
+      }
+
       return reply.send({
         success: true,
         mode: 'text-to-image',
         model: TEXT_TO_IMAGE_MODEL,
-        images: (result.data as any)?.images ?? [],
+        images,
         prompt,
       });
     } catch (err: any) {
@@ -107,6 +136,7 @@ export async function imageRoutes(app: FastifyInstance) {
       num_images = 1,
       aspect_ratio = 'auto',
       output_format = 'png',
+      node,
     } = request.body;
 
     if (!prompt?.trim()) {
@@ -121,11 +151,28 @@ export async function imageRoutes(app: FastifyInstance) {
         input: { prompt, image_urls, num_images, aspect_ratio, output_format },
       });
 
+      const images = (result.data as any)?.images ?? [];
+
+      if (node?.nodeId && images.length > 0) {
+        await GeneratedImage.create({
+          nodeId:             node.nodeId,
+          nodeContent:        node.nodeContent,
+          nodeCategory:       node.nodeCategory,
+          nodeTemporalState:  node.nodeTemporalState,
+          nodeEmotionalLevel: node.nodeEmotionalLevel,
+          prompt,
+          mode:         'image-to-image',
+          model:        IMAGE_TO_IMAGE_MODEL,
+          imageUrl:     images[0].url,
+          sourceImages: image_urls,
+        });
+      }
+
       return reply.send({
         success: true,
         mode: 'image-to-image',
         model: IMAGE_TO_IMAGE_MODEL,
-        images: (result.data as any)?.images ?? [],
+        images,
         description: (result.data as any)?.description ?? '',
         prompt,
         source_images: image_urls,

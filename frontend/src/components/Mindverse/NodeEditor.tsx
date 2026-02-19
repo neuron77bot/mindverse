@@ -85,22 +85,32 @@ export default function NodeEditor() {
     }
   };
 
+  const buildNodePayload = () => {
+    const nodeId = selectedNode?.id ?? `pending-${Date.now()}`;
+    return {
+      nodeId,
+      nodeContent:        content,
+      nodeCategory:       category,
+      nodeTemporalState:  temporalState,
+      nodeEmotionalLevel: emotionalLevel,
+    };
+  };
+
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim()) return;
     setIsGenerating(true);
     setImageError(null);
 
+    const node = buildNodePayload();
+
     try {
       if (refImageFile) {
-        // ── Image-to-image: subir archivo a fal.ai vía backend upload helper ──
-        // Convertimos el archivo a base64 y lo enviamos junto al prompt
         const reader = new FileReader();
         const base64 = await new Promise<string>((resolve) => {
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(refImageFile);
         });
 
-        // Subir imagen a fal.ai storage via backend proxy
         const uploadRes = await fetch(`${API_BASE}/images/upload`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -117,6 +127,7 @@ export default function NodeEditor() {
             prompt: imagePrompt,
             image_urls: [uploadedUrl],
             aspect_ratio: '1:1',
+            node,
           }),
         });
         if (!res.ok) throw new Error('Error generando imagen');
@@ -124,11 +135,10 @@ export default function NodeEditor() {
         setGeneratedImageUrl(data.images?.[0]?.url ?? null);
 
       } else {
-        // ── Text-to-image ────────────────────────────────────────────────────
         const res = await fetch(`${API_BASE}/images/text-to-image`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: imagePrompt, aspect_ratio: '1:1' }),
+          body: JSON.stringify({ prompt: imagePrompt, aspect_ratio: '1:1', node }),
         });
         if (!res.ok) throw new Error('Error generando imagen');
         const data = await res.json();

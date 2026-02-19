@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { fal } from '@fal-ai/client';
 import { imageRoutes } from './routes/images';
+import { connectDatabase } from './services/database';
 
 const FAL_KEY = process.env.FAL_KEY;
 const PORT    = Number(process.env.PORT) || 3001;
@@ -31,6 +32,7 @@ async function main() {
   app.get('/health', async () => ({ status: 'ok', service: 'mindverse-backend' }));
 
   try {
+    await connectDatabase();
     await app.listen({ port: PORT, host: '0.0.0.0' });
     console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
   } catch (err) {
