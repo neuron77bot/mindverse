@@ -54,11 +54,8 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
 
   return (
     <div
-      className="relative px-4 py-3 rounded-xl shadow-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl min-w-[160px] max-w-[240px]"
-      style={{
-        backgroundColor: node.color,
-        border: `2px solid ${node.color}`,
-      }}
+      className="relative rounded-xl shadow-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl min-w-[160px] max-w-[240px] overflow-hidden"
+      style={{ backgroundColor: node.color, border: `2px solid ${node.color}` }}
       onDoubleClick={handleDoubleClick}
     >
       <Handle
@@ -68,7 +65,19 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
         style={{ borderColor: node.color }}
       />
 
-      <div className="text-white">
+      {/* Banner de imagen */}
+      {node.imageUrl && (
+        <div className="relative h-28 w-full overflow-hidden">
+          <img
+            src={node.imageUrl}
+            alt={node.content}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </div>
+      )}
+
+      <div className="px-4 py-3 text-white">
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
           <span
             className="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
