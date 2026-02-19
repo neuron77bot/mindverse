@@ -214,7 +214,7 @@ export default function NodeEditor() {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-slate-700 max-h-[90vh] flex flex-col">
+      <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md lg:max-w-2xl mx-4 overflow-hidden border border-slate-700 max-h-[90vh] flex flex-col">
 
         {/* Header */}
         <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 shrink-0">
@@ -224,7 +224,8 @@ export default function NodeEditor() {
         </div>
 
         {/* Form */}
-        <div className="p-6 space-y-4 overflow-y-auto">
+        <div className="p-6 overflow-y-auto lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
+        <div className="space-y-4">
 
           {/* Content */}
           <div>
@@ -322,7 +323,10 @@ export default function NodeEditor() {
             </div>
           )}
 
-          {/* ── Generador de imagen ─────────────────────────────────────────── */}
+        </div>{/* fin columna izquierda */}
+
+        {/* ── Columna derecha: Generador de imagen ──────────────────────────── */}
+        <div className="mt-4 lg:mt-0">
           <div className="border border-slate-600 rounded-xl p-4 space-y-3 bg-slate-900/40">
             <div className="flex items-center gap-2">
               <span className="text-lg">🎨</span>
@@ -424,8 +428,8 @@ export default function NodeEditor() {
               )}
             </button>
           </div>
-
-        </div>
+        </div>{/* fin columna derecha */}
+        </div>{/* fin grid */}
 
         {/* Actions */}
         <div className="px-6 py-4 bg-slate-900/50 flex justify-between border-t border-slate-700 shrink-0">
