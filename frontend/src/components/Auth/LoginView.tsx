@@ -85,11 +85,6 @@ export default function LoginView({ onSuccess }: LoginViewProps) {
 
         {/* Card */}
         <div className="bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-xl font-semibold text-white text-center mb-2">Bienvenido</h2>
-          <p className="text-slate-400 text-sm text-center mb-8">
-            Iniciá sesión para acceder a tu mapa mental
-          </p>
-
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleSuccess}
