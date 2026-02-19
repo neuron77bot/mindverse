@@ -7,6 +7,7 @@ import { fal } from '@fal-ai/client';
 import { imageRoutes } from './routes/images';
 import { thoughtRoutes } from './routes/thoughts';
 import { authRoutes } from './routes/auth';
+import { userRoutes } from './routes/users';
 import { connectDatabase } from './services/database';
 
 const FAL_KEY = process.env.FAL_KEY;
@@ -39,6 +40,7 @@ async function main() {
       },
       tags: [
         { name: 'auth',     description: 'Autenticación con Google OAuth' },
+        { name: 'users',    description: 'CRUD de perfiles de usuario' },
         { name: 'thoughts', description: 'CRUD de pensamientos' },
         { name: 'images',   description: 'Generación de imágenes con IA (fal.ai)' },
         { name: 'health',   description: 'Estado del servicio' },
@@ -52,6 +54,9 @@ async function main() {
 
   // Rutas de autenticación
   await app.register(authRoutes, { prefix: '/auth' });
+
+  // Rutas de usuarios (CRUD perfil)
+  await app.register(userRoutes, { prefix: '/users' });
 
   // Rutas de imágenes
   await app.register(imageRoutes, { prefix: '/images' });
