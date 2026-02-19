@@ -3,9 +3,10 @@ import { logout, getStoredUser } from './LoginView';
 
 interface ProfileMenuProps {
   onLogout: () => void;
+  onProfile?: () => void;
 }
 
-export default function ProfileMenu({ onLogout }: ProfileMenuProps) {
+export default function ProfileMenu({ onLogout, onProfile }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const user = getStoredUser();
@@ -86,7 +87,20 @@ export default function ProfileMenu({ onLogout }: ProfileMenuProps) {
           </div>
 
           {/* Acciones */}
-          <div className="p-1.5">
+          <div className="p-1.5 space-y-0.5">
+            {onProfile && (
+              <button
+                onClick={() => { setOpen(false); onProfile(); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors font-medium"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                Mi perfil
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors font-medium"

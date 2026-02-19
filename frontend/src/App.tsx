@@ -9,9 +9,10 @@ import LayoutFilter from './components/Filters/LayoutFilter';
 import HomeView from './components/Home/HomeView';
 import DetailView from './components/Home/DetailView';
 import LoginView, { isAuthenticated } from './components/Auth/LoginView';
+import ProfileView from './components/Auth/ProfileView';
 import type { MindverseNode } from './types';
 
-type View = 'home' | 'detail' | 'mapa';
+type View = 'home' | 'detail' | 'mapa' | 'profile';
 
 function App() {
   const [authenticated, setAuthenticated] = useState(isAuthenticated());
@@ -43,7 +44,7 @@ function App() {
     setActiveView('mapa');
   };
 
-  const headerView = activeView === 'detail' ? 'home' : activeView;
+  const headerView = (activeView === 'detail' || activeView === 'profile') ? 'home' : activeView as 'home' | 'mapa';
 
   const handleViewChange = (view: 'home' | 'mapa') => {
     if (view === 'mapa') {
@@ -65,7 +66,13 @@ function App() {
         onViewChange={handleViewChange}
         syncStatus={syncStatus}
         onLogout={() => setAuthenticated(false)}
+        onProfile={() => setActiveView('profile')}
       />
+
+      {/* PROFILE */}
+      {activeView === 'profile' && (
+        <ProfileView onBack={() => setActiveView('home')} />
+      )}
 
       {/* HOME */}
       {activeView === 'home' && (

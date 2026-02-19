@@ -8,9 +8,10 @@ interface HeaderProps {
   onViewChange: (view: View) => void;
   syncStatus?: 'idle' | 'syncing' | 'error';
   onLogout?: () => void;
+  onProfile?: () => void;
 }
 
-export default function Header({ activeView, onViewChange, syncStatus = 'idle', onLogout }: HeaderProps) {
+export default function Header({ activeView, onViewChange, syncStatus = 'idle', onLogout, onProfile }: HeaderProps) {
   const resetToMockData = useMindverseStore((state) => state.resetToMockData);
 
   return (
@@ -82,7 +83,7 @@ export default function Header({ activeView, onViewChange, syncStatus = 'idle', 
 
         <div className="w-px h-6 bg-slate-700" />
 
-        <ProfileMenu onLogout={onLogout ?? (() => window.location.reload())} />
+        <ProfileMenu onLogout={onLogout ?? (() => window.location.reload())} onProfile={onProfile} />
       </div>
     </header>
   );
