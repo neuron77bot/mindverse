@@ -102,17 +102,25 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
           className="rounded-2xl mb-8 border overflow-hidden"
           style={{ backgroundColor: `${vibColor}15`, borderColor: `${vibColor}40` }}
         >
-          {/* Imagen hero */}
-          {node.imageUrl && (
-            <div className="relative h-52 sm:h-72 w-full overflow-hidden">
+          {/* Imagen hero o placeholder */}
+          <div className="relative h-52 sm:h-64 w-full overflow-hidden">
+            {node.imageUrl ? (
               <img
                 src={node.imageUrl}
                 alt={node.content}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            </div>
-          )}
+            ) : (
+              <div
+                className="w-full h-full flex flex-col items-center justify-center gap-3"
+                style={{ background: `linear-gradient(135deg, ${vibColor}30 0%, ${vibColor}10 100%)` }}
+              >
+                <span className="text-7xl opacity-50">{CATEGORY_ICONS[node.category]}</span>
+                <div className="w-16 h-0.5 rounded-full opacity-20" style={{ backgroundColor: vibColor }} />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          </div>
 
           <div className="p-5 sm:p-7">
             <div className="flex items-start gap-4">
@@ -196,17 +204,24 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                     }}
                     onClick={() => openEditor(step)}
                   >
-                    {/* Banner imagen del paso */}
-                    {step.imageUrl && (
-                      <div className="relative h-36 w-full overflow-hidden">
+                    {/* Banner imagen o placeholder del paso */}
+                    <div className="relative h-36 w-full overflow-hidden">
+                      {step.imageUrl ? (
                         <img
                           src={step.imageUrl}
                           alt={step.content}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      </div>
-                    )}
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ background: `linear-gradient(135deg, ${stepVibColor}25 0%, ${stepVibColor}10 100%)` }}
+                        >
+                          <span className="text-5xl opacity-40">{CATEGORY_ICONS[step.category]}</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    </div>
 
                     <div className="flex items-start gap-4 p-4">
                       {/* Número */}

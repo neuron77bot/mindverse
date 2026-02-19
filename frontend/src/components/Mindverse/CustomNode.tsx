@@ -65,17 +65,28 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
         style={{ borderColor: node.color }}
       />
 
-      {/* Banner de imagen */}
-      {node.imageUrl && (
-        <div className="relative h-28 w-full overflow-hidden">
+      {/* Banner: imagen real o placeholder */}
+      <div className="relative h-28 w-full overflow-hidden">
+        {node.imageUrl ? (
           <img
             src={node.imageUrl}
             alt={node.content}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        </div>
-      )}
+        ) : (
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{ background: `linear-gradient(135deg, ${node.color}55 0%, ${node.color}22 100%)` }}
+          >
+            <span className="text-4xl opacity-50">
+              {{ HEALTH:'💪', WORK:'💼', LOVE:'❤️', FAMILY:'👨‍👩‍👧', FINANCES:'💰',
+                 PERSONAL_GROWTH:'🚀', LEISURE:'🎉', SPIRITUALITY:'🔮', SOCIAL:'🤝'
+               }[node.category] ?? '✨'}
+            </span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      </div>
 
       <div className="px-4 py-3 text-white">
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
