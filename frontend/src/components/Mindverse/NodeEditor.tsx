@@ -32,8 +32,8 @@ export default function NodeEditor() {
   const [category, setCategory]           = useState<Category>('HEALTH');
   const [temporalState, setTemporalState] = useState<TemporalState>('PRESENT');
   const [emotionalLevel, setEmotionalLevel] = useState<EmotionalLevel>('NEUTRALITY');
-  const [inNodeId, setInNodeId]           = useState<string>(ROOT_NODE_ID);
-  const [outNodeId, setOutNodeId]         = useState<string>('');
+  const [inNodeIds, setInNodeIds]         = useState<string[]>([]);
+  const [outNodeIds, setOutNodeIds]       = useState<string[]>([]);
 
   // ── Imagen ────────────────────────────────────────────────────────────────
   const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url'>('text');
@@ -58,17 +58,18 @@ export default function NodeEditor() {
       setCategory(selectedNode.category);
       setTemporalState(selectedNode.temporalState);
       setEmotionalLevel(selectedNode.emotionalLevel || 'NEUTRALITY');
-      const inConn  = connections.find((c) => c.target === selectedNode.id);
-      const outConn = connections.find((c) => c.source === selectedNode.id);
-      setInNodeId(inConn?.source || '');
-      setOutNodeId(outConn?.target || '');
+      const inConns  = connections.filter((c) => c.target === selectedNode.id).map((c) => c.source);
+      const outConns = connections.filter((c) => c.source === selectedNode.id).map((c) => c.target);
+      setInNodeIds(inConns);
+      setOutNodeIds(outConns);
       setGeneratedImageUrl(selectedNode.imageUrl || null);
     } else {
       setContent(''); setDescription('');
       setCategory('HEALTH');
       setTemporalState(activeTemporalFilter === 'ALL' ? 'PRESENT' : activeTemporalFilter);
       setEmotionalLevel('NEUTRALITY');
-      setInNodeId(ROOT_NODE_ID); setOutNodeId('');
+      setInNodeIds([]);
+      setOutNodeIds([]);
       setGeneratedImageUrl(null);
     }
     setImagePrompt('');
@@ -186,16 +187,21 @@ export default function NodeEditor() {
       });
 
       if (!isRootNode) {
-        const oldInConn  = connections.find((c) => c.target === selectedNode.id);
-        const oldOutConn = connections.find((c) => c.source === selectedNode.id);
-        if (oldInConn?.source !== inNodeId) {
-          if (oldInConn) deleteConnection(oldInConn.id);
-          if (inNodeId) addConnection({ id: uuidv4(), source: inNodeId, target: selectedNode.id });
-        }
-        if (oldOutConn?.target !== outNodeId) {
-          if (oldOutConn) deleteConnection(oldOutConn.id);
-          if (outNodeId) addConnection({ id: uuidv4(), source: selectedNode.id, target: outNodeId });
-        }
+        // Eliminar todas las conexiones IN viejas
+        const oldInConns = connections.filter((c) => c.target === selectedNode.id);
+        oldInConns.forEach((c) => deleteConnection(c.id));
+        // Crear las nuevas conexiones IN
+        inNodeIds.forEach((srcId) => {
+          addConnection({ id: uuidv4(), source: srcId, target: selectedNode.id });
+        });
+
+        // Eliminar todas las conexiones OUT viejas
+        const oldOutConns = connections.filter((c) => c.source === selectedNode.id);
+        oldOutConns.forEach((c) => deleteConnection(c.id));
+        // Crear las nuevas conexiones OUT
+        outNodeIds.forEach((tgtId) => {
+          addConnection({ id: uuidv4(), source: selectedNode.id, target: tgtId });
+        });
       }
     } else {
       const newNode: MindverseNode = {
@@ -207,8 +213,14 @@ export default function NodeEditor() {
         ...(generatedImageUrl ? { imageUrl: generatedImageUrl } : {}),
       };
       addNode(newNode);
-      if (inNodeId)  addConnection({ id: uuidv4(), source: inNodeId,  target: newNode.id });
-      if (outNodeId) addConnection({ id: uuidv4(), source: newNode.id, target: outNodeId });
+      // Crear conexiones IN
+      inNodeIds.forEach((srcId) => {
+        addConnection({ id: uuidv4(), source: srcId, target: newNode.id });
+      });
+      // Crear conexiones OUT
+      outNodeIds.forEach((tgtId) => {
+        addConnection({ id: uuidv4(), source: newNode.id, target: tgtId });
+      });
     }
     closeEditor();
   };
@@ -286,19 +298,80 @@ export default function NodeEditor() {
 
             {/* IN / OUT */}
             {!isRootNode && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* IN connections */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">→ IN</label>
-                  <select value={inNodeId} onChange={(e) => setInNodeId(e.target.value)} className={selectClass}>
-                    <option value="">— Ninguno —</option>
-                    {otherNodes.map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
+                  <label className="block text-sm font-medium text-slate-300 mb-2">→ IN (Padres)</label>
+                  {inNodeIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {inNodeIds.map((nodeId) => {
+                        const node = nodes.find((n) => n.id === nodeId);
+                        return (
+                          <span
+                            key={nodeId}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 text-xs rounded-md"
+                          >
+                            {node?.content || nodeId}
+                            <button
+                              type="button"
+                              onClick={() => setInNodeIds(inNodeIds.filter((id) => id !== nodeId))}
+                              className="hover:text-red-400 transition-colors"
+                            >✕</button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val && !inNodeIds.includes(val)) setInNodeIds([...inNodeIds, val]);
+                    }}
+                    className={selectClass}
+                  >
+                    <option value="">+ Agregar padre</option>
+                    {otherNodes
+                      .filter((n) => !inNodeIds.includes(n.id))
+                      .map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
                   </select>
                 </div>
+
+                {/* OUT connections */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">→ OUT</label>
-                  <select value={outNodeId} onChange={(e) => setOutNodeId(e.target.value)} className={selectClass}>
-                    <option value="">— Ninguno —</option>
-                    {otherNodes.map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
+                  <label className="block text-sm font-medium text-slate-300 mb-2">→ OUT (Hijos)</label>
+                  {outNodeIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {outNodeIds.map((nodeId) => {
+                        const node = nodes.find((n) => n.id === nodeId);
+                        return (
+                          <span
+                            key={nodeId}
+                            className="inline-flex items-center gap-1 px-2 py-1 bg-purple-600/20 border border-purple-500/40 text-purple-300 text-xs rounded-md"
+                          >
+                            {node?.content || nodeId}
+                            <button
+                              type="button"
+                              onClick={() => setOutNodeIds(outNodeIds.filter((id) => id !== nodeId))}
+                              className="hover:text-red-400 transition-colors"
+                            >✕</button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val && !outNodeIds.includes(val)) setOutNodeIds([...outNodeIds, val]);
+                    }}
+                    className={selectClass}
+                  >
+                    <option value="">+ Agregar hijo</option>
+                    {otherNodes
+                      .filter((n) => !outNodeIds.includes(n.id))
+                      .map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
                   </select>
                 </div>
               </div>
