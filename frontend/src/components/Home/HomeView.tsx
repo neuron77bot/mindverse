@@ -107,11 +107,12 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                     />
                   ) : (
                     <div
-                      className="w-full h-full flex flex-col items-center justify-center gap-2"
-                      style={{ background: `linear-gradient(135deg, ${vibColor}30 0%, ${vibColor}15 100%)` }}
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ background: `linear-gradient(135deg, ${vibColor}25 0%, ${vibColor}10 100%)` }}
                     >
-                      <span className="text-5xl opacity-60">{CATEGORY_ICONS[node.category]}</span>
-                      <div className="w-10 h-0.5 rounded-full opacity-20" style={{ backgroundColor: vibColor }} />
+                      <span className="text-xs font-semibold tracking-widest uppercase opacity-30 text-white">
+                        Sin imagen
+                      </span>
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

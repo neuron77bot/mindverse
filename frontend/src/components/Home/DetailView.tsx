@@ -112,11 +112,12 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
               />
             ) : (
               <div
-                className="w-full h-full flex flex-col items-center justify-center gap-3"
-                style={{ background: `linear-gradient(135deg, ${vibColor}30 0%, ${vibColor}10 100%)` }}
+                className="w-full h-full flex items-center justify-center"
+                style={{ background: `linear-gradient(135deg, ${vibColor}25 0%, ${vibColor}10 100%)` }}
               >
-                <span className="text-7xl opacity-50">{CATEGORY_ICONS[node.category]}</span>
-                <div className="w-16 h-0.5 rounded-full opacity-20" style={{ backgroundColor: vibColor }} />
+                <span className="text-sm font-semibold tracking-widest uppercase opacity-30 text-white">
+                  Sin imagen
+                </span>
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -217,7 +218,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                           className="w-full h-full flex items-center justify-center"
                           style={{ background: `linear-gradient(135deg, ${stepVibColor}25 0%, ${stepVibColor}10 100%)` }}
                         >
-                          <span className="text-5xl opacity-40">{CATEGORY_ICONS[step.category]}</span>
+                          <span className="text-xs font-semibold tracking-widest uppercase opacity-30 text-white">Sin imagen</span>
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />

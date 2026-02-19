@@ -78,10 +78,8 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
             className="w-full h-full flex items-center justify-center"
             style={{ background: `linear-gradient(135deg, ${node.color}55 0%, ${node.color}22 100%)` }}
           >
-            <span className="text-4xl opacity-50">
-              {{ HEALTH:'💪', WORK:'💼', LOVE:'❤️', FAMILY:'👨‍👩‍👧', FINANCES:'💰',
-                 PERSONAL_GROWTH:'🚀', LEISURE:'🎉', SPIRITUALITY:'🔮', SOCIAL:'🤝'
-               }[node.category] ?? '✨'}
+            <span className="text-[10px] font-semibold tracking-widest uppercase opacity-30 text-white">
+              Sin imagen
             </span>
           </div>
         )}
