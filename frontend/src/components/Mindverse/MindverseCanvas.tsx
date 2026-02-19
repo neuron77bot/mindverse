@@ -31,9 +31,12 @@ const defaultEdgeOptions = {
   animated: true,
 };
 
+import { EMOTIONAL_COLORS } from '../../data/mockData';
+
 function getNodeColor(node: Node) {
   const nodeData = node.data as { node: MindverseNode };
-  return nodeData.node?.color || '#6366F1';
+  const n = nodeData.node;
+  return (n?.emotionalLevel && EMOTIONAL_COLORS[n.emotionalLevel]) || n?.color || '#6366F1';
 }
 
 function MindverseCanvasInner() {

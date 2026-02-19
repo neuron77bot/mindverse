@@ -50,19 +50,19 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
     );
   }
 
-  const emotionalColor = EMOTIONAL_COLORS[node.emotionalLevel];
+  const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || node.color;
 
   return (
     <div
       className="relative rounded-xl shadow-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl min-w-[160px] max-w-[240px] overflow-hidden"
-      style={{ backgroundColor: node.color, border: `2px solid ${node.color}` }}
+      style={{ backgroundColor: `${vibColor}cc`, border: `2px solid ${vibColor}` }}
       onDoubleClick={handleDoubleClick}
     >
       <Handle
         type="target"
         position={Position.Left}
         className="!w-3 !h-3 !bg-white !border-2"
-        style={{ borderColor: node.color }}
+        style={{ borderColor: vibColor }}
       />
 
       {/* Banner: imagen real o placeholder */}
@@ -76,7 +76,7 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
         ) : (
           <div
             className="w-full h-full flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${node.color}55 0%, ${node.color}22 100%)` }}
+            style={{ background: `linear-gradient(135deg, ${vibColor}55 0%, ${vibColor}22 100%)` }}
           >
             <span className="text-[10px] font-semibold tracking-widest uppercase opacity-30 text-white">
               Sin imagen
@@ -90,13 +90,13 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
           <span
             className="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
           >
             {CATEGORY_LABELS[node.category]}
           </span>
           <span
             className="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
-            style={{ backgroundColor: emotionalColor, color: '#fff' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
           >
             {EMOTIONAL_LABELS[node.emotionalLevel]}
           </span>
@@ -107,7 +107,7 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
         </h3>
 
         {node.description && (
-          <p className="text-xs opacity-90 line-clamp-2">{node.description}</p>
+          <p className="text-xs opacity-80 line-clamp-2">{node.description}</p>
         )}
       </div>
 
@@ -115,7 +115,7 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
         type="source"
         position={Position.Right}
         className="!w-3 !h-3 !bg-white !border-2"
-        style={{ borderColor: node.color }}
+        style={{ borderColor: vibColor }}
       />
     </div>
   );
