@@ -97,22 +97,43 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                   borderColor: `${vibColor}40`,
                 }}
               >
-                <div className="h-1.5 w-full" style={{ backgroundColor: vibColor }} />
-
-                <div className="p-5">
-                  {/* Icono */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
-                      style={{ backgroundColor: `${color}25` }}
-                    >
-                      {CATEGORY_ICONS[node.category]}
+                {/* Imagen generada o barra de color */}
+                {node.imageUrl ? (
+                  <div className="relative h-40 w-full overflow-hidden">
+                    <img
+                      src={node.imageUrl}
+                      alt={node.content}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-2 left-3 right-3">
+                      <h3 className="text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow">
+                        {node.content}
+                      </h3>
                     </div>
                   </div>
+                ) : (
+                  <div className="h-1.5 w-full" style={{ backgroundColor: vibColor }} />
+                )}
 
-                  <h3 className="text-white font-bold text-base mb-2 leading-tight">
-                    {node.content}
-                  </h3>
+                <div className="p-5">
+                  {/* Icono (solo sin imagen) */}
+                  {!node.imageUrl && (
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg"
+                        style={{ backgroundColor: `${color}25` }}
+                      >
+                        {CATEGORY_ICONS[node.category]}
+                      </div>
+                    </div>
+                  )}
+
+                  {!node.imageUrl && (
+                    <h3 className="text-white font-bold text-base mb-2 leading-tight">
+                      {node.content}
+                    </h3>
+                  )}
 
                   {/* Labels: vibración + frecuencia + categoría + temporal */}
                   <div className="flex flex-wrap items-center gap-1.5 mb-3">

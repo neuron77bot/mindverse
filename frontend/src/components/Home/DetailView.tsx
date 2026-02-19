@@ -99,32 +99,45 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
 
         {/* Hero del pensamiento */}
         <div
-          className="rounded-2xl p-5 sm:p-7 mb-8 border"
+          className="rounded-2xl mb-8 border overflow-hidden"
           style={{ backgroundColor: `${vibColor}15`, borderColor: `${vibColor}40` }}
         >
-          <div className="flex items-start gap-4">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
-              style={{ backgroundColor: `${vibColor}25` }}
-            >
-              {CATEGORY_ICONS[node.category]}
+          {/* Imagen hero */}
+          {node.imageUrl && (
+            <div className="relative h-52 sm:h-72 w-full overflow-hidden">
+              <img
+                src={node.imageUrl}
+                alt={node.content}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-3">
-                {node.content}
-              </h2>
-              <NodeLabels node={node} size="md" />
-              {node.description && (
-                <div className="mt-3">
-                  <ExpandableText
-                    text={node.description}
-                    className="text-slate-400 leading-relaxed"
-                    clamp={3}
-                  />
-                </div>
-              )}
+          )}
+
+          <div className="p-5 sm:p-7">
+            <div className="flex items-start gap-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shrink-0"
+                style={{ backgroundColor: `${vibColor}25` }}
+              >
+                {CATEGORY_ICONS[node.category]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-3">
+                  {node.content}
+                </h2>
+                <NodeLabels node={node} size="md" />
+                {node.description && (
+                  <div className="mt-3">
+                    <ExpandableText
+                      text={node.description}
+                      className="text-slate-400 leading-relaxed"
+                      clamp={3}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
           {/* Acciones */}
           <div className="flex flex-wrap gap-2 mt-5 pt-5 border-t" style={{ borderColor: `${vibColor}25` }}>
@@ -142,6 +155,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
               🗺️ Ver en mapa
             </button>
           </div>
+          </div>{/* /p-5 */}
         </div>
 
         {/* Pasos */}
@@ -204,6 +218,16 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                         </div>
                       )}
                     </div>
+
+                    {/* Thumbnail del paso */}
+                    {step.imageUrl && (
+                      <img
+                        src={step.imageUrl}
+                        alt={step.content}
+                        className="w-16 h-16 rounded-xl object-cover border shrink-0"
+                        style={{ borderColor: `${stepVibColor}40` }}
+                      />
+                    )}
 
                     {/* Editar hint */}
                     <span className="text-slate-600 group-hover:text-slate-400 text-sm transition-colors shrink-0 mt-1">
