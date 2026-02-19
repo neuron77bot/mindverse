@@ -370,7 +370,7 @@ export default function NodeEditor() {
                 <img
                   src={generatedImageUrl}
                   alt="Thumbnail"
-                  className="w-full h-40 object-cover rounded-lg border border-slate-600"
+                  className="w-full aspect-square object-cover rounded-lg border border-slate-600"
                 />
                 <button
                   onClick={() => setGeneratedImageUrl(null)}

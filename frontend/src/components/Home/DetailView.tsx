@@ -103,7 +103,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
             style={{ borderColor: `${vibColor}20` }}
           >
             {/* Imagen hero */}
-            <div className="relative h-56 sm:h-64 lg:h-72 w-full overflow-hidden shrink-0">
+            <div className="relative w-full overflow-hidden aspect-square shrink-0">
               {node.imageUrl ? (
                 <img src={node.imageUrl} alt={node.content} className="w-full h-full object-cover" />
               ) : (
@@ -195,7 +195,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                 {steps.map((step, idx) => {
                   const stepVibColor = EMOTIONAL_COLORS[step.emotionalLevel] || CATEGORY_COLORS[step.category] || '#6366F1';
                   return (
@@ -206,7 +206,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                       onClick={() => openEditor(step)}
                     >
                       {/* Banner imagen/placeholder */}
-                      <div className="relative h-32 w-full overflow-hidden">
+                      <div className="relative w-full overflow-hidden aspect-square">
                         {step.imageUrl ? (
                           <img src={step.imageUrl} alt={step.content} className="w-full h-full object-cover" />
                         ) : (
@@ -250,6 +250,19 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                     </div>
                   );
                 })}
+
+                {/* Card "Nuevo paso" */}
+                <button
+                  onClick={() => openEditor()}
+                  className="rounded-xl border-2 border-dashed border-slate-700 hover:border-indigo-500/60 hover:bg-indigo-500/5 transition-all duration-200 group flex flex-col items-center justify-center gap-3 h-full min-h-48 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-full bg-slate-800 group-hover:bg-indigo-600/20 border border-slate-600 group-hover:border-indigo-500/50 flex items-center justify-center transition-all">
+                    <svg className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-slate-500 group-hover:text-indigo-400 transition-colors">Nuevo paso</span>
+                </button>
               </div>
             )}
           </div>

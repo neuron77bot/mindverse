@@ -80,7 +80,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {mainNodes.map((node) => {
             const color = CATEGORY_COLORS[node.category] || '#6366F1';
             const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || color;
@@ -98,7 +98,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                 }}
               >
                 {/* Banner: imagen real o placeholder */}
-                <div className="relative h-40 w-full overflow-hidden">
+                <div className="relative w-full overflow-hidden aspect-square">
                   {node.imageUrl ? (
                     <img
                       src={node.imageUrl}
