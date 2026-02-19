@@ -46,6 +46,7 @@ export interface MindverseNode {
   color: string;
   createdAt: Date;
   isRoot?: boolean;
+  imageUrl?: string;   // thumbnail generado con IA
 }
 
 // Interfaz para una conexión entre pensamientos

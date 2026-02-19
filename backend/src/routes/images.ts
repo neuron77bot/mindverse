@@ -24,6 +24,29 @@ interface ImageToImageBody {
 export async function imageRoutes(app: FastifyInstance) {
 
   /**
+   * POST /images/upload
+   * Recibe un dataUrl base64 y lo sube a fal.ai storage.
+   * Retorna: { url: string }
+   */
+  app.post<{ Body: { dataUrl: string } }>('/upload', async (request, reply) => {
+    const { dataUrl } = request.body;
+    if (!dataUrl) return reply.status(400).send({ error: '"dataUrl" es requerido.' });
+
+    try {
+      const [header, base64Data] = dataUrl.split(',');
+      const mimeMatch = header.match(/data:([^;]+);/);
+      const mimeType  = mimeMatch?.[1] ?? 'image/jpeg';
+      const buffer    = Buffer.from(base64Data, 'base64');
+      const blob      = new Blob([buffer], { type: mimeType });
+      const url       = await fal.storage.upload(blob);
+      return reply.send({ url });
+    } catch (err: any) {
+      app.log.error(err);
+      return reply.status(500).send({ error: 'Error al subir imagen.', detail: err?.message });
+    }
+  });
+
+  /**
    * POST /images/text-to-image
    * Genera una imagen a partir de un texto.
    *
