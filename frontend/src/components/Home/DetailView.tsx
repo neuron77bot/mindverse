@@ -189,50 +189,54 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                 return (
                   <div
                     key={step.id}
-                    className="flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer group"
+                    className="rounded-xl border overflow-hidden transition-all cursor-pointer group"
                     style={{
                       backgroundColor: `${stepVibColor}10`,
                       borderColor: `${stepVibColor}35`,
                     }}
                     onClick={() => openEditor(step)}
                   >
-                    {/* Número */}
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5"
-                      style={{ backgroundColor: `${stepVibColor}25`, color: stepVibColor }}
-                    >
-                      {idx + 1}
-                    </div>
-
-                    {/* Contenido */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold leading-tight mb-2">{step.content}</p>
-                      <NodeLabels node={step} size="sm" />
-                      {step.description && (
-                        <div className="mt-2">
-                          <ExpandableText
-                            text={step.description}
-                            className="text-slate-400 text-sm leading-relaxed"
-                            clamp={2}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Thumbnail del paso */}
+                    {/* Banner imagen del paso */}
                     {step.imageUrl && (
-                      <img
-                        src={step.imageUrl}
-                        alt={step.content}
-                        className="w-16 h-16 rounded-xl object-cover border shrink-0"
-                        style={{ borderColor: `${stepVibColor}40` }}
-                      />
+                      <div className="relative h-36 w-full overflow-hidden">
+                        <img
+                          src={step.imageUrl}
+                          alt={step.content}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      </div>
                     )}
 
-                    {/* Editar hint */}
-                    <span className="text-slate-600 group-hover:text-slate-400 text-sm transition-colors shrink-0 mt-1">
-                      ✏️
-                    </span>
+                    <div className="flex items-start gap-4 p-4">
+                      {/* Número */}
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5"
+                        style={{ backgroundColor: `${stepVibColor}25`, color: stepVibColor }}
+                      >
+                        {idx + 1}
+                      </div>
+
+                      {/* Contenido */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold leading-tight mb-2">{step.content}</p>
+                        <NodeLabels node={step} size="sm" />
+                        {step.description && (
+                          <div className="mt-2">
+                            <ExpandableText
+                              text={step.description}
+                              className="text-slate-400 text-sm leading-relaxed"
+                              clamp={2}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Editar hint */}
+                      <span className="text-slate-600 group-hover:text-slate-400 text-sm transition-colors shrink-0 mt-1">
+                        ✏️
+                      </span>
+                    </div>
                   </div>
                 );
               })}
