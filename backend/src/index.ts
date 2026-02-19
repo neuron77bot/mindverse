@@ -20,7 +20,7 @@ if (!FAL_KEY) {
 fal.config({ credentials: FAL_KEY });
 
 async function main() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, bodyLimit: 20 * 1024 * 1024 }); // 20MB
 
   // CORS
   await app.register(cors, {
