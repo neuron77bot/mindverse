@@ -35,12 +35,12 @@ export default function NodeEditor() {
   const [outNodeId, setOutNodeId]         = useState<string>('');
 
   // ── Imagen ────────────────────────────────────────────────────────────────
-  const [imagePrompt, setImagePrompt]     = useState('');
-  const [refImageFile, setRefImageFile]   = useState<File | null>(null);
-  const [refImagePreview, setRefImagePreview] = useState<string | null>(null);
+  const [imagePrompt, setImagePrompt]       = useState('');
+  const [refImageFiles, setRefImageFiles]   = useState<File[]>([]);
+  const [refImagePreviews, setRefImagePreviews] = useState<string[]>([]);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating]   = useState(false);
-  const [imageError, setImageError]       = useState<string | null>(null);
+  const [isGenerating, setIsGenerating]     = useState(false);
+  const [imageError, setImageError]         = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isRootNode  = selectedNode?.id === ROOT_NODE_ID;
@@ -67,22 +67,36 @@ export default function NodeEditor() {
       setGeneratedImageUrl(null);
     }
     setImagePrompt('');
-    setRefImageFile(null);
-    setRefImagePreview(null);
+    setRefImageFiles([]);
+    setRefImagePreviews([]);
     setImageError(null);
   }, [selectedNode, activeTemporalFilter, connections]);
 
-  // ── Handlers de imagen ────────────────────────────────────────────────────
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    setRefImageFile(file);
-    if (file) {
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const readAsDataURL = (file: File): Promise<string> =>
+    new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = () => setRefImagePreview(reader.result as string);
+      reader.onload = () => resolve(reader.result as string);
       reader.readAsDataURL(file);
-    } else {
-      setRefImagePreview(null);
-    }
+    });
+
+  // ── Handlers de imagen ────────────────────────────────────────────────────
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(e.target.files ?? []);
+    if (!incoming.length) return;
+    // Acumular a los archivos ya seleccionados
+    const combined = [...refImageFiles, ...incoming];
+    setRefImageFiles(combined);
+    const previews = await Promise.all(combined.map(readAsDataURL));
+    setRefImagePreviews(previews);
+    // Limpiar input para permitir re-selección
+    e.target.value = '';
+  };
+
+  const removeRefImage = async (index: number) => {
+    const updated = refImageFiles.filter((_, i) => i !== index);
+    setRefImageFiles(updated);
+    setRefImagePreviews(await Promise.all(updated.map(readAsDataURL)));
   };
 
   const buildNodePayload = () => {
@@ -104,28 +118,28 @@ export default function NodeEditor() {
     const node = buildNodePayload();
 
     try {
-      if (refImageFile) {
-        const reader = new FileReader();
-        const base64 = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(refImageFile);
-        });
-
-        const uploadRes = await fetch(`${API_BASE}/images/upload`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dataUrl: base64 }),
-        });
-
-        if (!uploadRes.ok) throw new Error('Error al subir imagen');
-        const { url: uploadedUrl } = await uploadRes.json();
+      if (refImageFiles.length > 0) {
+        // ── Image-to-image: subir todos los archivos en paralelo ──────────────
+        const uploadedUrls = await Promise.all(
+          refImageFiles.map(async (file) => {
+            const dataUrl = await readAsDataURL(file);
+            const uploadRes = await fetch(`${API_BASE}/images/upload`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ dataUrl }),
+            });
+            if (!uploadRes.ok) throw new Error(`Error al subir ${file.name}`);
+            const { url } = await uploadRes.json();
+            return url as string;
+          })
+        );
 
         const res = await fetch(`${API_BASE}/images/image-to-image`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             prompt: imagePrompt,
-            image_urls: [uploadedUrl],
+            image_urls: uploadedUrls,
             aspect_ratio: '1:1',
             node,
           }),
@@ -342,27 +356,45 @@ export default function NodeEditor() {
               />
             </div>
 
-            {/* Imagen de referencia */}
+            {/* Imágenes de referencia */}
             <div>
               <label className="block text-xs text-slate-400 mb-1">
-                Imagen de referencia <span className="text-slate-500">(opcional — activa image-to-image)</span>
+                Imágenes de referencia{' '}
+                <span className="text-slate-500">(opcional — activa image-to-image; podés agregar varias)</span>
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg transition-colors border border-slate-600"
                 >
-                  {refImageFile ? '📎 ' + refImageFile.name.slice(0, 20) + '…' : '📎 Seleccionar imagen'}
+                  📎 {refImageFiles.length > 0 ? `Agregar más (${refImageFiles.length} seleccionada${refImageFiles.length > 1 ? 's' : ''})` : 'Seleccionar imágenes'}
                 </button>
-                {refImageFile && (
-                  <button onClick={() => { setRefImageFile(null); setRefImagePreview(null); }}
+                {refImageFiles.length > 0 && (
+                  <button
+                    onClick={() => { setRefImageFiles([]); setRefImagePreviews([]); }}
                     className="text-slate-500 hover:text-red-400 text-xs transition-colors"
-                  >✕ quitar</button>
+                  >✕ quitar todas</button>
                 )}
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
               </div>
-              {refImagePreview && (
-                <img src={refImagePreview} alt="Referencia" className="mt-2 h-16 rounded-lg object-cover border border-slate-600" />
+
+              {/* Miniaturas de referencia */}
+              {refImagePreviews.length > 0 && (
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {refImagePreviews.map((src, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={src}
+                        alt={`Ref ${i + 1}`}
+                        className="h-16 w-16 object-cover rounded-lg border border-slate-600"
+                      />
+                      <button
+                        onClick={() => removeRefImage(i)}
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-black/70 text-white rounded-full text-[9px] hover:bg-red-600 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -384,7 +416,10 @@ export default function NodeEditor() {
                 </>
               ) : (
                 <>
-                  {refImageFile ? '🖼️ Image-to-image' : '✨ Text-to-image'}
+                  {refImageFiles.length > 0
+                    ? `🖼️ Image-to-image (${refImageFiles.length} img${refImageFiles.length > 1 ? 's' : ''})`
+                    : '✨ Text-to-image'
+                  }
                 </>
               )}
             </button>
