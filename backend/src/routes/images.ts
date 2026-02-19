@@ -40,7 +40,17 @@ export async function imageRoutes(app: FastifyInstance) {
    * Recibe un dataUrl base64 y lo sube a fal.ai storage.
    * Retorna: { url: string }
    */
-  app.post<{ Body: { dataUrl: string } }>('/upload', async (request, reply) => {
+  app.post<{ Body: { dataUrl: string } }>('/upload', {
+    schema: {
+      tags: ['images'],
+      summary: 'Subir imagen a fal.ai storage (base64 dataUrl)',
+      body: {
+        type: 'object',
+        required: ['dataUrl'],
+        properties: { dataUrl: { type: 'string', description: 'Imagen en formato base64 data URL' } },
+      },
+    },
+  }, async (request, reply) => {
     const { dataUrl } = request.body;
     if (!dataUrl) return reply.status(400).send({ error: '"dataUrl" es requerido.' });
 
@@ -68,7 +78,23 @@ export async function imageRoutes(app: FastifyInstance) {
    *   aspect_ratio — relación de aspecto, ej: "1:1", "16:9" (default: "1:1")
    *   output_format — "jpeg" | "png" | "webp" (default: "png")
    */
-  app.post<{ Body: TextToImageBody }>('/text-to-image', async (request, reply) => {
+  app.post<{ Body: TextToImageBody }>('/text-to-image', {
+    schema: {
+      tags: ['images'],
+      summary: 'Generar imagen desde texto (fal-ai/nano-banana)',
+      body: {
+        type: 'object',
+        required: ['prompt'],
+        properties: {
+          prompt:        { type: 'string' },
+          num_images:    { type: 'number', default: 1 },
+          aspect_ratio:  { type: 'string', enum: ['21:9','16:9','3:2','4:3','5:4','1:1','4:5','3:4','2:3','9:16'], default: '1:1' },
+          output_format: { type: 'string', enum: ['jpeg','png','webp'], default: 'png' },
+          node:          { type: 'object', properties: { nodeId: { type: 'string' }, nodeContent: { type: 'string' } } },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const {
       prompt,
       num_images = 1,
@@ -129,7 +155,24 @@ export async function imageRoutes(app: FastifyInstance) {
    *   aspect_ratio  — "auto" | "1:1" | "16:9" etc. (default: "auto")
    *   output_format — "jpeg" | "png" | "webp" (default: "png")
    */
-  app.post<{ Body: ImageToImageBody }>('/image-to-image', async (request, reply) => {
+  app.post<{ Body: ImageToImageBody }>('/image-to-image', {
+    schema: {
+      tags: ['images'],
+      summary: 'Editar imagen con prompt (fal-ai/nano-banana/edit)',
+      body: {
+        type: 'object',
+        required: ['prompt', 'image_urls'],
+        properties: {
+          prompt:        { type: 'string' },
+          image_urls:    { type: 'array', items: { type: 'string' }, description: 'Una o más URLs de imágenes base' },
+          num_images:    { type: 'number', default: 1 },
+          aspect_ratio:  { type: 'string', enum: ['auto','21:9','16:9','3:2','4:3','5:4','1:1','4:5','3:4','2:3','9:16'], default: 'auto' },
+          output_format: { type: 'string', enum: ['jpeg','png','webp'], default: 'png' },
+          node:          { type: 'object', properties: { nodeId: { type: 'string' }, nodeContent: { type: 'string' } } },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const {
       prompt,
       image_urls,
