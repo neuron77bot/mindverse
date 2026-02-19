@@ -5,9 +5,10 @@ type View = 'home' | 'mapa';
 interface HeaderProps {
   activeView: View;
   onViewChange: (view: View) => void;
+  syncStatus?: 'idle' | 'syncing' | 'error';
 }
 
-export default function Header({ activeView, onViewChange }: HeaderProps) {
+export default function Header({ activeView, onViewChange, syncStatus = 'idle' }: HeaderProps) {
   const resetToMockData = useMindverseStore((state) => state.resetToMockData);
 
   return (
@@ -22,7 +23,18 @@ export default function Header({ activeView, onViewChange }: HeaderProps) {
           </svg>
         </div>
         <div className="hidden sm:block">
-          <h1 className="text-base sm:text-xl font-bold text-white">Mindverse</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base sm:text-xl font-bold text-white">Mindverse</h1>
+            {syncStatus === 'syncing' && (
+              <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" title="Sincronizando…" />
+            )}
+            {syncStatus === 'error' && (
+              <span className="w-2 h-2 rounded-full bg-red-400" title="Sin conexión al backend" />
+            )}
+            {syncStatus === 'idle' && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400" title="Sincronizado" />
+            )}
+          </div>
           <p className="text-[10px] sm:text-xs text-slate-400">Mapa de Estado Mental</p>
         </div>
       </div>

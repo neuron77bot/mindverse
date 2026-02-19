@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMindverseStore } from './store/mindverseStore';
 import Header from './components/Layout/Header';
 import MindverseCanvas from './components/Mindverse/MindverseCanvas';
@@ -17,7 +17,14 @@ function App() {
   const [authenticated, setAuthenticated] = useState(isAuthenticated());
   const [activeView, setActiveView] = useState<View>('home');
   const [detailNode, setDetailNode] = useState<MindverseNode | null>(null);
-  const setFocusedNode = useMindverseStore((s) => s.setFocusedNode);
+  const setFocusedNode    = useMindverseStore((s) => s.setFocusedNode);
+  const initFromBackend   = useMindverseStore((s) => s.initFromBackend);
+  const syncStatus        = useMindverseStore((s) => s.syncStatus);
+
+  // Sincronizar con el backend al autenticarse
+  useEffect(() => {
+    if (authenticated) initFromBackend();
+  }, [authenticated]);
 
   const navigateToDetail = (node: MindverseNode) => {
     setDetailNode(node);
@@ -53,7 +60,7 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-900">
-      <Header activeView={headerView} onViewChange={handleViewChange} />
+      <Header activeView={headerView} onViewChange={handleViewChange} syncStatus={syncStatus} />
 
       {/* HOME */}
       {activeView === 'home' && (

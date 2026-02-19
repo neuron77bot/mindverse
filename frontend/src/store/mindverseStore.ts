@@ -4,7 +4,22 @@ import type { MindverseNode, Connection, Category, TemporalState } from '../type
 import type { LayoutDirection } from '../utils/layoutUtils';
 import { ROOT_NODE_ID } from '../data/mockData';
 import { mockNodes, mockConnections } from '../data/ejemplo';
+import {
+  apiGetThoughts, apiCreateThought, apiUpdateThought,
+  apiDeleteThought, apiBulkSync,
+  backendToNode, extractConnections,
+} from '../services/thoughtsApi';
 
+// ── Debounce helper ───────────────────────────────────────────────────────────
+const positionTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function debouncePosition(nodeId: string, fn: () => void, delay = 1200) {
+  const prev = positionTimers.get(nodeId);
+  if (prev) clearTimeout(prev);
+  positionTimers.set(nodeId, setTimeout(() => { fn(); positionTimers.delete(nodeId); }, delay));
+}
+
+// ── Tipos ─────────────────────────────────────────────────────────────────────
 interface MindverseStore {
   // Estado
   nodes: MindverseNode[];
@@ -15,6 +30,7 @@ interface MindverseStore {
   isEditorOpen: boolean;
   layoutDirection: LayoutDirection;
   focusedNodeId: string | null;
+  syncStatus: 'idle' | 'syncing' | 'error';
 
   // Acciones - Pensamientos
   addNode: (node: MindverseNode) => void;
@@ -41,12 +57,15 @@ interface MindverseStore {
   getFilteredNodes: () => MindverseNode[];
   getFilteredConnections: () => Connection[];
   resetToMockData: () => void;
+
+  // Acciones - Sync
+  initFromBackend: () => Promise<void>;
 }
 
 export const useMindverseStore = create<MindverseStore>()(
   persist(
     (set, get) => ({
-      // Estado inicial con datos mock
+      // Estado inicial
       nodes: mockNodes,
       connections: mockConnections,
       activeTemporalFilter: 'PRESENT',
@@ -55,83 +74,82 @@ export const useMindverseStore = create<MindverseStore>()(
       isEditorOpen: false,
       layoutDirection: 'LR',
       focusedNodeId: null,
+      syncStatus: 'idle',
 
-      // Acciones - Nodos
-      addNode: (node) =>
-        set((state) => ({
-          nodes: [...state.nodes, node],
-        })),
+      // ── Nodos ────────────────────────────────────────────────────────────────
+      addNode: (node) => {
+        set((state) => ({ nodes: [...state.nodes, node] }));
+        const { connections } = get();
+        apiCreateThought(node, connections).catch(console.error);
+      },
 
-      updateNode: (id, updates) =>
+      updateNode: (id, updates) => {
         set((state) => ({
-          nodes: state.nodes.map((node) =>
-            node.id === id ? { ...node, ...updates } : node
-          ),
-        })),
+          nodes: state.nodes.map((n) => n.id === id ? { ...n, ...updates } : n),
+        }));
+        const { connections } = get();
+        apiUpdateThought(id, updates, connections).catch(console.error);
+      },
 
       deleteNode: (id) => {
         if (id === ROOT_NODE_ID) return;
         set((state) => ({
-          nodes: state.nodes.filter((node) => node.id !== id),
-          connections: state.connections.filter(
-            (conn) => conn.source !== id && conn.target !== id
-          ),
+          nodes: state.nodes.filter((n) => n.id !== id),
+          connections: state.connections.filter((c) => c.source !== id && c.target !== id),
         }));
+        apiDeleteThought(id).catch(console.error);
       },
 
-      updateNodePosition: (id, x, y) =>
+      updateNodePosition: (id, x, y) => {
         set((state) => ({
-          nodes: state.nodes.map((node) =>
-            node.id === id ? { ...node, positionX: x, positionY: y } : node
-          ),
-        })),
+          nodes: state.nodes.map((n) => n.id === id ? { ...n, positionX: x, positionY: y } : n),
+        }));
+        debouncePosition(id, () => {
+          const { connections } = get();
+          apiUpdateThought(id, { positionX: x, positionY: y }, connections).catch(console.error);
+        });
+      },
 
-      // Acciones - Conexiones
-      addConnection: (connection) =>
+      // ── Conexiones ───────────────────────────────────────────────────────────
+      addConnection: (connection) => {
+        set((state) => ({ connections: [...state.connections, connection] }));
+        // Actualizar nodo source con las nuevas conexiones
+        const { connections } = get();
+        apiUpdateThought(connection.source, {}, connections).catch(console.error);
+      },
+
+      deleteConnection: (id) => {
+        const { connections } = get();
+        const conn = connections.find((c) => c.id === id);
         set((state) => ({
-          connections: [...state.connections, connection],
-        })),
+          connections: state.connections.filter((c) => c.id !== id),
+        }));
+        if (conn) {
+          const updated = connections.filter((c) => c.id !== id);
+          apiUpdateThought(conn.source, {}, updated).catch(console.error);
+        }
+      },
 
-      deleteConnection: (id) =>
-        set((state) => ({
-          connections: state.connections.filter((conn) => conn.id !== id),
-        })),
-
-      // Acciones - Filtros
-      setTemporalFilter: (filter) => set({ activeTemporalFilter: filter }),
-
-      setCategoryFilter: (filter) => set({ activeCategoryFilter: filter }),
-
+      // ── Filtros ───────────────────────────────────────────────────────────────
+      setTemporalFilter:  (filter)    => set({ activeTemporalFilter: filter }),
+      setCategoryFilter:  (filter)    => set({ activeCategoryFilter: filter }),
       setLayoutDirection: (direction) => set({ layoutDirection: direction }),
+      setFocusedNode:     (id)        => set({ focusedNodeId: id }),
 
-      setFocusedNode: (id) => set({ focusedNodeId: id }),
-
-      // Acciones - Editor
+      // ── Editor ────────────────────────────────────────────────────────────────
       setSelectedNode: (node) => set({ selectedNode: node }),
+      openEditor:  (node) => set({ selectedNode: node || null, isEditorOpen: true }),
+      closeEditor: ()     => set({ selectedNode: null, isEditorOpen: false }),
 
-      openEditor: (node) =>
-        set({
-          selectedNode: node || null,
-          isEditorOpen: true,
-        }),
-
-      closeEditor: () =>
-        set({
-          selectedNode: null,
-          isEditorOpen: false,
-        }),
-
-      // Getters — el nodo raíz (Casco Periférico) siempre es visible
+      // ── Getters ───────────────────────────────────────────────────────────────
       getFilteredNodes: () => {
         const { nodes, activeTemporalFilter, activeCategoryFilter } = get();
         return nodes.filter((node) => {
           if (node.id === ROOT_NODE_ID) return true;
           const matchesTemporal =
-            activeTemporalFilter === 'ALL' ||
-            node.temporalState === activeTemporalFilter;
+            activeTemporalFilter === 'ALL' || node.temporalState === activeTemporalFilter;
           const matchesCategory =
-            activeCategoryFilter === 'ALL' ||
-            node.category === activeCategoryFilter;
+            activeCategoryFilter === 'ALL' || node.category === activeCategoryFilter;
           return matchesTemporal && matchesCategory;
         });
       },
@@ -144,17 +162,36 @@ export const useMindverseStore = create<MindverseStore>()(
         );
       },
 
-      resetToMockData: () =>
-        set({
-          nodes: mockNodes,
-          connections: mockConnections,
-        }),
+      resetToMockData: () => set({ nodes: mockNodes, connections: mockConnections }),
+
+      // ── Sync con backend ──────────────────────────────────────────────────────
+      initFromBackend: async () => {
+        set({ syncStatus: 'syncing' });
+        try {
+          const backendThoughts = await apiGetThoughts();
+
+          if (backendThoughts.length > 0) {
+            // El backend tiene datos → los usamos como fuente de verdad
+            const nodes = backendThoughts.map(backendToNode);
+            const connections = extractConnections(backendThoughts);
+            set({ nodes, connections, syncStatus: 'idle' });
+          } else {
+            // Backend vacío → sincronizamos el estado local
+            const { nodes, connections } = get();
+            await apiBulkSync(nodes, connections);
+            set({ syncStatus: 'idle' });
+          }
+        } catch (err) {
+          console.warn('⚠️ Backend no disponible, usando datos locales:', err);
+          set({ syncStatus: 'error' });
+        }
+      },
     }),
     {
       name: 'mindverse-storage',
       partialize: (state) => ({
-        nodes: state.nodes,
-        connections: state.connections,
+        nodes:                state.nodes,
+        connections:          state.connections,
         activeTemporalFilter: state.activeTemporalFilter,
         activeCategoryFilter: state.activeCategoryFilter,
       }),

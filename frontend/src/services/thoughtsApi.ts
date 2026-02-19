@@ -1,0 +1,147 @@
+import type { MindverseNode, Connection } from '../types';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Conexiones outgoing de un nodo */
+const outgoingConns = (nodeId: string, connections: Connection[]) =>
+  connections
+    .filter((c) => c.source === nodeId)
+    .map((c) => ({ source: c.source, target: c.target, connectionId: c.id }));
+
+/** Convierte un nodo del backend al formato del store */
+export interface BackendThought {
+  frontendId: string;
+  content: string;
+  description?: string;
+  category: string;
+  temporalState: string;
+  emotionalLevel: string;
+  positionX: number;
+  positionY: number;
+  color: string;
+  isRoot?: boolean;
+  imageUrl?: string | null;
+  connections: { source: string; target: string; connectionId: string }[];
+  createdAt: string;
+}
+
+export function backendToNode(t: BackendThought): MindverseNode {
+  return {
+    id:            t.frontendId,
+    content:       t.content,
+    description:   t.description ?? '',
+    category:      t.category as MindverseNode['category'],
+    temporalState: t.temporalState as MindverseNode['temporalState'],
+    emotionalLevel: t.emotionalLevel as MindverseNode['emotionalLevel'],
+    positionX:     t.positionX,
+    positionY:     t.positionY,
+    color:         t.color,
+    isRoot:        t.isRoot ?? false,
+    imageUrl:      t.imageUrl ?? undefined,
+    createdAt:     new Date(t.createdAt),
+  };
+}
+
+/** Reconstruye el array de conexiones del store a partir de los nodos del backend */
+export function extractConnections(thoughts: BackendThought[]): Connection[] {
+  const seen = new Set<string>();
+  const conns: Connection[] = [];
+  for (const t of thoughts) {
+    for (const c of t.connections ?? []) {
+      if (c.connectionId && !seen.has(c.connectionId)) {
+        seen.add(c.connectionId);
+        conns.push({ id: c.connectionId, source: c.source, target: c.target });
+      }
+    }
+  }
+  return conns;
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+
+export async function apiGetThoughts(): Promise<BackendThought[]> {
+  const res = await fetch(`${API_BASE}/thoughts`);
+  if (!res.ok) throw new Error('Error al obtener pensamientos');
+  const data = await res.json();
+  return data.data as BackendThought[];
+}
+
+export async function apiCreateThought(node: MindverseNode, connections: Connection[]): Promise<void> {
+  const res = await fetch(`${API_BASE}/thoughts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      frontendId:     node.id,
+      content:        node.content,
+      description:    node.description ?? '',
+      category:       node.category,
+      temporalState:  node.temporalState,
+      emotionalLevel: node.emotionalLevel,
+      positionX:      node.positionX,
+      positionY:      node.positionY,
+      color:          node.color,
+      isRoot:         node.isRoot ?? false,
+      imageUrl:       node.imageUrl ?? null,
+      connections:    outgoingConns(node.id, connections),
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? 'Error al crear pensamiento');
+  }
+}
+
+export async function apiUpdateThought(
+  nodeId: string,
+  updates: Partial<MindverseNode>,
+  connections?: Connection[]
+): Promise<void> {
+  const body: Record<string, any> = { ...updates };
+  // Renombrar id→frontendId si viene en updates
+  if ('id' in body) { delete body.id; }
+  if (connections !== undefined) {
+    body.connections = outgoingConns(nodeId, connections);
+  }
+  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? 'Error al actualizar pensamiento');
+  }
+}
+
+export async function apiDeleteThought(nodeId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? 'Error al eliminar pensamiento');
+  }
+}
+
+export async function apiBulkSync(nodes: MindverseNode[], connections: Connection[]): Promise<void> {
+  const thoughts = nodes.map((node) => ({
+    frontendId:     node.id,
+    content:        node.content,
+    description:    node.description ?? '',
+    category:       node.category,
+    temporalState:  node.temporalState,
+    emotionalLevel: node.emotionalLevel,
+    positionX:      node.positionX,
+    positionY:      node.positionY,
+    color:          node.color,
+    isRoot:         node.isRoot ?? false,
+    imageUrl:       node.imageUrl ?? null,
+    connections:    outgoingConns(node.id, connections),
+  }));
+  const res = await fetch(`${API_BASE}/thoughts/bulk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ thoughts }),
+  });
+  if (!res.ok) throw new Error('Error en bulk sync');
+}
