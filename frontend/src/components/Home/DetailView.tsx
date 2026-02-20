@@ -64,15 +64,25 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
   const color    = CATEGORY_COLORS[node.category] || '#6366F1';
   const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || color;
 
+  // BFS para obtener TODOS los descendientes
   const steps: MindverseNode[] = [];
   const visited = new Set<string>([node.id]);
-  let currentId: string | undefined = connections.find((c) => c.source === node.id)?.target;
-  while (currentId) {
-    const step = nodes.find((n) => n.id === currentId);
-    if (!step || visited.has(currentId)) break;
-    visited.add(currentId);
-    steps.push(step);
-    currentId = connections.find((c) => c.source === currentId && !visited.has(c.target))?.target;
+  const queue = [node.id];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const childIds = connections
+      .filter((c) => c.source === current && !visited.has(c.target))
+      .map((c) => c.target);
+
+    for (const childId of childIds) {
+      const childNode = nodes.find((n) => n.id === childId);
+      if (childNode) {
+        visited.add(childId);
+        queue.push(childId);
+        steps.push(childNode);
+      }
+    }
   }
 
   return (

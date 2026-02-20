@@ -32,16 +32,20 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
 
   const getStepCount = (nodeId: string): number => {
     const visited = new Set<string>([nodeId]);
+    const queue = [nodeId];
     let count = 0;
-    let current = nodeId;
-    while (true) {
-      const next = connections.find(
-        (c) => c.source === current && !visited.has(c.target)
-      )?.target;
-      if (!next) break;
-      visited.add(next);
-      count++;
-      current = next;
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const children = connections
+        .filter((c) => c.source === current && !visited.has(c.target))
+        .map((c) => c.target);
+
+      for (const child of children) {
+        visited.add(child);
+        queue.push(child);
+        count++;
+      }
     }
     return count;
   };
