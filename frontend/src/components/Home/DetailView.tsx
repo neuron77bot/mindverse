@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMindverseStore } from '../../store/mindverseStore';
 import { CATEGORY_COLORS, CATEGORY_LABELS, EMOTIONAL_COLORS, HAWKINS_SCALE } from '../../data/mockData';
 import type { MindverseNode } from '../../types';
 import ExpandableText from '../UI/ExpandableText';
+import MermaidDiagram from '../UI/MermaidDiagram';
 import { getFreqLabel } from '../../utils/vibration';
 
 const TEMPORAL_ICONS: Record<string, string> = {
@@ -61,7 +62,7 @@ function NodeLabels({ node, size = 'md' }: { node: MindverseNode; size?: 'sm' | 
 
 export default function DetailView({ node, onBack, onNavigateToMap }: DetailViewProps) {
   const { nodes, connections, openEditor } = useMindverseStore();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'esquema'>('grid');
 
   const color    = CATEGORY_COLORS[node.category] || '#6366F1';
   const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || color;
@@ -86,6 +87,42 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
       }
     }
   }
+
+  // Generar código Mermaid para el esquema
+  const mermaidCode = useMemo(() => {
+    if (steps.length === 0) return '';
+
+    const allNodeIds = new Set([node.id, ...steps.map((s) => s.id)]);
+    const relevantConns = connections.filter(
+      (c) => allNodeIds.has(c.source) && allNodeIds.has(c.target)
+    );
+
+    const sanitize = (text: string) => text.replace(/["\n]/g, ' ').substring(0, 40);
+    
+    let code = 'graph TD\n';
+    
+    // Nodo raíz
+    code += `  ROOT["${sanitize(node.content)}"]\n`;
+    code += `  style ROOT fill:${vibColor},stroke:${vibColor},color:#fff\n`;
+
+    // Nodos hijos
+    steps.forEach((step, idx) => {
+      const stepColor = EMOTIONAL_COLORS[step.emotionalLevel] || CATEGORY_COLORS[step.category] || '#6366F1';
+      code += `  N${idx}["${sanitize(step.content)}"]\n`;
+      code += `  style N${idx} fill:${stepColor},stroke:${stepColor},color:#fff\n`;
+    });
+
+    // Conexiones
+    relevantConns.forEach((conn) => {
+      const sourceLabel = conn.source === node.id ? 'ROOT' : `N${steps.findIndex((s) => s.id === conn.source)}`;
+      const targetLabel = conn.target === node.id ? 'ROOT' : `N${steps.findIndex((s) => s.id === conn.target)}`;
+      if (sourceLabel && targetLabel && !sourceLabel.includes('-1') && !targetLabel.includes('-1')) {
+        code += `  ${sourceLabel} --> ${targetLabel}\n`;
+      }
+    });
+
+    return code;
+  }, [node, steps, connections, vibColor]);
 
   return (
     <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
@@ -206,7 +243,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
               </h2>
               
               <div className="flex items-center gap-2">
-                {/* Toggle Grid/List */}
+                {/* Toggle Grid/List/Esquema */}
                 {steps.length > 0 && (
                   <div className="flex rounded-lg overflow-hidden border border-slate-700">
                     <button
@@ -214,6 +251,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                       className={`px-2 py-1.5 text-xs font-medium transition-colors ${
                         viewMode === 'grid' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-300'
                       }`}
+                      title="Vista grid"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -224,9 +262,21 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                       className={`px-2 py-1.5 text-xs font-medium transition-colors ${
                         viewMode === 'list' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-300'
                       }`}
+                      title="Vista lista"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('esquema')}
+                      className={`px-2 py-1.5 text-xs font-medium transition-colors ${
+                        viewMode === 'esquema' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-300'
+                      }`}
+                      title="Vista esquema"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
                     </button>
                   </div>
@@ -254,6 +304,11 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                 >
                   + Agregar primer paso
                 </button>
+              </div>
+            ) : viewMode === 'esquema' ? (
+              /* ── Vista Esquema ─────────────────────────────────────────────── */
+              <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-6 overflow-x-auto">
+                <MermaidDiagram chart={mermaidCode} className="flex justify-center" />
               </div>
             ) : viewMode === 'list' ? (
               /* ── Vista Lista ───────────────────────────────────────────────── */
