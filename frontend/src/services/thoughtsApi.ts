@@ -22,7 +22,6 @@ export interface BackendThought {
   positionX: number;
   positionY: number;
   color: string;
-  isRoot?: boolean;
   imageUrl?: string | null;
   tags?: string[];
   isFavorite?: boolean;
@@ -41,7 +40,6 @@ export function backendToNode(t: BackendThought): MindverseNode {
     positionX:     t.positionX,
     positionY:     t.positionY,
     color:         t.color,
-    isRoot:        t.isRoot ?? false,
     imageUrl:      t.imageUrl ?? undefined,
     tags:          t.tags ?? [],
     isFavorite:    t.isFavorite ?? false,
@@ -86,7 +84,6 @@ export async function apiCreateThought(node: MindverseNode, connections: Connect
       positionX:      node.positionX,
       positionY:      node.positionY,
       color:          node.color,
-      isRoot:         node.isRoot ?? false,
       imageUrl:       node.imageUrl ?? null,
       tags:           node.tags ?? [],
       isFavorite:     node.isFavorite ?? false,
@@ -142,7 +139,6 @@ export async function apiBulkSync(nodes: MindverseNode[], connections: Connectio
     positionX:      node.positionX,
     positionY:      node.positionY,
     color:          node.color,
-    isRoot:         node.isRoot ?? false,
     imageUrl:       node.imageUrl ?? null,
     tags:           node.tags ?? [],
     isFavorite:     node.isFavorite ?? false,

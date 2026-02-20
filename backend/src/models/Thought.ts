@@ -21,7 +21,6 @@ const thoughtSchema = new Schema({
   positionX: { type: Number, default: 0 },
   positionY: { type: Number, default: 0 },
   color:     { type: String, default: '#6366f1' },
-  isRoot:    { type: Boolean, default: false },
   imageUrl:  { type: String, default: null },
 
   // Tags y favoritos

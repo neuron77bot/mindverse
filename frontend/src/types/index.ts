@@ -45,7 +45,6 @@ export interface MindverseNode {
   positionY: number;
   color: string;
   createdAt: Date;
-  isRoot?: boolean;
   imageUrl?: string;   // thumbnail generado con IA
   tags?: string[];     // etiquetas personalizadas
   isFavorite?: boolean; // destacado

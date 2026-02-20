@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMindverseStore } from '../../store/mindverseStore';
-import { CATEGORY_COLORS, CATEGORY_LABELS, EMOTIONAL_COLORS, HAWKINS_SCALE, ROOT_NODE_ID } from '../../data/mockData';
+import { CATEGORY_COLORS, CATEGORY_LABELS, EMOTIONAL_COLORS, HAWKINS_SCALE } from '../../data/mockData';
 import type { MindverseNode } from '../../types';
 import ExpandableText from '../UI/ExpandableText';
 import { getFreqLabel } from '../../utils/vibration';
@@ -27,14 +27,13 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const rootConnectionTargets = connections
-    .filter((c) => c.source === ROOT_NODE_ID)
-    .map((c) => c.target);
-
-  const allMainNodes = nodes.filter((n) => rootConnectionTargets.includes(n.id));
+  // Nodos que no tienen conexiones entrantes (top-level)
+  const nodeIdsWithIncomingConns = new Set(connections.map((c) => c.target));
+  const allTopLevelNodes = nodes.filter((n) => !nodeIdsWithIncomingConns.has(n.id));
+  
   const mainNodes = showOnlyFavorites
-    ? allMainNodes.filter((n) => n.isFavorite)
-    : allMainNodes;
+    ? allTopLevelNodes.filter((n) => n.isFavorite)
+    : allTopLevelNodes;
 
   const getStepCount = (nodeId: string): number => {
     const visited = new Set<string>([nodeId]);

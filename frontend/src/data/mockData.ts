@@ -72,6 +72,3 @@ export const EMOTIONAL_COLORS: Record<EmotionalLevel, string> = Object.fromEntri
   HAWKINS_SCALE.map((l) => [l.key, l.color])
 ) as Record<EmotionalLevel, string>;
 
-// ===== NODO RAÍZ — CASCO PERIFÉRICO (Punto Cero) =====
-
-export const ROOT_NODE_ID = 'casco-periferico';

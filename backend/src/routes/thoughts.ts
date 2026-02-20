@@ -19,7 +19,6 @@ const thoughtShape = {
     positionX:      { type: 'number' },
     positionY:      { type: 'number' },
     color:          { type: 'string' },
-    isRoot:         { type: 'boolean' },
     imageUrl:       { type: 'string', nullable: true },
     tags:           { type: 'array', items: { type: 'string' } },
     isFavorite:     { type: 'boolean' },
@@ -51,7 +50,6 @@ const bodyShape = {
     positionX:      { type: 'number' },
     positionY:      { type: 'number' },
     color:          { type: 'string' },
-    isRoot:         { type: 'boolean' },
     imageUrl:       { type: 'string', nullable: true },
     tags:           { type: 'array', items: { type: 'string' } },
     isFavorite:     { type: 'boolean' },
@@ -146,7 +144,7 @@ export async function thoughtRoutes(app: FastifyInstance) {
       if (!userId) return (reply as any).status(401).send({ success: false, error: 'No autorizado' });
       
       const { content, description, category, temporalState, emotionalLevel,
-              positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections } = req.body;
+              positionX, positionY, color, imageUrl, tags, isFavorite, connections } = req.body;
 
       if (!content || !category || !temporalState || !emotionalLevel) {
         return reply.status(400).send({ success: false, error: 'Faltan campos requeridos' });
@@ -155,7 +153,7 @@ export async function thoughtRoutes(app: FastifyInstance) {
       const thought = new Thought({
         userId,
         content, description, category, temporalState, emotionalLevel,
-        positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections,
+        positionX, positionY, color, imageUrl, tags, isFavorite, connections,
       });
       await thought.save();
       return reply.status(201).send({ success: true, data: thought });
@@ -186,7 +184,7 @@ export async function thoughtRoutes(app: FastifyInstance) {
       if (!userId) return (reply as any).status(401).send({ success: false, error: 'No autorizado' });
       
       const { content, description, category, temporalState, emotionalLevel,
-              positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections } = req.body;
+              positionX, positionY, color, imageUrl, tags, isFavorite, connections } = req.body;
 
       const thought = await Thought.findById(req.params.id);
       if (!thought || thought.userId !== userId) {
@@ -195,7 +193,7 @@ export async function thoughtRoutes(app: FastifyInstance) {
 
       Object.assign(thought, {
         content, description, category, temporalState, emotionalLevel,
-        positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections,
+        positionX, positionY, color, imageUrl, tags, isFavorite, connections,
       });
       await thought.save();
       return reply.send({ success: true, data: thought });

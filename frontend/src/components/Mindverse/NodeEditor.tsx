@@ -9,7 +9,6 @@ import {
   TEMPORAL_LABELS,
   HAWKINS_SCALE,
   EMOTIONAL_COLORS,
-  ROOT_NODE_ID,
 } from '../../data/mockData';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -51,7 +50,6 @@ export default function NodeEditor() {
 
   const [activeTab, setActiveTab] = useState<'general' | 'vibracion' | 'imagen'>('general');
 
-  const isRootNode  = selectedNode?.id === ROOT_NODE_ID;
   const otherNodes  = nodes.filter((n) => n.id !== selectedNode?.id);
 
   useEffect(() => {
@@ -190,39 +188,37 @@ export default function NodeEditor() {
     if (selectedNode) {
       updateNode(selectedNode.id, {
         content, description, category, temporalState, emotionalLevel,
-        color: isRootNode ? '#FBBF24' : CATEGORY_COLORS[category],
+        color: CATEGORY_COLORS[category],
         ...(generatedImageUrl !== null ? { imageUrl: generatedImageUrl } : {}),
         tags,
         isFavorite,
       });
 
-      if (!isRootNode) {
-        // Solo actualizar conexiones si cambiaron
-        const currentInIds = connections.filter((c) => c.target === selectedNode.id).map((c) => c.source);
-        const currentOutIds = connections.filter((c) => c.source === selectedNode.id).map((c) => c.target);
-        
-        const inChanged = JSON.stringify([...inNodeIds].sort()) !== JSON.stringify([...currentInIds].sort());
-        const outChanged = JSON.stringify([...outNodeIds].sort()) !== JSON.stringify([...currentOutIds].sort());
+      // Solo actualizar conexiones si cambiaron
+      const currentInIds = connections.filter((c) => c.target === selectedNode.id).map((c) => c.source);
+      const currentOutIds = connections.filter((c) => c.source === selectedNode.id).map((c) => c.target);
+      
+      const inChanged = JSON.stringify([...inNodeIds].sort()) !== JSON.stringify([...currentInIds].sort());
+      const outChanged = JSON.stringify([...outNodeIds].sort()) !== JSON.stringify([...currentOutIds].sort());
 
-        if (inChanged) {
-          // Eliminar todas las conexiones IN viejas
-          const oldInConns = connections.filter((c) => c.target === selectedNode.id);
-          oldInConns.forEach((c) => deleteConnection(c.id));
-          // Crear las nuevas conexiones IN
-          inNodeIds.forEach((srcId) => {
-            addConnection({ id: uuidv4(), source: srcId, target: selectedNode.id });
-          });
-        }
+      if (inChanged) {
+        // Eliminar todas las conexiones IN viejas
+        const oldInConns = connections.filter((c) => c.target === selectedNode.id);
+        oldInConns.forEach((c) => deleteConnection(c.id));
+        // Crear las nuevas conexiones IN
+        inNodeIds.forEach((srcId) => {
+          addConnection({ id: uuidv4(), source: srcId, target: selectedNode.id });
+        });
+      }
 
-        if (outChanged) {
-          // Eliminar todas las conexiones OUT viejas
-          const oldOutConns = connections.filter((c) => c.source === selectedNode.id);
-          oldOutConns.forEach((c) => deleteConnection(c.id));
-          // Crear las nuevas conexiones OUT
-          outNodeIds.forEach((tgtId) => {
-            addConnection({ id: uuidv4(), source: selectedNode.id, target: tgtId });
-          });
-        }
+      if (outChanged) {
+        // Eliminar todas las conexiones OUT viejas
+        const oldOutConns = connections.filter((c) => c.source === selectedNode.id);
+        oldOutConns.forEach((c) => deleteConnection(c.id));
+        // Crear las nuevas conexiones OUT
+        outNodeIds.forEach((tgtId) => {
+          addConnection({ id: uuidv4(), source: selectedNode.id, target: tgtId });
+        });
       }
     } else {
       const newNode: MindverseNode = {
@@ -249,7 +245,7 @@ export default function NodeEditor() {
   };
 
   const handleDelete = () => {
-    if (selectedNode && !isRootNode) { deleteNode(selectedNode.id); closeEditor(); }
+    if (selectedNode) { deleteNode(selectedNode.id); closeEditor(); }
   };
 
   if (!isEditorOpen) return null;
@@ -263,13 +259,12 @@ export default function NodeEditor() {
         {/* Header */}
         <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 shrink-0">
           <h2 className="text-xl font-bold text-white">
-            {selectedNode ? (isRootNode ? 'Casco Periférico' : 'Editar Pensamiento') : 'Nuevo Pensamiento'}
+            {selectedNode ? 'Editar Pensamiento' : 'Nuevo Pensamiento'}
           </h2>
         </div>
 
         {/* Tabs */}
-        {!isRootNode && (
-          <div className="flex border-b border-slate-700 shrink-0 px-6">
+        <div className="flex border-b border-slate-700 shrink-0 px-6">
             {([
               { key: 'general',   label: 'General',   icon: '✏️' },
               { key: 'vibracion', label: 'Vibración',  icon: '⚡' },
@@ -289,14 +284,13 @@ export default function NodeEditor() {
               </button>
             ))}
           </div>
-        )}
 
         {/* Form */}
         <div className="p-6 overflow-y-auto">
         <div className="space-y-4">
 
           {/* ── Tab General ─────────────────────────────────────────────────── */}
-          {(activeTab === 'general' || isRootNode) && (<>
+          {activeTab === 'general' && (<>
 
             {/* Content */}
             <div>
@@ -305,7 +299,6 @@ export default function NodeEditor() {
                 type="text" value={content} onChange={(e) => setContent(e.target.value)}
                 placeholder="¿Qué pensamiento querés registrar?"
                 className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                disabled={isRootNode}
               />
             </div>
 
@@ -320,8 +313,7 @@ export default function NodeEditor() {
             </div>
 
             {/* IN / OUT */}
-            {!isRootNode && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* IN connections */}
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">→ IN (Padres)</label>
@@ -398,11 +390,9 @@ export default function NodeEditor() {
                   </select>
                 </div>
               </div>
-            )}
 
             {/* Tags */}
-            {!isRootNode && (
-              <div>
+            <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Etiquetas</label>
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
@@ -451,11 +441,9 @@ export default function NodeEditor() {
                   >+ Agregar</button>
                 </div>
               </div>
-            )}
 
             {/* Favorito */}
-            {!isRootNode && (
-              <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700 rounded-xl">
+            <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700 rounded-xl">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">⭐</span>
                   <div>
@@ -477,11 +465,10 @@ export default function NodeEditor() {
                   />
                 </button>
               </div>
-            )}
           </>)}
 
           {/* ── Tab Vibración ────────────────────────────────────────────────── */}
-          {activeTab === 'vibracion' && !isRootNode && (<>
+          {activeTab === 'vibracion' && (<>
 
             {/* Temporal State */}
             <div>
@@ -536,7 +523,7 @@ export default function NodeEditor() {
           </>)}
 
           {/* ── Tab Imagen ───────────────────────────────────────────────────── */}
-          {activeTab === 'imagen' && !isRootNode && (
+          {activeTab === 'imagen' && (
           <div className="space-y-4">
 
             {/* Selector de modo */}
@@ -674,7 +661,7 @@ export default function NodeEditor() {
         {/* Actions */}
         <div className="px-6 py-4 bg-slate-900/50 flex justify-between border-t border-slate-700 shrink-0">
           <div>
-            {selectedNode && !isRootNode && (
+            {selectedNode && (
               <button onClick={handleDelete} className="px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium">
                 Eliminar
               </button>

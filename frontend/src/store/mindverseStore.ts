@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { MindverseNode, Connection, Category, TemporalState } from '../types';
 import type { LayoutDirection } from '../utils/layoutUtils';
-import { ROOT_NODE_ID } from '../data/mockData';
 import {
   apiGetThoughts, apiCreateThought, apiUpdateThought,
   apiDeleteThought, apiBulkSync,
@@ -108,7 +107,7 @@ export const useMindverseStore = create<MindverseStore>()(
       },
 
       deleteNode: (id) => {
-        if (id === ROOT_NODE_ID) return;
+        
         set((state) => ({
           nodes: state.nodes.filter((n) => n.id !== id),
           connections: state.connections.filter((c) => c.source !== id && c.target !== id),
@@ -161,7 +160,7 @@ export const useMindverseStore = create<MindverseStore>()(
       getFilteredNodes: () => {
         const { nodes, activeTemporalFilter, activeCategoryFilter } = get();
         return nodes.filter((node) => {
-          if (node.id === ROOT_NODE_ID) return true;
+          
           const matchesTemporal =
             activeTemporalFilter === 'ALL' || node.temporalState === activeTemporalFilter;
           const matchesCategory =

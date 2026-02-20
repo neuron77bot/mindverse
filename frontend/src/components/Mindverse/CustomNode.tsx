@@ -17,39 +17,6 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
     openEditor(node);
   };
 
-  if (node.isRoot) {
-    return (
-      <div
-        className="relative px-6 py-4 rounded-full shadow-2xl cursor-pointer transition-all duration-300 hover:scale-110 hover:shadow-[0_0_40px_rgba(251,191,36,0.5)] min-w-[180px] text-center"
-        style={{
-          background: 'radial-gradient(circle, #FBBF24 0%, #D97706 60%, #92400E 100%)',
-          border: '3px solid #FBBF24',
-          boxShadow: '0 0 25px rgba(251,191,36,0.35)',
-        }}
-        onDoubleClick={handleDoubleClick}
-      >
-        <Handle
-          type="target"
-          position={Position.Top}
-          className="!w-4 !h-4 !bg-yellow-300 !border-2 !border-yellow-500"
-        />
-
-        <div className="text-white">
-          <h3 className="font-bold text-base leading-tight tracking-wide">
-            {node.content}
-          </h3>
-          <p className="text-xs opacity-80 mt-1">Punto Cero</p>
-        </div>
-
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          className="!w-4 !h-4 !bg-yellow-300 !border-2 !border-yellow-500"
-        />
-      </div>
-    );
-  }
-
   const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || node.color;
 
   return (
