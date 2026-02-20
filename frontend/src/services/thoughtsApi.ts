@@ -1,5 +1,5 @@
 import type { MindverseNode, Connection } from '../types';
-import { authHeaders } from './authHeaders';
+import { authHeaders, authHeadersOnly } from './authHeaders';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -67,7 +67,7 @@ export function extractConnections(thoughts: BackendThought[]): Connection[] {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export async function apiGetThoughts(): Promise<BackendThought[]> {
-  const res = await fetch(`${API_BASE}/thoughts`, { headers: authHeaders() });
+  const res = await fetch(`${API_BASE}/thoughts`, { headers: authHeadersOnly() });
   if (!res.ok) throw new Error('Error al obtener pensamientos');
   const data = await res.json();
   return data.data as BackendThought[];
@@ -123,7 +123,7 @@ export async function apiUpdateThought(
 }
 
 export async function apiDeleteThought(nodeId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, { method: 'DELETE', headers: authHeaders() });
+  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, { method: 'DELETE', headers: authHeadersOnly() });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? 'Error al eliminar pensamiento');

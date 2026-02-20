@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { getStoredUser, type GoogleUser } from './LoginView';
-import { authHeaders } from '../../services/authHeaders';
+import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -21,7 +21,7 @@ export default function ProfileView({ onBack }: ProfileViewProps) {
 
   if (!loadedExtra && user?.sub) {
     setLoadedExtra(true);
-    fetch(`${API_BASE}/users/${user.sub}`, { headers: authHeaders() })
+    fetch(`${API_BASE}/users/${user.sub}`, { headers: authHeadersOnly() })
       .then((r) => r.json())
       .then(({ data }) => {
         if (data) {
