@@ -1,6 +1,9 @@
 import { Schema, model } from 'mongoose';
 
 const thoughtSchema = new Schema({
+  // Usuario dueño (googleId del User)
+  userId: { type: String, required: true, index: true },
+
   // Identificador del frontend (uuid v4)
   frontendId: { type: String, required: true, unique: true, index: true },
 
