@@ -34,6 +34,9 @@ export default function NodeEditor() {
   const [emotionalLevel, setEmotionalLevel] = useState<EmotionalLevel>('NEUTRALITY');
   const [inNodeIds, setInNodeIds]         = useState<string[]>([]);
   const [outNodeIds, setOutNodeIds]       = useState<string[]>([]);
+  const [tags, setTags]                   = useState<string[]>([]);
+  const [tagInput, setTagInput]           = useState('');
+  const [isFavorite, setIsFavorite]       = useState(false);
 
   // ── Imagen ────────────────────────────────────────────────────────────────
   const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url'>('text');
@@ -63,6 +66,8 @@ export default function NodeEditor() {
       setInNodeIds(inConns);
       setOutNodeIds(outConns);
       setGeneratedImageUrl(selectedNode.imageUrl || null);
+      setTags(selectedNode.tags || []);
+      setIsFavorite(selectedNode.isFavorite || false);
     } else {
       setContent(''); setDescription('');
       setCategory('HEALTH');
@@ -71,7 +76,10 @@ export default function NodeEditor() {
       setInNodeIds([]);
       setOutNodeIds([]);
       setGeneratedImageUrl(null);
+      setTags([]);
+      setIsFavorite(false);
     }
+    setTagInput('');
     setImagePrompt('');
     setImageUrlInput('');
     setRefImageFiles([]);
@@ -184,24 +192,37 @@ export default function NodeEditor() {
         content, description, category, temporalState, emotionalLevel,
         color: isRootNode ? '#FBBF24' : CATEGORY_COLORS[category],
         ...(generatedImageUrl !== null ? { imageUrl: generatedImageUrl } : {}),
+        tags,
+        isFavorite,
       });
 
       if (!isRootNode) {
-        // Eliminar todas las conexiones IN viejas
-        const oldInConns = connections.filter((c) => c.target === selectedNode.id);
-        oldInConns.forEach((c) => deleteConnection(c.id));
-        // Crear las nuevas conexiones IN
-        inNodeIds.forEach((srcId) => {
-          addConnection({ id: uuidv4(), source: srcId, target: selectedNode.id });
-        });
+        // Solo actualizar conexiones si cambiaron
+        const currentInIds = connections.filter((c) => c.target === selectedNode.id).map((c) => c.source);
+        const currentOutIds = connections.filter((c) => c.source === selectedNode.id).map((c) => c.target);
+        
+        const inChanged = JSON.stringify([...inNodeIds].sort()) !== JSON.stringify([...currentInIds].sort());
+        const outChanged = JSON.stringify([...outNodeIds].sort()) !== JSON.stringify([...currentOutIds].sort());
 
-        // Eliminar todas las conexiones OUT viejas
-        const oldOutConns = connections.filter((c) => c.source === selectedNode.id);
-        oldOutConns.forEach((c) => deleteConnection(c.id));
-        // Crear las nuevas conexiones OUT
-        outNodeIds.forEach((tgtId) => {
-          addConnection({ id: uuidv4(), source: selectedNode.id, target: tgtId });
-        });
+        if (inChanged) {
+          // Eliminar todas las conexiones IN viejas
+          const oldInConns = connections.filter((c) => c.target === selectedNode.id);
+          oldInConns.forEach((c) => deleteConnection(c.id));
+          // Crear las nuevas conexiones IN
+          inNodeIds.forEach((srcId) => {
+            addConnection({ id: uuidv4(), source: srcId, target: selectedNode.id });
+          });
+        }
+
+        if (outChanged) {
+          // Eliminar todas las conexiones OUT viejas
+          const oldOutConns = connections.filter((c) => c.source === selectedNode.id);
+          oldOutConns.forEach((c) => deleteConnection(c.id));
+          // Crear las nuevas conexiones OUT
+          outNodeIds.forEach((tgtId) => {
+            addConnection({ id: uuidv4(), source: selectedNode.id, target: tgtId });
+          });
+        }
       }
     } else {
       const newNode: MindverseNode = {
@@ -211,6 +232,8 @@ export default function NodeEditor() {
         color: CATEGORY_COLORS[category],
         createdAt: new Date(),
         ...(generatedImageUrl ? { imageUrl: generatedImageUrl } : {}),
+        tags,
+        isFavorite,
       };
       addNode(newNode);
       // Crear conexiones IN
@@ -374,6 +397,85 @@ export default function NodeEditor() {
                       .map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
                   </select>
                 </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {!isRootNode && (
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Etiquetas</label>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 text-xs rounded-full"
+                      >
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => setTags(tags.filter((_, i) => i !== idx))}
+                          className="hover:text-red-400 transition-colors"
+                        >✕</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && tagInput.trim()) {
+                        e.preventDefault();
+                        const normalized = tagInput.trim().toLowerCase();
+                        if (!tags.includes(normalized)) setTags([...tags, normalized]);
+                        setTagInput('');
+                      }
+                    }}
+                    placeholder="Escribí y presioná Enter"
+                    className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const normalized = tagInput.trim().toLowerCase();
+                      if (normalized && !tags.includes(normalized)) {
+                        setTags([...tags, normalized]);
+                        setTagInput('');
+                      }
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!tagInput.trim()}
+                  >+ Agregar</button>
+                </div>
+              </div>
+            )}
+
+            {/* Favorito */}
+            {!isRootNode && (
+              <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">⭐</span>
+                  <div>
+                    <p className="text-sm font-medium text-slate-300">Marcar como favorito</p>
+                    <p className="text-xs text-slate-500">Destacar este pensamiento</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsFavorite(!isFavorite)}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                    isFavorite ? 'bg-amber-500' : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                      isFavorite ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
             )}
           </>)}

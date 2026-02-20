@@ -24,6 +24,10 @@ const thoughtSchema = new Schema({
   isRoot:    { type: Boolean, default: false },
   imageUrl:  { type: String, default: null },
 
+  // Tags y favoritos
+  tags:       { type: [String], default: [] },
+  isFavorite: { type: Boolean, default: false },
+
   // Conexiones (ids frontendId de otros pensamientos)
   connections: {
     type: [{ source: String, target: String, connectionId: String }],

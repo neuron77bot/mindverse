@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMindverseStore } from '../../store/mindverseStore';
 import { CATEGORY_COLORS, CATEGORY_LABELS, EMOTIONAL_COLORS, HAWKINS_SCALE } from '../../data/mockData';
 import type { MindverseNode } from '../../types';
@@ -60,6 +61,7 @@ function NodeLabels({ node, size = 'md' }: { node: MindverseNode; size?: 'sm' | 
 
 export default function DetailView({ node, onBack, onNavigateToMap }: DetailViewProps) {
   const { nodes, connections, openEditor } = useMindverseStore();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const color    = CATEGORY_COLORS[node.category] || '#6366F1';
   const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || color;
@@ -132,10 +134,30 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
             {/* Info del pensamiento */}
             <div className="p-5 lg:p-6 space-y-4">
               <div>
+                {node.isFavorite && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">⭐</span>
+                    <span className="text-amber-400 text-xs font-semibold uppercase tracking-wide">Favorito</span>
+                  </div>
+                )}
                 <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-3">
                   {node.content}
                 </h1>
                 <NodeLabels node={node} size="md" />
+                
+                {/* Tags */}
+                {node.tags && node.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {node.tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2.5 py-1 bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 text-xs font-medium rounded-full"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {node.description && (
@@ -172,7 +194,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
 
           {/* ── Columna derecha — Pasos ───────────────────────────────────────── */}
           <div className="lg:overflow-y-auto p-4 lg:p-6">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
               <h2 className="text-white font-bold text-lg flex items-center gap-2">
                 Pasos
                 <span
@@ -182,12 +204,41 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                   {steps.length}
                 </span>
               </h2>
-              <button
-                onClick={() => openEditor()}
-                className="text-sm px-3 py-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 rounded-lg font-medium transition-all flex items-center gap-1.5"
-              >
-                + Agregar paso
-              </button>
+              
+              <div className="flex items-center gap-2">
+                {/* Toggle Grid/List */}
+                {steps.length > 0 && (
+                  <div className="flex rounded-lg overflow-hidden border border-slate-700">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`px-2 py-1.5 text-xs font-medium transition-colors ${
+                        viewMode === 'grid' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`px-2 py-1.5 text-xs font-medium transition-colors ${
+                        viewMode === 'list' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                
+                <button
+                  onClick={() => openEditor()}
+                  className="text-sm px-3 py-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 rounded-lg font-medium transition-all flex items-center gap-1.5"
+                >
+                  + Agregar paso
+                </button>
+              </div>
             </div>
 
             {steps.length === 0 ? (
@@ -204,7 +255,67 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                   + Agregar primer paso
                 </button>
               </div>
+            ) : viewMode === 'list' ? (
+              /* ── Vista Lista ───────────────────────────────────────────────── */
+              <div className="space-y-2">
+                {steps.map((step, idx) => {
+                  const stepVibColor = EMOTIONAL_COLORS[step.emotionalLevel] || CATEGORY_COLORS[step.category] || '#6366F1';
+                  return (
+                    <div
+                      key={step.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer hover:shadow-md"
+                      style={{ backgroundColor: `${stepVibColor}08`, borderColor: `${stepVibColor}25` }}
+                      onClick={() => openEditor(step)}
+                    >
+                      {/* Número */}
+                      <div
+                        className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow"
+                        style={{ backgroundColor: stepVibColor }}
+                      >
+                        {idx + 1}
+                      </div>
+                      
+                      {/* Thumbnail */}
+                      <div className="relative shrink-0 w-12 h-12 rounded overflow-hidden">
+                        {step.imageUrl ? (
+                          <img src={step.imageUrl} alt={step.content} className="w-full h-full object-cover" />
+                        ) : (
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={{ background: `linear-gradient(135deg, ${stepVibColor}25 0%, ${stepVibColor}10 100%)` }}
+                          >
+                            <span className="text-[8px] font-semibold tracking-widest uppercase opacity-30 text-white">IMG</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold text-sm mb-1 line-clamp-1">{step.content}</p>
+                        <NodeLabels node={step} size="sm" />
+                      </div>
+
+                      {/* Edit hint */}
+                      <div className="shrink-0 text-slate-500 hover:text-white text-sm transition-colors">
+                        ✏️
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Card "Nuevo paso" en lista */}
+                <button
+                  onClick={() => openEditor()}
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-slate-700 hover:border-indigo-500/60 hover:bg-indigo-500/5 transition-all text-slate-500 hover:text-indigo-400"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-sm font-medium">Nuevo paso</span>
+                </button>
+              </div>
             ) : (
+              /* ── Vista Grid ────────────────────────────────────────────────── */
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                 {steps.map((step, idx) => {
                   const stepVibColor = EMOTIONAL_COLORS[step.emotionalLevel] || CATEGORY_COLORS[step.category] || '#6366F1';

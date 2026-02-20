@@ -22,6 +22,8 @@ const thoughtShape = {
     color:          { type: 'string' },
     isRoot:         { type: 'boolean' },
     imageUrl:       { type: 'string', nullable: true },
+    tags:           { type: 'array', items: { type: 'string' } },
+    isFavorite:     { type: 'boolean' },
     connections:    {
       type: 'array',
       items: {
@@ -53,6 +55,8 @@ const bodyShape = {
     color:          { type: 'string' },
     isRoot:         { type: 'boolean' },
     imageUrl:       { type: 'string', nullable: true },
+    tags:           { type: 'array', items: { type: 'string' } },
+    isFavorite:     { type: 'boolean' },
     connections:    {
       type: 'array',
       items: {
