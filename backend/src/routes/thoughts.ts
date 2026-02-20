@@ -11,7 +11,6 @@ const thoughtShape = {
   type: 'object',
   properties: {
     _id:            { type: 'string' },
-    frontendId:     { type: 'string' },
     content:        { type: 'string' },
     description:    { type: 'string' },
     category:       { type: 'string', enum: CATEGORIES },
@@ -42,9 +41,8 @@ const thoughtShape = {
 
 const bodyShape = {
   type: 'object',
-  required: ['frontendId','content','category','temporalState','emotionalLevel'],
+  required: ['content','category','temporalState','emotionalLevel'],
   properties: {
-    frontendId:     { type: 'string', description: 'UUID generado por el frontend' },
     content:        { type: 'string' },
     description:    { type: 'string' },
     category:       { type: 'string', enum: CATEGORIES },
@@ -108,7 +106,7 @@ export async function thoughtRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>('/:id', {
     schema: {
       tags: ['thoughts'],
-      summary: 'Obtener un pensamiento por frontendId',
+      summary: 'Obtener un pensamiento por _id',
       params: { type: 'object', properties: { id: { type: 'string' } } },
       response: {
         200: { type: 'object', properties: { success: { type: 'boolean' }, data: thoughtShape } },
@@ -118,10 +116,12 @@ export async function thoughtRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     try {
       const userId = req.jwtUser?.sub;
-      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+      if (!userId) return (reply as any).status(401).send({ success: false, error: 'No autorizado' });
       
-      const thought = await Thought.findOne({ frontendId: req.params.id, userId });
-      if (!thought) return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      const thought = await Thought.findById(req.params.id);
+      if (!thought || thought.userId !== userId) {
+        return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      }
       return reply.send({ success: true, data: thought });
     } catch (err: any) {
       return (reply as any).code(500).send({ success: false, error: err.message });
@@ -143,24 +143,23 @@ export async function thoughtRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     try {
       const userId = req.jwtUser?.sub;
-      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+      if (!userId) return (reply as any).status(401).send({ success: false, error: 'No autorizado' });
       
-      const { frontendId, content, description, category, temporalState, emotionalLevel,
+      const { content, description, category, temporalState, emotionalLevel,
               positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections } = req.body;
 
-      if (!frontendId || !content || !category || !temporalState || !emotionalLevel) {
+      if (!content || !category || !temporalState || !emotionalLevel) {
         return reply.status(400).send({ success: false, error: 'Faltan campos requeridos' });
       }
 
       const thought = new Thought({
         userId,
-        frontendId, content, description, category, temporalState, emotionalLevel,
+        content, description, category, temporalState, emotionalLevel,
         positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections,
       });
       await thought.save();
       return reply.status(201).send({ success: true, data: thought });
     } catch (err: any) {
-      if (err.code === 11000) return reply.status(409).send({ success: false, error: 'Ya existe un pensamiento con ese frontendId' });
       return (reply as any).code(500).send({ success: false, error: err.message });
     }
   });
@@ -178,23 +177,27 @@ export async function thoughtRoutes(app: FastifyInstance) {
       response: {
         200: { type: 'object', properties: { success: { type: 'boolean' }, data: thoughtShape } },
         404: errorShape,
+        401: errorShape,
       },
     },
   }, async (req, reply) => {
     try {
       const userId = req.jwtUser?.sub;
-      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+      if (!userId) return (reply as any).status(401).send({ success: false, error: 'No autorizado' });
       
       const { content, description, category, temporalState, emotionalLevel,
               positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections } = req.body;
 
-      const thought = await Thought.findOneAndUpdate(
-        { frontendId: req.params.id, userId },
-        { content, description, category, temporalState, emotionalLevel,
-          positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections },
-        { new: true, runValidators: true }
-      );
-      if (!thought) return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      const thought = await Thought.findById(req.params.id);
+      if (!thought || thought.userId !== userId) {
+        return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      }
+
+      Object.assign(thought, {
+        content, description, category, temporalState, emotionalLevel,
+        positionX, positionY, color, isRoot, imageUrl, tags, isFavorite, connections,
+      });
+      await thought.save();
       return reply.send({ success: true, data: thought });
     } catch (err: any) {
       return (reply as any).code(500).send({ success: false, error: err.message });
@@ -211,19 +214,21 @@ export async function thoughtRoutes(app: FastifyInstance) {
       response: {
         200: { type: 'object', properties: { success: { type: 'boolean' }, data: thoughtShape } },
         404: errorShape,
+        401: errorShape,
       },
     },
   }, async (req, reply) => {
     try {
       const userId = req.jwtUser?.sub;
-      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+      if (!userId) return (reply as any).status(401).send({ success: false, error: 'No autorizado' });
       
-      const thought = await Thought.findOneAndUpdate(
-        { frontendId: req.params.id, userId },
-        { $set: req.body },
-        { new: true, runValidators: true }
-      );
-      if (!thought) return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      const thought = await Thought.findById(req.params.id);
+      if (!thought || thought.userId !== userId) {
+        return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      }
+
+      Object.assign(thought, req.body);
+      await thought.save();
       return reply.send({ success: true, data: thought });
     } catch (err: any) {
       return (reply as any).code(500).send({ success: false, error: err.message });
@@ -239,15 +244,20 @@ export async function thoughtRoutes(app: FastifyInstance) {
       response: {
         200: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } },
         404: errorShape,
+        401: errorShape,
       },
     },
   }, async (req, reply) => {
     try {
       const userId = req.jwtUser?.sub;
-      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+      if (!userId) return (reply as any).status(401).send({ success: false, error: 'No autorizado' });
       
-      const thought = await Thought.findOneAndDelete({ frontendId: req.params.id, userId });
-      if (!thought) return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      const thought = await Thought.findById(req.params.id);
+      if (!thought || thought.userId !== userId) {
+        return reply.status(404).send({ success: false, error: 'Pensamiento no encontrado' });
+      }
+
+      await thought.deleteOne();
       return reply.send({ success: true, message: 'Pensamiento eliminado', data: thought });
     } catch (err: any) {
       return (reply as any).code(500).send({ success: false, error: err.message });
@@ -311,16 +321,32 @@ export async function thoughtRoutes(app: FastifyInstance) {
         return reply.status(400).send({ success: false, error: 'Se esperaba un array en "thoughts"' });
       }
 
-      const ops = thoughts.map((t) => ({
-        updateOne: {
-          filter: { frontendId: t.frontendId, userId },
-          update: { $set: { ...t, userId } },
-          upsert: true,
-        },
-      }));
+      const ops = thoughts.map((t) => {
+        const { _id, ...data } = t;
+        if (_id) {
+          // Update existente
+          return {
+            updateOne: {
+              filter: { _id, userId },
+              update: { $set: { ...data, userId } },
+            },
+          };
+        } else {
+          // Insert nuevo
+          return {
+            insertOne: {
+              document: { ...data, userId },
+            },
+          };
+        }
+      });
 
       const result = await Thought.bulkWrite(ops);
-      return reply.send({ success: true, upserted: result.upsertedCount, modified: result.modifiedCount });
+      return reply.send({ 
+        success: true, 
+        upserted: result.insertedCount ?? 0, 
+        modified: result.modifiedCount ?? 0 
+      });
     } catch (err: any) {
       return (reply as any).code(500).send({ success: false, error: err.message });
     }

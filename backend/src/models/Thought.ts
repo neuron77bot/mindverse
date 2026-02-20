@@ -4,9 +4,6 @@ const thoughtSchema = new Schema({
   // Usuario dueño (googleId del User)
   userId: { type: String, required: true, index: true },
 
-  // Identificador del frontend (uuid v4)
-  frontendId: { type: String, required: true, unique: true, index: true },
-
   content:        { type: String, required: true },
   description:    { type: String, default: '' },
   category:       {

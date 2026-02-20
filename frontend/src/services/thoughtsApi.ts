@@ -13,7 +13,7 @@ const outgoingConns = (nodeId: string, connections: Connection[]) =>
 
 /** Convierte un nodo del backend al formato del store */
 export interface BackendThought {
-  frontendId: string;
+  _id: string;
   content: string;
   description?: string;
   category: string;
@@ -32,7 +32,7 @@ export interface BackendThought {
 
 export function backendToNode(t: BackendThought): MindverseNode {
   return {
-    id:            t.frontendId,
+    id:            t._id,
     content:       t.content,
     description:   t.description ?? '',
     category:      t.category as MindverseNode['category'],
@@ -73,12 +73,11 @@ export async function apiGetThoughts(): Promise<BackendThought[]> {
   return data.data as BackendThought[];
 }
 
-export async function apiCreateThought(node: MindverseNode, connections: Connection[]): Promise<void> {
+export async function apiCreateThought(node: MindverseNode, connections: Connection[]): Promise<{ _id: string }> {
   const res = await fetch(`${API_BASE}/thoughts`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({
-      frontendId:     node.id,
       content:        node.content,
       description:    node.description ?? '',
       category:       node.category,
@@ -98,6 +97,8 @@ export async function apiCreateThought(node: MindverseNode, connections: Connect
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? 'Error al crear pensamiento');
   }
+  const result = await res.json();
+  return { _id: result.data._id };
 }
 
 export async function apiUpdateThought(
@@ -132,7 +133,7 @@ export async function apiDeleteThought(nodeId: string): Promise<void> {
 
 export async function apiBulkSync(nodes: MindverseNode[], connections: Connection[]): Promise<void> {
   const thoughts = nodes.map((node) => ({
-    frontendId:     node.id,
+    _id:            node.id, // _id de MongoDB
     content:        node.content,
     description:    node.description ?? '',
     category:       node.category,

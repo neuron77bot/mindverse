@@ -75,10 +75,28 @@ export const useMindverseStore = create<MindverseStore>()(
       syncStatus: 'idle',
 
       // ── Nodos ────────────────────────────────────────────────────────────────
-      addNode: (node) => {
+      addNode: async (node) => {
+        const tempId = node.id; // UUID temporal
         set((state) => ({ nodes: [...state.nodes, node] }));
-        const { connections } = get();
-        apiCreateThought(node, connections).catch(console.error);
+        
+        try {
+          const { connections } = get();
+          const { _id } = await apiCreateThought(node, connections);
+          
+          // Actualizar el nodo con el _id de MongoDB
+          set((state) => ({
+            nodes: state.nodes.map((n) => n.id === tempId ? { ...n, id: _id } : n),
+            connections: state.connections.map((c) => ({
+              ...c,
+              source: c.source === tempId ? _id : c.source,
+              target: c.target === tempId ? _id : c.target,
+            })),
+          }));
+        } catch (err) {
+          console.error('Error creating thought:', err);
+          // Revertir en caso de error
+          set((state) => ({ nodes: state.nodes.filter((n) => n.id !== tempId) }));
+        }
       },
 
       updateNode: (id, updates) => {
