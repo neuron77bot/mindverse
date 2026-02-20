@@ -27,13 +27,12 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  // Nodos que no tienen conexiones entrantes (top-level)
-  const nodeIdsWithIncomingConns = new Set(connections.map((c) => c.target));
-  const allTopLevelNodes = nodes.filter((n) => !nodeIdsWithIncomingConns.has(n.id));
+  // Nodos marcados como raíz (isRoot=true)
+  const allRootNodes = nodes.filter((n) => n.isRoot === true);
   
   const mainNodes = showOnlyFavorites
-    ? allTopLevelNodes.filter((n) => n.isFavorite)
-    : allTopLevelNodes;
+    ? allRootNodes.filter((n) => n.isFavorite)
+    : allRootNodes;
 
   const getStepCount = (nodeId: string): number => {
     const visited = new Set<string>([nodeId]);
@@ -60,7 +59,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
       <div className="mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">Mis pensamientos</h2>
         <p className="text-slate-400 text-sm">
-          {mainNodes.length} tópicos conectados al Casco Periférico
+          {mainNodes.length} pensamientos raíz
         </p>
       </div>
 

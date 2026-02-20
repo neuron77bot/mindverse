@@ -25,6 +25,7 @@ export interface BackendThought {
   imageUrl?: string | null;
   tags?: string[];
   isFavorite?: boolean;
+  isRoot?: boolean;
   connections: { source: string; target: string; connectionId: string }[];
   createdAt: string;
 }
@@ -43,6 +44,7 @@ export function backendToNode(t: BackendThought): MindverseNode {
     imageUrl:      t.imageUrl ?? undefined,
     tags:          t.tags ?? [],
     isFavorite:    t.isFavorite ?? false,
+    isRoot:        t.isRoot ?? false,
     createdAt:     new Date(t.createdAt),
   };
 }
@@ -87,6 +89,7 @@ export async function apiCreateThought(node: MindverseNode, connections: Connect
       imageUrl:       node.imageUrl ?? null,
       tags:           node.tags ?? [],
       isFavorite:     node.isFavorite ?? false,
+      isRoot:         node.isRoot ?? false,
       connections:    outgoingConns(node.id, connections),
     }),
   });
@@ -142,6 +145,7 @@ export async function apiBulkSync(nodes: MindverseNode[], connections: Connectio
     imageUrl:       node.imageUrl ?? null,
     tags:           node.tags ?? [],
     isFavorite:     node.isFavorite ?? false,
+    isRoot:         node.isRoot ?? false,
     connections:    outgoingConns(node.id, connections),
   }));
   const res = await fetch(`${API_BASE}/thoughts/bulk`, {

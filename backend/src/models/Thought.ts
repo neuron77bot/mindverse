@@ -26,8 +26,9 @@ const thoughtSchema = new Schema({
   // Tags y favoritos
   tags:       { type: [String], default: [] },
   isFavorite: { type: Boolean, default: false },
+  isRoot:     { type: Boolean, default: false },
 
-  // Conexiones (ids frontendId de otros pensamientos)
+  // Conexiones (ids de otros pensamientos)
   connections: {
     type: [{ source: String, target: String, connectionId: String }],
     default: [],

@@ -36,6 +36,7 @@ export default function NodeEditor() {
   const [tags, setTags]                   = useState<string[]>([]);
   const [tagInput, setTagInput]           = useState('');
   const [isFavorite, setIsFavorite]       = useState(false);
+  const [isRoot, setIsRoot]               = useState(false);
 
   // ── Imagen ────────────────────────────────────────────────────────────────
   const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url'>('text');
@@ -66,6 +67,7 @@ export default function NodeEditor() {
       setGeneratedImageUrl(selectedNode.imageUrl || null);
       setTags(selectedNode.tags || []);
       setIsFavorite(selectedNode.isFavorite || false);
+      setIsRoot(selectedNode.isRoot || false);
     } else {
       setContent(''); setDescription('');
       setCategory('HEALTH');
@@ -76,6 +78,7 @@ export default function NodeEditor() {
       setGeneratedImageUrl(null);
       setTags([]);
       setIsFavorite(false);
+      setIsRoot(false);
     }
     setTagInput('');
     setImagePrompt('');
@@ -192,6 +195,7 @@ export default function NodeEditor() {
         ...(generatedImageUrl !== null ? { imageUrl: generatedImageUrl } : {}),
         tags,
         isFavorite,
+        isRoot,
       });
 
       // Solo actualizar conexiones si cambiaron
@@ -230,6 +234,7 @@ export default function NodeEditor() {
         ...(generatedImageUrl ? { imageUrl: generatedImageUrl } : {}),
         tags,
         isFavorite,
+        isRoot,
       };
       addNode(newNode);
       // Crear conexiones IN
@@ -461,6 +466,30 @@ export default function NodeEditor() {
                   <span
                     className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
                       isFavorite ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+            {/* Pensamiento Raíz */}
+            <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🌱</span>
+                  <div>
+                    <p className="text-sm font-medium text-slate-300">Pensamiento raíz</p>
+                    <p className="text-xs text-slate-500">Se mostrará en la página principal</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsRoot(!isRoot)}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                    isRoot ? 'bg-green-500' : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                      isRoot ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
                 </button>
