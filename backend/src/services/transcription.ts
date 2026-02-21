@@ -25,7 +25,53 @@ export interface ThoughtStep {
 
 export interface AnalysisResult {
   steps: ThoughtStep[];
+  mermaid: string;
   duration: number;
+}
+
+/**
+ * Genera un diagrama Mermaid flowchart a partir de los steps
+ */
+function generateMermaidDiagram(steps: ThoughtStep[]): string {
+  const lines: string[] = ['flowchart TD'];
+  lines.push('  Start([Inicio])');
+  
+  steps.forEach((step, idx) => {
+    const stepId = `Step${idx + 1}`;
+    const stepLabel = step.step.replace(/"/g, '\\"');
+    lines.push(`  ${stepId}["${stepLabel}"]`);
+    
+    // Conectar con el paso anterior o con Start
+    if (idx === 0) {
+      lines.push(`  Start --> ${stepId}`);
+    } else {
+      lines.push(`  Step${idx} --> ${stepId}`);
+    }
+    
+    // Agregar acciones como nodos secundarios
+    step.actions.forEach((action, actionIdx) => {
+      const actionId = `Action${idx + 1}_${actionIdx + 1}`;
+      const actionLabel = action.replace(/"/g, '\\"');
+      lines.push(`  ${actionId}["✓ ${actionLabel}"]`);
+      lines.push(`  ${stepId} -.-> ${actionId}`);
+      
+      // Aplicar estilos a las acciones (verde brillante con texto negro)
+      lines.push(`  style ${actionId} fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000000`);
+    });
+    
+    // Aplicar estilos a los pasos (azul brillante con texto negro)
+    lines.push(`  style ${stepId} fill:#3b82f6,stroke:#2563eb,stroke-width:3px,color:#000000`);
+  });
+  
+  // Agregar nodo final
+  lines.push('  End([Fin])');
+  lines.push(`  Step${steps.length} --> End`);
+  
+  // Estilos para inicio y fin (amarillo y verde brillante con texto negro)
+  lines.push('  style Start fill:#fbbf24,stroke:#f59e0b,stroke-width:3px,color:#000000');
+  lines.push('  style End fill:#10b981,stroke:#059669,stroke-width:3px,color:#000000');
+  
+  return lines.join('\n');
 }
 
 /**
@@ -100,7 +146,7 @@ Responde únicamente con el JSON, sin texto adicional.`;
 
   try {
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
     });
 
@@ -136,7 +182,8 @@ Responde únicamente con el JSON, sin texto adicional.`;
       }];
     }
 
-    return { steps, duration };
+    const mermaid = generateMermaidDiagram(steps);
+    return { steps, mermaid, duration };
   } catch (error: any) {
     throw new Error(`Error en análisis con Gemini: ${error.message}`);
   }
@@ -216,7 +263,8 @@ Responde en formato JSON.`;
       }];
     }
 
-    return { steps, duration };
+    const mermaid = generateMermaidDiagram(steps);
+    return { steps, mermaid, duration };
   } catch (error: any) {
     throw new Error(`Error en análisis con fal.ai: ${error.message}`);
   }

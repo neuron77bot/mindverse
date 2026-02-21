@@ -6,29 +6,36 @@ interface MermaidDiagramProps {
   className?: string;
 }
 
-// Inicializar Mermaid con tema oscuro
+// Inicializar Mermaid con tema oscuro y alto contraste
 mermaid.initialize({
   startOnLoad: false,
   theme: 'dark',
   themeVariables: {
-    primaryColor: '#6366f1',
-    primaryTextColor: '#fff',
-    primaryBorderColor: '#818cf8',
-    lineColor: '#64748b',
+    primaryColor: '#3b82f6',
+    primaryTextColor: '#000000',
+    primaryBorderColor: '#2563eb',
+    lineColor: '#94a3b8',
     secondaryColor: '#8b5cf6',
     tertiaryColor: '#0ea5e9',
     background: '#1e293b',
-    mainBkg: '#1e293b',
-    secondBkg: '#334155',
-    border1: '#475569',
-    border2: '#64748b',
+    mainBkg: '#3b82f6',
+    secondBkg: '#8b5cf6',
+    border1: '#2563eb',
+    border2: '#7c3aed',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontSize: '16px',
+    nodeBorder: '#2563eb',
+    clusterBkg: '#334155',
+    clusterBorder: '#64748b',
+    textColor: '#000000',
+    titleColor: '#ffffff',
   },
   flowchart: {
     curve: 'basis',
     padding: 20,
     nodeSpacing: 60,
     rankSpacing: 80,
+    htmlLabels: true,
   },
 });
 

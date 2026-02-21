@@ -82,6 +82,7 @@ export async function transcriptionRoutes(app: FastifyInstance) {
                 },
               },
             },
+            mermaid: { type: 'string' },
             duration: { type: 'number' },
           },
         },
@@ -106,6 +107,7 @@ export async function transcriptionRoutes(app: FastifyInstance) {
       return reply.send({
         success: true,
         steps: result.steps,
+        mermaid: result.mermaid,
         duration: result.duration,
       });
     } catch (err: any) {
