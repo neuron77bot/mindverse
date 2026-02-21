@@ -269,14 +269,12 @@ export default function NodeEditor() {
 
   const selectClass = "w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors";
 
-  // Lógica de habilitación según reglas de isRoot
+  // Lógica de visibilidad según reglas de isRoot
   const isEditingRoot = selectedNode?.isRoot === true;
   const isCreatingFromHome = !selectedNode && !parentNodeId;
-  const isCreatingFromDetail = !selectedNode && !!parentNodeId;
   
-  const disableInConnections = isEditingRoot || isCreatingFromHome || isCreatingFromDetail;
-  const disableOutConnections = isCreatingFromHome;
-  const disableIsRootToggle = true; // Siempre deshabilitado (se define en creación)
+  const showInOut = !isCreatingFromHome; // Ocultar IN/OUT cuando se crea desde Home
+  const showIn = !isEditingRoot; // Ocultar IN al editar pensamiento raíz
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
@@ -339,50 +337,50 @@ export default function NodeEditor() {
             </div>
 
             {/* IN / OUT */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {showInOut && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* IN connections */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">→ IN (Padres)</label>
-                  {inNodeIds.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {inNodeIds.map((nodeId) => {
-                        const node = nodes.find((n) => n.id === nodeId);
-                        return (
-                          <span
-                            key={nodeId}
-                            className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 text-xs rounded-md"
-                          >
-                            {node?.content || nodeId}
-                            {!disableInConnections && (
+                {showIn && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">→ IN (Padres)</label>
+                    {inNodeIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {inNodeIds.map((nodeId) => {
+                          const node = nodes.find((n) => n.id === nodeId);
+                          return (
+                            <span
+                              key={nodeId}
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 text-xs rounded-md"
+                            >
+                              {node?.content || nodeId}
                               <button
                                 type="button"
                                 onClick={() => setInNodeIds(inNodeIds.filter((id) => id !== nodeId))}
                                 className="hover:text-red-400 transition-colors"
                               >✕</button>
-                            )}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <select
-                    value=""
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val && !inNodeIds.includes(val)) setInNodeIds([...inNodeIds, val]);
-                    }}
-                    className={selectClass}
-                    disabled={disableInConnections}
-                  >
-                    <option value="">+ Agregar padre</option>
-                    {otherNodes
-                      .filter((n) => !inNodeIds.includes(n.id))
-                      .map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
-                  </select>
-                </div>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val && !inNodeIds.includes(val)) setInNodeIds([...inNodeIds, val]);
+                      }}
+                      className={selectClass}
+                    >
+                      <option value="">+ Agregar padre</option>
+                      {otherNodes
+                        .filter((n) => !inNodeIds.includes(n.id))
+                        .map((n) => <option key={n.id} value={n.id}>{n.content}</option>)}
+                    </select>
+                  </div>
+                )}
 
                 {/* OUT connections */}
-                <div>
+                <div className={showIn ? '' : 'col-span-2'}>
                   <label className="block text-sm font-medium text-slate-300 mb-2">→ OUT (Hijos)</label>
                   {outNodeIds.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -394,13 +392,11 @@ export default function NodeEditor() {
                             className="inline-flex items-center gap-1 px-2 py-1 bg-purple-600/20 border border-purple-500/40 text-purple-300 text-xs rounded-md"
                           >
                             {node?.content || nodeId}
-                            {!disableOutConnections && (
-                              <button
-                                type="button"
-                                onClick={() => setOutNodeIds(outNodeIds.filter((id) => id !== nodeId))}
-                                className="hover:text-red-400 transition-colors"
-                              >✕</button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => setOutNodeIds(outNodeIds.filter((id) => id !== nodeId))}
+                              className="hover:text-red-400 transition-colors"
+                            >✕</button>
                           </span>
                         );
                       })}
@@ -413,7 +409,6 @@ export default function NodeEditor() {
                       if (val && !outNodeIds.includes(val)) setOutNodeIds([...outNodeIds, val]);
                     }}
                     className={selectClass}
-                    disabled={disableOutConnections}
                   >
                     <option value="">+ Agregar hijo</option>
                     {otherNodes
@@ -422,6 +417,7 @@ export default function NodeEditor() {
                   </select>
                 </div>
               </div>
+            )}
 
             {/* Tags */}
             <div>
@@ -493,35 +489,6 @@ export default function NodeEditor() {
                   <span
                     className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
                       isFavorite ? 'translate-x-6' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-            {/* Pensamiento Raíz */}
-            <div className="flex items-center justify-between p-3 bg-slate-900/40 border border-slate-700 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🌱</span>
-                  <div>
-                    <p className="text-sm font-medium text-slate-300">Pensamiento raíz</p>
-                    <p className="text-xs text-slate-500">
-                      {isCreatingFromHome && "Se mostrará en la página principal"}
-                      {isCreatingFromDetail && "Los pasos siempre son hijos (no raíz)"}
-                      {selectedNode && (isRoot ? "Pensamiento raíz (no se puede cambiar)" : "Pensamiento hijo (no se puede cambiar)")}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => !disableIsRootToggle && setIsRoot(!isRoot)}
-                  disabled={disableIsRootToggle}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
-                    disableIsRootToggle ? 'opacity-50 cursor-not-allowed' : ''
-                  } ${isRoot ? 'bg-green-500' : 'bg-slate-700'}`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                      isRoot ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
                 </button>
