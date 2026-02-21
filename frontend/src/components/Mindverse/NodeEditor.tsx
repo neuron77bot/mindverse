@@ -23,7 +23,7 @@ export default function NodeEditor() {
   const {
     isEditorOpen, selectedNode, nodes, connections, closeEditor,
     addNode, updateNode, deleteNode, addConnection, deleteConnection,
-    activeTemporalFilter,
+    activeTemporalFilter, parentNodeId,
   } = useMindverseStore();
 
   const [content, setContent]             = useState('');
@@ -55,6 +55,7 @@ export default function NodeEditor() {
 
   useEffect(() => {
     if (selectedNode) {
+      // EDICIÓN: cargar datos del nodo existente
       setContent(selectedNode.content);
       setDescription(selectedNode.description || '');
       setCategory(selectedNode.category);
@@ -62,23 +63,34 @@ export default function NodeEditor() {
       setEmotionalLevel(selectedNode.emotionalLevel || 'NEUTRALITY');
       const inConns  = connections.filter((c) => c.target === selectedNode.id).map((c) => c.source);
       const outConns = connections.filter((c) => c.source === selectedNode.id).map((c) => c.target);
-      setInNodeIds(inConns);
+      // Si es raíz, forzar IN vacío
+      setInNodeIds(selectedNode.isRoot ? [] : inConns);
       setOutNodeIds(outConns);
       setGeneratedImageUrl(selectedNode.imageUrl || null);
       setTags(selectedNode.tags || []);
       setIsFavorite(selectedNode.isFavorite || false);
       setIsRoot(selectedNode.isRoot || false);
     } else {
+      // CREACIÓN: inicializar según contexto
       setContent(''); setDescription('');
       setCategory('HEALTH');
       setTemporalState(activeTemporalFilter === 'ALL' ? 'PRESENT' : activeTemporalFilter);
       setEmotionalLevel('NEUTRALITY');
-      setInNodeIds([]);
-      setOutNodeIds([]);
       setGeneratedImageUrl(null);
       setTags([]);
       setIsFavorite(false);
-      setIsRoot(false);
+      
+      if (parentNodeId) {
+        // Crear desde Detail: hijo del pensamiento actual
+        setInNodeIds([parentNodeId]);
+        setOutNodeIds([]);
+        setIsRoot(false);
+      } else {
+        // Crear desde Home: pensamiento raíz sin conexiones
+        setInNodeIds([]);
+        setOutNodeIds([]);
+        setIsRoot(true);
+      }
     }
     setTagInput('');
     setImagePrompt('');
@@ -88,7 +100,7 @@ export default function NodeEditor() {
     setImageError(null);
     setImageMode('text');
     setActiveTab('general');
-  }, [selectedNode, activeTemporalFilter, connections]);
+  }, [selectedNode, activeTemporalFilter, connections, parentNodeId]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const readAsDataURL = (file: File): Promise<string> =>
@@ -257,6 +269,15 @@ export default function NodeEditor() {
 
   const selectClass = "w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors";
 
+  // Lógica de habilitación según reglas de isRoot
+  const isEditingRoot = selectedNode?.isRoot === true;
+  const isCreatingFromHome = !selectedNode && !parentNodeId;
+  const isCreatingFromDetail = !selectedNode && !!parentNodeId;
+  
+  const disableInConnections = isEditingRoot || isCreatingFromHome || isCreatingFromDetail;
+  const disableOutConnections = isCreatingFromHome;
+  const disableIsRootToggle = true; // Siempre deshabilitado (se define en creación)
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md lg:max-w-2xl mx-4 overflow-hidden border border-slate-700 max-h-[90vh] flex flex-col">
@@ -332,11 +353,13 @@ export default function NodeEditor() {
                             className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-600/20 border border-indigo-500/40 text-indigo-300 text-xs rounded-md"
                           >
                             {node?.content || nodeId}
-                            <button
-                              type="button"
-                              onClick={() => setInNodeIds(inNodeIds.filter((id) => id !== nodeId))}
-                              className="hover:text-red-400 transition-colors"
-                            >✕</button>
+                            {!disableInConnections && (
+                              <button
+                                type="button"
+                                onClick={() => setInNodeIds(inNodeIds.filter((id) => id !== nodeId))}
+                                className="hover:text-red-400 transition-colors"
+                              >✕</button>
+                            )}
                           </span>
                         );
                       })}
@@ -349,6 +372,7 @@ export default function NodeEditor() {
                       if (val && !inNodeIds.includes(val)) setInNodeIds([...inNodeIds, val]);
                     }}
                     className={selectClass}
+                    disabled={disableInConnections}
                   >
                     <option value="">+ Agregar padre</option>
                     {otherNodes
@@ -370,11 +394,13 @@ export default function NodeEditor() {
                             className="inline-flex items-center gap-1 px-2 py-1 bg-purple-600/20 border border-purple-500/40 text-purple-300 text-xs rounded-md"
                           >
                             {node?.content || nodeId}
-                            <button
-                              type="button"
-                              onClick={() => setOutNodeIds(outNodeIds.filter((id) => id !== nodeId))}
-                              className="hover:text-red-400 transition-colors"
-                            >✕</button>
+                            {!disableOutConnections && (
+                              <button
+                                type="button"
+                                onClick={() => setOutNodeIds(outNodeIds.filter((id) => id !== nodeId))}
+                                className="hover:text-red-400 transition-colors"
+                              >✕</button>
+                            )}
                           </span>
                         );
                       })}
@@ -387,6 +413,7 @@ export default function NodeEditor() {
                       if (val && !outNodeIds.includes(val)) setOutNodeIds([...outNodeIds, val]);
                     }}
                     className={selectClass}
+                    disabled={disableOutConnections}
                   >
                     <option value="">+ Agregar hijo</option>
                     {otherNodes
@@ -477,15 +504,20 @@ export default function NodeEditor() {
                   <span className="text-lg">🌱</span>
                   <div>
                     <p className="text-sm font-medium text-slate-300">Pensamiento raíz</p>
-                    <p className="text-xs text-slate-500">Se mostrará en la página principal</p>
+                    <p className="text-xs text-slate-500">
+                      {isCreatingFromHome && "Se mostrará en la página principal"}
+                      {isCreatingFromDetail && "Los pasos siempre son hijos (no raíz)"}
+                      {selectedNode && (isRoot ? "Pensamiento raíz (no se puede cambiar)" : "Pensamiento hijo (no se puede cambiar)")}
+                    </p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsRoot(!isRoot)}
+                  onClick={() => !disableIsRootToggle && setIsRoot(!isRoot)}
+                  disabled={disableIsRootToggle}
                   className={`relative w-12 h-6 rounded-full transition-colors ${
-                    isRoot ? 'bg-green-500' : 'bg-slate-700'
-                  }`}
+                    disableIsRootToggle ? 'opacity-50 cursor-not-allowed' : ''
+                  } ${isRoot ? 'bg-green-500' : 'bg-slate-700'}`}
                 >
                   <span
                     className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${

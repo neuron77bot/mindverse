@@ -29,6 +29,7 @@ interface MindverseStore {
   layoutDirection: LayoutDirection;
   focusedNodeId: string | null;
   syncStatus: 'idle' | 'syncing' | 'error';
+  parentNodeId: string | null; // Para crear hijo desde Detail
 
   // Acciones - Pensamientos
   addNode: (node: MindverseNode) => void;
@@ -48,7 +49,7 @@ interface MindverseStore {
 
   // Acciones - Editor
   setSelectedNode: (node: MindverseNode | null) => void;
-  openEditor: (node?: MindverseNode) => void;
+  openEditor: (node?: MindverseNode, parentNodeId?: string) => void;
   closeEditor: () => void;
 
   // Acciones - Utilidades
@@ -72,6 +73,7 @@ export const useMindverseStore = create<MindverseStore>()(
       layoutDirection: 'LR',
       focusedNodeId: null,
       syncStatus: 'idle',
+      parentNodeId: null,
 
       // ── Nodos ────────────────────────────────────────────────────────────────
       addNode: async (node) => {
@@ -153,8 +155,12 @@ export const useMindverseStore = create<MindverseStore>()(
 
       // ── Editor ────────────────────────────────────────────────────────────────
       setSelectedNode: (node) => set({ selectedNode: node }),
-      openEditor:  (node) => set({ selectedNode: node || null, isEditorOpen: true }),
-      closeEditor: ()     => set({ selectedNode: null, isEditorOpen: false }),
+      openEditor:  (node, parentNodeId) => set({ 
+        selectedNode: node || null, 
+        isEditorOpen: true,
+        parentNodeId: parentNodeId || null 
+      }),
+      closeEditor: ()     => set({ selectedNode: null, isEditorOpen: false, parentNodeId: null }),
 
       // ── Getters ───────────────────────────────────────────────────────────────
       getFilteredNodes: () => {

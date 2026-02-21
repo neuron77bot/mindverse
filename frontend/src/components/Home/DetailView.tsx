@@ -283,7 +283,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                 )}
                 
                 <button
-                  onClick={() => openEditor()}
+                  onClick={() => openEditor(undefined, node.id)}
                   className="text-sm px-3 py-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 rounded-lg font-medium transition-all flex items-center gap-1.5"
                 >
                   + Agregar paso
@@ -299,7 +299,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                 <p className="text-slate-400 font-medium mb-1">Sin pasos definidos</p>
                 <p className="text-slate-600 text-sm mb-5">Agregá el primer paso para este pensamiento</p>
                 <button
-                  onClick={() => openEditor()}
+                  onClick={() => openEditor(undefined, node.id)}
                   className="text-sm px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-all font-medium"
                 >
                   + Agregar primer paso
@@ -360,7 +360,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                 
                 {/* Card "Nuevo paso" en lista */}
                 <button
-                  onClick={() => openEditor()}
+                  onClick={() => openEditor(undefined, node.id)}
                   className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-slate-700 hover:border-indigo-500/60 hover:bg-indigo-500/5 transition-all text-slate-500 hover:text-indigo-400"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -429,7 +429,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
 
                 {/* Card "Nuevo paso" */}
                 <button
-                  onClick={() => openEditor()}
+                  onClick={() => openEditor(undefined, node.id)}
                   className="rounded-xl border-2 border-dashed border-slate-700 hover:border-indigo-500/60 hover:bg-indigo-500/5 transition-all duration-200 group flex flex-col items-center justify-center gap-3 h-full min-h-48 cursor-pointer"
                 >
                   <div className="w-10 h-10 rounded-full bg-slate-800 group-hover:bg-indigo-600/20 border border-slate-600 group-hover:border-indigo-500/50 flex items-center justify-center transition-all">
