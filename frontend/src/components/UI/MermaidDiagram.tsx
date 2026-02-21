@@ -69,7 +69,7 @@ export default function MermaidDiagram({ chart, className = '' }: MermaidDiagram
       <TransformWrapper
         initialScale={1}
         minScale={0.5}
-        maxScale={3}
+        maxScale={50}
         centerOnInit
         wheel={{ step: 0.1 }}
       >
