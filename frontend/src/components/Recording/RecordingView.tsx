@@ -12,6 +12,14 @@ interface ThoughtStep {
   actions: string[];
 }
 
+interface StepRefinement {
+  explanation: string;
+  substeps: {
+    substep: string;
+    details: string[];
+  }[];
+}
+
 export default function RecordingView() {
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
@@ -22,6 +30,9 @@ export default function RecordingView() {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysis, setAnalysis] = useState<ThoughtStep[] | null>(null);
   const [mermaidDiagram, setMermaidDiagram] = useState<string | null>(null);
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  const [stepRefinements, setStepRefinements] = useState<Map<number, StepRefinement>>(new Map());
+  const [refiningStep, setRefiningStep] = useState<number | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -142,6 +153,9 @@ export default function RecordingView() {
     setDuration(0);
     setError(null);
     setAnalysis(null);
+    setMermaidDiagram(null);
+    setExpandedSteps(new Set());
+    setStepRefinements(new Map());
     chunksRef.current = [];
     timerRef.current = 0;
   };
@@ -176,12 +190,60 @@ export default function RecordingView() {
     }
   };
 
+  const refineStepFunc = async (stepIndex: number, step: ThoughtStep) => {
+    setRefiningStep(stepIndex);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/transcription/refine-step`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          step: step.step,
+          actions: step.actions,
+          context: inputMode === 'voice' ? transcription : textInput,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Error al refinar paso');
+      }
+
+      const data = await res.json();
+      const newRefinements = new Map(stepRefinements);
+      newRefinements.set(stepIndex, data.refinement);
+      setStepRefinements(newRefinements);
+
+      const newExpanded = new Set(expandedSteps);
+      newExpanded.add(stepIndex);
+      setExpandedSteps(newExpanded);
+    } catch (err: any) {
+      console.error('Error al refinar paso:', err);
+      setError('Error al refinar paso: ' + err.message);
+    } finally {
+      setRefiningStep(null);
+    }
+  };
+
+  const toggleStepExpansion = (stepIndex: number) => {
+    const newExpanded = new Set(expandedSteps);
+    if (newExpanded.has(stepIndex)) {
+      newExpanded.delete(stepIndex);
+    } else {
+      newExpanded.add(stepIndex);
+    }
+    setExpandedSteps(newExpanded);
+  };
+
   const handleModeChange = (mode: InputMode) => {
     if (recordingState !== 'idle') return; // No cambiar modo durante grabación
     setInputMode(mode);
     setError(null);
     setAnalysis(null);
     setMermaidDiagram(null);
+    setExpandedSteps(new Set());
+    setStepRefinements(new Map());
   };
 
   const formatDuration = (seconds: number) => {
@@ -431,6 +493,8 @@ export default function RecordingView() {
                 onClick={() => {
                   setAnalysis(null);
                   setMermaidDiagram(null);
+                  setExpandedSteps(new Set());
+                  setStepRefinements(new Map());
                 }}
                 className="text-slate-400 hover:text-white transition-colors"
                 title="Cerrar análisis"
@@ -449,10 +513,43 @@ export default function RecordingView() {
                       {idx + 1}
                     </div>
                     <h4 className="text-white font-medium flex-1">{item.step}</h4>
+                    
+                    {/* Botón Expandir/Refinar */}
+                    <div className="flex gap-2">
+                      {stepRefinements.has(idx) && (
+                        <button
+                          onClick={() => toggleStepExpansion(idx)}
+                          className="text-slate-400 hover:text-white transition-colors"
+                          title={expandedSteps.has(idx) ? "Contraer" : "Expandir"}
+                        >
+                          <svg className={`w-5 h-5 transition-transform ${expandedSteps.has(idx) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={() => refineStepFunc(idx, item)}
+                        disabled={refiningStep === idx}
+                        className="text-purple-400 hover:text-purple-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Refinar paso con más detalle"
+                      >
+                        {refiningStep === idx ? (
+                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
                   
                   {item.actions && item.actions.length > 0 && (
-                    <div className="ml-9 space-y-2">
+                    <div className="ml-9 space-y-2 mb-3">
                       {item.actions.map((action, actionIdx) => (
                         <div key={actionIdx} className="flex items-start gap-2 text-slate-300 text-sm">
                           <svg className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -461,6 +558,45 @@ export default function RecordingView() {
                           <span>{action}</span>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Refinamiento expandido */}
+                  {stepRefinements.has(idx) && expandedSteps.has(idx) && (
+                    <div className="ml-9 mt-4 p-4 bg-slate-900/50 rounded-lg border border-purple-500/30">
+                      <div className="mb-3">
+                        <h5 className="text-purple-400 text-sm font-medium mb-1 flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Análisis detallado
+                        </h5>
+                        <p className="text-slate-400 text-sm">{stepRefinements.get(idx)!.explanation}</p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {stepRefinements.get(idx)!.substeps.map((substep, subIdx) => (
+                          <div key={subIdx} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
+                            <div className="flex items-start gap-2 mb-2">
+                              <div className="w-5 h-5 rounded bg-purple-600/30 flex items-center justify-center text-purple-400 text-xs font-bold shrink-0 mt-0.5">
+                                {subIdx + 1}
+                              </div>
+                              <h6 className="text-white text-sm font-medium">{substep.substep}</h6>
+                            </div>
+                            
+                            {substep.details && substep.details.length > 0 && (
+                              <div className="ml-7 space-y-1">
+                                {substep.details.map((detail, detailIdx) => (
+                                  <div key={detailIdx} className="flex items-start gap-2 text-slate-400 text-xs">
+                                    <span className="text-purple-400 mt-0.5">•</span>
+                                    <span>{detail}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

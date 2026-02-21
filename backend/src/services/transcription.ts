@@ -29,6 +29,19 @@ export interface AnalysisResult {
   duration: number;
 }
 
+export interface StepRefinement {
+  explanation: string;
+  substeps: {
+    substep: string;
+    details: string[];
+  }[];
+}
+
+export interface RefinementResult {
+  refinement: StepRefinement;
+  duration: number;
+}
+
 /**
  * Genera un diagrama Mermaid flowchart a partir de los steps
  */
@@ -281,5 +294,186 @@ export async function analyzeThought(thoughtText: string): Promise<AnalysisResul
     return analyzeWithGemini(thoughtText);
   } else {
     return analyzeWithFal(thoughtText);
+  }
+}
+
+/**
+ * Refina un paso específico para obtener más detalle y sub-pasos
+ */
+async function refineStepWithGemini(step: string, actions: string[], context?: string): Promise<RefinementResult> {
+  if (!genAI) {
+    throw new Error('Gemini no está configurado. Falta GEMINI_API_KEY.');
+  }
+
+  const startTime = Date.now();
+
+  const systemPrompt = `Eres un asistente experto en planificación y desglose de tareas complejas.
+Tu trabajo es tomar un paso de un plan y desglosarlo en sub-pasos más específicos y detallados.
+
+Responde SIEMPRE en formato JSON válido con la siguiente estructura:
+{
+  "explanation": "Por qué este paso requiere estos sub-pasos",
+  "substeps": [
+    {
+      "substep": "Descripción del sub-paso",
+      "details": ["Detalle específico 1", "Detalle específico 2"]
+    }
+  ]
+}
+
+Características de tu refinamiento:
+- Desglosa el paso en 3-5 sub-pasos concretos
+- Cada sub-paso debe tener 2-4 detalles específicos
+- Mantiene la coherencia con las acciones originales
+- Agrega información que faltaba en el análisis inicial
+- Usa lenguaje claro y directo
+- Responde en español`;
+
+  const actionsText = actions.length > 0 ? `\nAcciones actuales:\n${actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}` : '';
+  const contextText = context ? `\n\nContexto adicional: ${context}` : '';
+
+  const userPrompt = `Refina y desglosa el siguiente paso en sub-pasos más detallados:
+
+"${step}"${actionsText}${contextText}
+
+Responde únicamente con el JSON, sin texto adicional.`;
+
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: systemPrompt,
+    });
+
+    const result = await model.generateContent(userPrompt);
+    const response = result.response;
+    const responseText = response.text();
+    const duration = Date.now() - startTime;
+
+    // Parsear respuesta JSON
+    let refinement: StepRefinement = {
+      explanation: '',
+      substeps: [],
+    };
+
+    try {
+      let cleanedText = responseText.trim();
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```$/g, '').trim();
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/```\n?/g, '').replace(/```$/g, '').trim();
+      }
+
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        refinement = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No se encontró JSON válido en la respuesta');
+      }
+    } catch (parseError) {
+      console.error('Error parseando respuesta de Gemini:', parseError);
+      console.error('Respuesta completa:', responseText);
+      refinement = {
+        explanation: 'No se pudo refinar el paso automáticamente',
+        substeps: [{
+          substep: step,
+          details: actions.length > 0 ? actions : [responseText || 'Sin detalles disponibles'],
+        }],
+      };
+    }
+
+    return { refinement, duration };
+  } catch (error: any) {
+    throw new Error(`Error en refinamiento con Gemini: ${error.message}`);
+  }
+}
+
+async function refineStepWithFal(step: string, actions: string[], context?: string): Promise<RefinementResult> {
+  const startTime = Date.now();
+
+  const systemPrompt = `Eres un asistente experto en planificación y desglose de tareas complejas.
+Tu trabajo es tomar un paso de un plan y desglosarlo en sub-pasos más específicos y detallados.
+
+Responde SIEMPRE en formato JSON válido con la siguiente estructura:
+{
+  "explanation": "Por qué este paso requiere estos sub-pasos",
+  "substeps": [
+    {
+      "substep": "Descripción del sub-paso",
+      "details": ["Detalle específico 1", "Detalle específico 2"]
+    }
+  ]
+}`;
+
+  const actionsText = actions.length > 0 ? `\nAcciones actuales:\n${actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}` : '';
+  const contextText = context ? `\n\nContexto adicional: ${context}` : '';
+
+  const userPrompt = `Refina y desglosa el siguiente paso:
+
+"${step}"${actionsText}${contextText}
+
+Responde en formato JSON.`;
+
+  try {
+    const result = await fal.subscribe(LLM_MODEL, {
+      input: {
+        prompt: `${systemPrompt}\n\n${userPrompt}`,
+        max_tokens: 2000,
+        temperature: 0.7,
+      },
+    });
+
+    let responseText = '';
+    if ((result.data as any)?.output) {
+      responseText = (result.data as any).output;
+    } else if ((result.data as any)?.text) {
+      responseText = (result.data as any).text;
+    } else if (typeof result.data === 'string') {
+      responseText = result.data;
+    } else {
+      responseText = JSON.stringify(result.data);
+    }
+
+    const duration = Date.now() - startTime;
+
+    let refinement: StepRefinement = {
+      explanation: '',
+      substeps: [],
+    };
+
+    try {
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        refinement = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No se encontró JSON válido');
+      }
+    } catch (parseError) {
+      console.error('Error parseando respuesta:', parseError);
+      refinement = {
+        explanation: 'No se pudo refinar el paso',
+        substeps: [{
+          substep: step,
+          details: actions.length > 0 ? actions : [responseText],
+        }],
+      };
+    }
+
+    return { refinement, duration };
+  } catch (error: any) {
+    throw new Error(`Error en refinamiento con fal.ai: ${error.message}`);
+  }
+}
+
+/**
+ * Refina un paso específico del análisis
+ * Usa el provider configurado (Gemini por defecto, fal.ai como alternativa)
+ */
+export async function refineStep(step: string, actions: string[], context?: string): Promise<RefinementResult> {
+  console.log(`[LLM] Refinando paso con provider: ${LLM_PROVIDER}`);
+
+  if (LLM_PROVIDER === 'gemini') {
+    return refineStepWithGemini(step, actions, context);
+  } else {
+    return refineStepWithFal(step, actions, context);
   }
 }

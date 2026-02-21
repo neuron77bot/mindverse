@@ -115,4 +115,72 @@ export async function transcriptionRoutes(app: FastifyInstance) {
       return reply.status(500).send({ success: false, error: err.message });
     }
   });
+
+  // POST /transcription/refine-step - Refinar/expandir un paso específico
+  app.post<{ Body: { step: string; actions: string[]; context?: string } }>('/refine-step', {
+    schema: {
+      tags: ['transcription'],
+      summary: 'Refinar un paso del análisis para obtener más detalle',
+      body: {
+        type: 'object',
+        required: ['step', 'actions'],
+        properties: {
+          step: { type: 'string', description: 'Descripción del paso a refinar' },
+          actions: { type: 'array', items: { type: 'string' }, description: 'Acciones actuales del paso' },
+          context: { type: 'string', description: 'Contexto adicional (opcional)' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            refinement: {
+              type: 'object',
+              properties: {
+                explanation: { type: 'string' },
+                substeps: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      substep: { type: 'string' },
+                      details: { type: 'array', items: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+            },
+            duration: { type: 'number' },
+          },
+        },
+        400: errorShape,
+        401: errorShape,
+        500: errorShape,
+      },
+    },
+  }, async (req, reply) => {
+    try {
+      const userId = req.jwtUser?.sub;
+      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+
+      const { step, actions, context } = req.body;
+      if (!step?.trim()) {
+        return reply.status(400).send({ success: false, error: 'El paso es requerido' });
+      }
+
+      // Importar función de refinamiento
+      const { refineStep } = await import('../services/transcription');
+      const result = await refineStep(step, actions, context);
+
+      return reply.send({
+        success: true,
+        refinement: result.refinement,
+        duration: result.duration,
+      });
+    } catch (err: any) {
+      console.error('Error en refinamiento:', err);
+      return reply.status(500).send({ success: false, error: err.message });
+    }
+  });
 }
