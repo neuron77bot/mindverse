@@ -1,11 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs/promises';
-import path from 'path';
-import crypto from 'crypto';
-
-const execAsync = promisify(exec);
+import { transcribeAudio } from '../services/transcription';
 
 const errorShape = {
   type: 'object',
@@ -13,11 +7,11 @@ const errorShape = {
 };
 
 export async function transcriptionRoutes(app: FastifyInstance) {
-  // POST /transcription - Transcribir audio con whisper local
+  // POST /transcription - Transcribir audio con Whisper (fal.ai)
   app.post('/', {
     schema: {
       tags: ['transcription'],
-      summary: 'Transcribir audio usando whisper local',
+      summary: 'Transcribir audio usando Whisper de fal.ai',
       consumes: ['multipart/form-data'],
       response: {
         200: {
@@ -44,36 +38,17 @@ export async function transcriptionRoutes(app: FastifyInstance) {
         return reply.status(400).send({ success: false, error: 'No se recibió archivo de audio' });
       }
 
-      const startTime = Date.now();
-      
-      // Generar nombre de archivo temporal
-      const tempId = crypto.randomBytes(8).toString('hex');
-      const tempPath = `/tmp/mindverse-audio-${tempId}.ogg`;
-      
-      // Guardar archivo temporal
-      await fs.writeFile(tempPath, await data.toBuffer());
+      const audioBuffer = await data.toBuffer();
+      const mimeType = data.mimetype || 'audio/ogg';
 
-      try {
-        // Ejecutar transcripción con whisper local
-        const { stdout, stderr } = await execAsync(`/usr/local/bin/transcribe-audio.sh "${tempPath}"`);
-        
-        if (stderr && !stdout) {
-          console.error('Whisper stderr:', stderr);
-          return reply.status(500).send({ success: false, error: 'Error en transcripción' });
-        }
+      // Transcribir audio usando fal.ai
+      const result = await transcribeAudio(audioBuffer, mimeType);
 
-        const text = stdout.trim();
-        const duration = Date.now() - startTime;
-
-        return reply.send({
-          success: true,
-          text,
-          duration,
-        });
-      } finally {
-        // Limpiar archivo temporal
-        await fs.unlink(tempPath).catch(() => {});
-      }
+      return reply.send({
+        success: true,
+        text: result.text,
+        duration: result.duration,
+      });
     } catch (err: any) {
       console.error('Error en transcription:', err);
       return reply.status(500).send({ success: false, error: err.message });
