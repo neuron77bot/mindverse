@@ -4,6 +4,7 @@ import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 type RecordingState = 'idle' | 'recording' | 'paused' | 'processing';
+type InputMode = 'voice' | 'text';
 
 interface ThoughtStep {
   step: string;
@@ -11,8 +12,10 @@ interface ThoughtStep {
 }
 
 export default function RecordingView() {
+  const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [transcription, setTranscription] = useState<string>('');
+  const [textInput, setTextInput] = useState<string>('');
   const [duration, setDuration] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -133,6 +136,7 @@ export default function RecordingView() {
 
   const newRecording = () => {
     setTranscription('');
+    setTextInput('');
     setDuration(0);
     setError(null);
     setAnalysis(null);
@@ -141,7 +145,8 @@ export default function RecordingView() {
   };
 
   const analyzeWithAI = async () => {
-    if (!transcription.trim()) return;
+    const textToAnalyze = inputMode === 'voice' ? transcription : textInput;
+    if (!textToAnalyze.trim()) return;
 
     setIsAnalyzing(true);
     setError(null);
@@ -150,7 +155,7 @@ export default function RecordingView() {
       const res = await fetch(`${API_BASE}/transcription/analyze`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ text: transcription }),
+        body: JSON.stringify({ text: textToAnalyze }),
       });
 
       if (!res.ok) {
@@ -168,6 +173,13 @@ export default function RecordingView() {
     }
   };
 
+  const handleModeChange = (mode: InputMode) => {
+    if (recordingState !== 'idle') return; // No cambiar modo durante grabación
+    setInputMode(mode);
+    setError(null);
+    setAnalysis(null);
+  };
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -177,13 +189,47 @@ export default function RecordingView() {
   const isSecureContext = window.isSecureContext;
   const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
+  const hasContent = inputMode === 'voice' ? transcription : textInput;
+
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold text-white mb-6">Agregar Planificación</h2>
 
-        {/* Advertencia de contexto no seguro */}
-        {!isSecureContext && (
+        {/* Selector de modo: Voice / Text */}
+        <div className="mb-6 flex gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700">
+          <button
+            onClick={() => handleModeChange('voice')}
+            disabled={recordingState !== 'idle'}
+            className={`flex-1 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2 ${
+              inputMode === 'voice'
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+            </svg>
+            Entrada de Voz
+          </button>
+          <button
+            onClick={() => handleModeChange('text')}
+            disabled={recordingState !== 'idle'}
+            className={`flex-1 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2 ${
+              inputMode === 'text'
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Entrada de Texto
+          </button>
+        </div>
+
+        {/* Advertencia de contexto no seguro (solo en modo voz) */}
+        {inputMode === 'voice' && !isSecureContext && (
           <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <div className="flex items-start gap-3">
               <svg className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -199,8 +245,9 @@ export default function RecordingView() {
           </div>
         )}
 
-        {/* Estado de grabación */}
-        <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
+        {/* Modo VOZ: Estado de grabación */}
+        {inputMode === 'voice' && (
+          <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               {recordingState === 'recording' && (
@@ -284,6 +331,34 @@ export default function RecordingView() {
             )}
           </div>
         </div>
+        )}
+
+        {/* Modo TEXTO: Editor de texto */}
+        {inputMode === 'text' && (
+          <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
+            <h3 className="text-white font-semibold mb-3">Describe tu pensamiento u objetivo:</h3>
+            <textarea
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              placeholder="Escribe aquí tu pensamiento, objetivo o idea que quieras analizar y convertir en un plan de acción..."
+              className="w-full min-h-[200px] p-4 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y"
+              disabled={isAnalyzing}
+            />
+            <div className="mt-3 flex items-center justify-between text-sm">
+              <span className="text-slate-400">
+                {textInput.length} caracteres
+              </span>
+              {textInput.trim() && (
+                <button
+                  onClick={() => setTextInput('')}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -292,43 +367,55 @@ export default function RecordingView() {
           </div>
         )}
 
-        {/* Transcripción */}
-        {transcription && (
+        {/* Transcripción (solo modo voz) */}
+        {inputMode === 'voice' && transcription && (
           <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
             <h3 className="text-white font-semibold mb-3">Transcripción:</h3>
             <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{transcription}</p>
-            
-            {/* Botón de análisis */}
-            {!analysis && (
-              <button
-                onClick={analyzeWithAI}
-                disabled={isAnalyzing}
-                className="mt-4 w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Analizando con IA...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    Analizar con IA
-                  </>
-                )}
-              </button>
-            )}
+          </div>
+        )}
+
+        {/* Botón de análisis (ambos modos) */}
+        {hasContent && !analysis && (
+          <div className="mb-6">
+            <button
+              onClick={analyzeWithAI}
+              disabled={isAnalyzing}
+              className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isAnalyzing ? (
+                <>
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Analizando con IA...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  Analizar con IA
+                </>
+              )}
+            </button>
           </div>
         )}
 
         {/* Análisis con IA */}
         {analysis && analysis.length > 0 && (
           <div className="mb-6 p-6 bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-xl border border-purple-500/30">
+            {/* Texto original analizado */}
+            <div className="mb-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+              <h4 className="text-slate-400 text-sm font-medium mb-2">
+                {inputMode === 'voice' ? '🎙️ Transcripción original:' : '📝 Texto original:'}
+              </h4>
+              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                {inputMode === 'voice' ? transcription : textInput}
+              </p>
+            </div>
+
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-semibold flex items-center gap-2">
                 <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
