@@ -1,7 +1,7 @@
 import { fal } from '@fal-ai/client';
 
 const WHISPER_MODEL = 'fal-ai/whisper';
-const LLM_MODEL = 'fal-ai/any-llm'; // Modelo de chat para análisis
+const LLM_MODEL = 'fal-ai/meta-llama/llama-3.3-70b-instruct'; // Modelo de chat para análisis
 
 export interface TranscriptionResult {
   text: string;
@@ -87,15 +87,25 @@ Responde en formato JSON.`;
   try {
     const result = await fal.subscribe(LLM_MODEL, {
       input: {
-        prompt: userPrompt,
-        system_prompt: systemPrompt,
-        model: 'meta-llama/Llama-3.3-70B-Instruct', // Modelo potente y rápido
+        prompt: `${systemPrompt}\n\n${userPrompt}`,
         max_tokens: 2000,
         temperature: 0.7,
       },
     });
 
-    const responseText = (result.data as any)?.output || '';
+    // La respuesta puede estar en diferentes formatos dependiendo del modelo
+    let responseText = '';
+    if ((result.data as any)?.output) {
+      responseText = (result.data as any).output;
+    } else if ((result.data as any)?.text) {
+      responseText = (result.data as any).text;
+    } else if (typeof result.data === 'string') {
+      responseText = result.data;
+    } else {
+      console.error('Formato de respuesta desconocido:', result.data);
+      responseText = JSON.stringify(result.data);
+    }
+
     const duration = Date.now() - startTime;
 
     // Parsear respuesta JSON
@@ -111,6 +121,7 @@ Responde en formato JSON.`;
       }
     } catch (parseError) {
       console.error('Error parseando respuesta del LLM:', parseError);
+      console.error('Respuesta completa:', responseText);
       // Fallback: crear un paso genérico
       steps = [{
         step: 'Análisis del pensamiento',
