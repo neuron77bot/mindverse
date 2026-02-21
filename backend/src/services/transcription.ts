@@ -1,9 +1,20 @@
 import { fal } from '@fal-ai/client';
 
 const WHISPER_MODEL = 'fal-ai/whisper';
+const LLM_MODEL = 'fal-ai/any-llm'; // Modelo de chat para análisis
 
 export interface TranscriptionResult {
   text: string;
+  duration: number;
+}
+
+export interface ThoughtStep {
+  step: string;
+  actions: string[];
+}
+
+export interface AnalysisResult {
+  steps: ThoughtStep[];
   duration: number;
 }
 
@@ -37,5 +48,81 @@ export async function transcribeAudio(audioBuffer: Buffer, mimeType: string): Pr
     };
   } catch (error: any) {
     throw new Error(`Error en transcripción: ${error.message}`);
+  }
+}
+
+/**
+ * Analiza un pensamiento transcrito y devuelve pasos y acciones
+ */
+export async function analyzeThought(thoughtText: string): Promise<AnalysisResult> {
+  const startTime = Date.now();
+
+  const systemPrompt = `Eres un asistente experto en análisis de objetivos y planificación. 
+Tu tarea es analizar pensamientos o ideas y descomponerlos en pasos concretos y accionables.
+
+Responde SIEMPRE en formato JSON válido con la siguiente estructura:
+{
+  "steps": [
+    {
+      "step": "Descripción del paso",
+      "actions": ["Acción específica 1", "Acción específica 2"]
+    }
+  ]
+}
+
+Características de tu análisis:
+- Identifica el objetivo principal del pensamiento
+- Descompone en pasos lógicos y secuenciales
+- Cada paso debe tener acciones concretas y medibles
+- Usa lenguaje claro y directo
+- Prioriza pasos por orden de ejecución
+- Responde en español`;
+
+  const userPrompt = `Analiza el siguiente pensamiento y devuelve los pasos necesarios para cumplir con el objetivo, incluyendo acciones específicas:
+
+"${thoughtText}"
+
+Responde en formato JSON.`;
+
+  try {
+    const result = await fal.subscribe(LLM_MODEL, {
+      input: {
+        prompt: userPrompt,
+        system_prompt: systemPrompt,
+        model: 'meta-llama/Llama-3.3-70B-Instruct', // Modelo potente y rápido
+        max_tokens: 2000,
+        temperature: 0.7,
+      },
+    });
+
+    const responseText = (result.data as any)?.output || '';
+    const duration = Date.now() - startTime;
+
+    // Parsear respuesta JSON
+    let steps: ThoughtStep[] = [];
+    try {
+      // Intentar extraer JSON del texto (por si viene con markdown o texto adicional)
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        steps = parsed.steps || [];
+      } else {
+        throw new Error('No se encontró JSON válido en la respuesta');
+      }
+    } catch (parseError) {
+      console.error('Error parseando respuesta del LLM:', parseError);
+      // Fallback: crear un paso genérico
+      steps = [{
+        step: 'Análisis del pensamiento',
+        actions: [responseText || 'No se pudo analizar el pensamiento'],
+      }];
+    }
+
+    return {
+      steps,
+      duration,
+    };
+  } catch (error: any) {
+    throw new Error(`Error en análisis: ${error.message}`);
   }
 }

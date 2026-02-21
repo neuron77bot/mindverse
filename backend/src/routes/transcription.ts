@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { transcribeAudio } from '../services/transcription';
+import { transcribeAudio, analyzeThought } from '../services/transcription';
 
 const errorShape = {
   type: 'object',
@@ -51,6 +51,65 @@ export async function transcriptionRoutes(app: FastifyInstance) {
       });
     } catch (err: any) {
       console.error('Error en transcription:', err);
+      return reply.status(500).send({ success: false, error: err.message });
+    }
+  });
+
+  // POST /transcription/analyze - Analizar pensamiento con LLM
+  app.post<{ Body: { text: string } }>('/analyze', {
+    schema: {
+      tags: ['transcription'],
+      summary: 'Analizar pensamiento transcrito con LLM para obtener pasos y acciones',
+      body: {
+        type: 'object',
+        required: ['text'],
+        properties: {
+          text: { type: 'string', description: 'Texto del pensamiento a analizar' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            steps: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  step: { type: 'string' },
+                  actions: { type: 'array', items: { type: 'string' } },
+                },
+              },
+            },
+            duration: { type: 'number' },
+          },
+        },
+        400: errorShape,
+        401: errorShape,
+        500: errorShape,
+      },
+    },
+  }, async (req, reply) => {
+    try {
+      const userId = req.jwtUser?.sub;
+      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+
+      const { text } = req.body;
+      if (!text?.trim()) {
+        return reply.status(400).send({ success: false, error: 'El texto es requerido' });
+      }
+
+      // Analizar pensamiento con LLM
+      const result = await analyzeThought(text);
+
+      return reply.send({
+        success: true,
+        steps: result.steps,
+        duration: result.duration,
+      });
+    } catch (err: any) {
+      console.error('Error en análisis:', err);
       return reply.status(500).send({ success: false, error: err.message });
     }
   });
