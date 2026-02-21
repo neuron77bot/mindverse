@@ -5,6 +5,8 @@ services:
       - "3001:3001"
     env_file:
       - ./backend/.env
+    volumes:
+      - /root/.openclaw/whisper-models:/app/whisper-models:ro
     depends_on:
       mongo:
         condition: service_started
