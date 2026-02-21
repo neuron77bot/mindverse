@@ -1,16 +1,16 @@
 import { fal } from '@fal-ai/client';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const WHISPER_MODEL = 'fal-ai/whisper';
 const LLM_MODEL = 'fal-ai/meta-llama/llama-3.3-70b-instruct';
 
-const LLM_PROVIDER = process.env.LLM_PROVIDER || 'claude'; // "claude" | "fal"
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
+const LLM_PROVIDER = process.env.LLM_PROVIDER || 'gemini'; // "gemini" | "fal"
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
-// Inicializar cliente de Anthropic si está configurado
-let anthropic: Anthropic | null = null;
-if (LLM_PROVIDER === 'claude' && ANTHROPIC_API_KEY) {
-  anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+// Inicializar cliente de Gemini si está configurado
+let genAI: GoogleGenerativeAI | null = null;
+if (LLM_PROVIDER === 'gemini' && GEMINI_API_KEY) {
+  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 }
 
 export interface TranscriptionResult {
@@ -62,11 +62,11 @@ export async function transcribeAudio(audioBuffer: Buffer, mimeType: string): Pr
 }
 
 /**
- * Analiza un pensamiento con Claude (Anthropic)
+ * Analiza un pensamiento con Gemini 2.5 Flash
  */
-async function analyzeWithClaude(thoughtText: string): Promise<AnalysisResult> {
-  if (!anthropic) {
-    throw new Error('Claude no está configurado. Falta ANTHROPIC_API_KEY.');
+async function analyzeWithGemini(thoughtText: string): Promise<AnalysisResult> {
+  if (!genAI) {
+    throw new Error('Gemini no está configurado. Falta GEMINI_API_KEY.');
   }
 
   const startTime = Date.now();
@@ -99,25 +99,28 @@ Características de tu análisis:
 Responde únicamente con el JSON, sin texto adicional.`;
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: userPrompt,
-        },
-      ],
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.0-flash-exp',
+      systemInstruction: systemPrompt,
     });
 
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+    const result = await model.generateContent(userPrompt);
+    const response = result.response;
+    const responseText = response.text();
     const duration = Date.now() - startTime;
 
     // Parsear respuesta JSON
     let steps: ThoughtStep[] = [];
     try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      // Limpiar markdown code blocks si existen
+      let cleanedText = responseText.trim();
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```$/g, '').trim();
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/```\n?/g, '').replace(/```$/g, '').trim();
+      }
+
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         steps = parsed.steps || [];
@@ -125,7 +128,7 @@ Responde únicamente con el JSON, sin texto adicional.`;
         throw new Error('No se encontró JSON válido en la respuesta');
       }
     } catch (parseError) {
-      console.error('Error parseando respuesta de Claude:', parseError);
+      console.error('Error parseando respuesta de Gemini:', parseError);
       console.error('Respuesta completa:', responseText);
       steps = [{
         step: 'Análisis del pensamiento',
@@ -135,7 +138,7 @@ Responde únicamente con el JSON, sin texto adicional.`;
 
     return { steps, duration };
   } catch (error: any) {
-    throw new Error(`Error en análisis con Claude: ${error.message}`);
+    throw new Error(`Error en análisis con Gemini: ${error.message}`);
   }
 }
 
@@ -221,13 +224,13 @@ Responde en formato JSON.`;
 
 /**
  * Analiza un pensamiento transcrito y devuelve pasos y acciones
- * Usa el provider configurado (Claude por defecto, fal.ai como alternativa)
+ * Usa el provider configurado (Gemini por defecto, fal.ai como alternativa)
  */
 export async function analyzeThought(thoughtText: string): Promise<AnalysisResult> {
   console.log(`[LLM] Analizando con provider: ${LLM_PROVIDER}`);
   
-  if (LLM_PROVIDER === 'claude') {
-    return analyzeWithClaude(thoughtText);
+  if (LLM_PROVIDER === 'gemini') {
+    return analyzeWithGemini(thoughtText);
   } else {
     return analyzeWithFal(thoughtText);
   }
