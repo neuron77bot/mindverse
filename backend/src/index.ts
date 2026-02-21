@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { fal } from '@fal-ai/client';
@@ -8,6 +9,7 @@ import { imageRoutes } from './routes/images';
 import { thoughtRoutes } from './routes/thoughts';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
+import { transcriptionRoutes } from './routes/transcription';
 import { connectDatabase } from './services/database';
 import { authMiddleware } from './middleware/auth';
 
@@ -31,6 +33,13 @@ async function main() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   });
 
+  // Multipart para upload de archivos
+  await app.register(multipart, {
+    limits: {
+      fileSize: 20 * 1024 * 1024, // 20MB
+    },
+  });
+
   // Swagger / OpenAPI
   await app.register(swagger, {
     openapi: {
@@ -40,11 +49,12 @@ async function main() {
         version: '1.0.0',
       },
       tags: [
-        { name: 'auth',     description: 'Autenticación con Google OAuth' },
-        { name: 'users',    description: 'CRUD de perfiles de usuario' },
-        { name: 'thoughts', description: 'CRUD de pensamientos' },
-        { name: 'images',   description: 'Generación de imágenes con IA (fal.ai)' },
-        { name: 'health',   description: 'Estado del servicio' },
+        { name: 'auth',          description: 'Autenticación con Google OAuth' },
+        { name: 'users',         description: 'CRUD de perfiles de usuario' },
+        { name: 'thoughts',      description: 'CRUD de pensamientos' },
+        { name: 'images',        description: 'Generación de imágenes con IA (fal.ai)' },
+        { name: 'transcription', description: 'Transcripción de audio con Whisper' },
+        { name: 'health',        description: 'Estado del servicio' },
       ],
     },
   });
@@ -67,6 +77,9 @@ async function main() {
 
   // Rutas de pensamientos (CRUD)
   await app.register(thoughtRoutes, { prefix: '/thoughts' });
+
+  // Rutas de transcripción (audio → texto)
+  await app.register(transcriptionRoutes, { prefix: '/transcription' });
 
   // Health check
   app.get('/health', {

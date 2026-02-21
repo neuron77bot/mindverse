@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMindverseStore } from '../../store/mindverseStore';
 import { CATEGORY_COLORS, CATEGORY_LABELS, EMOTIONAL_COLORS, HAWKINS_SCALE } from '../../data/mockData';
 import type { MindverseNode } from '../../types';
@@ -63,6 +64,7 @@ function NodeLabels({ node, size = 'md' }: { node: MindverseNode; size?: 'sm' | 
 export default function DetailView({ node, onBack, onNavigateToMap }: DetailViewProps) {
   const { nodes, connections, openEditor } = useMindverseStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'esquema'>('grid');
+  const navigate = useNavigate();
 
   const color    = CATEGORY_COLORS[node.category] || '#6366F1';
   const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || color;
@@ -282,12 +284,23 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                   </div>
                 )}
                 
-                <button
-                  onClick={() => openEditor(undefined, node.id)}
-                  className="text-sm px-3 py-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 rounded-lg font-medium transition-all flex items-center gap-1.5"
-                >
-                  + Agregar paso
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openEditor(undefined, node.id)}
+                    className="text-sm px-3 py-1.5 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 rounded-lg font-medium transition-all flex items-center gap-1.5"
+                  >
+                    + Agregar paso
+                  </button>
+                  <button
+                    onClick={() => navigate(`/recording/${node.id}`)}
+                    className="text-sm px-3 py-1.5 bg-green-600/20 text-green-400 hover:bg-green-600/30 rounded-lg font-medium transition-all flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                    </svg>
+                    Agregar planificación
+                  </button>
+                </div>
               </div>
             </div>
 

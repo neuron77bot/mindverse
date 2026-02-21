@@ -1,11 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './router/ProtectedRoute';
 import AppLayout from './components/Layout/AppLayout';
-import LoginPage   from './pages/LoginPage';
-import HomePage    from './pages/HomePage';
-import MapaPage    from './pages/MapaPage';
-import DetailPage  from './pages/DetailPage';
-import ProfilePage from './pages/ProfilePage';
+import LoginPage      from './pages/LoginPage';
+import HomePage       from './pages/HomePage';
+import MapaPage       from './pages/MapaPage';
+import DetailPage     from './pages/DetailPage';
+import ProfilePage    from './pages/ProfilePage';
+import RecordingPage  from './pages/RecordingPage';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route index        element={<HomePage />} />
           <Route path="/mapa" element={<MapaPage />} />
           <Route path="/detail/:id" element={<DetailPage />} />
+          <Route path="/recording/:id" element={<RecordingPage />} />
           <Route path="/perfil"     element={<ProfilePage />} />
         </Route>
       </Route>
