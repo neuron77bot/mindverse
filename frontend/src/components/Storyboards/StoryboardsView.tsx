@@ -23,13 +23,78 @@ interface Storyboard {
   updatedAt: string;
 }
 
+// MOCK DATA FOR TESTING
+const MOCK_STORYBOARDS: Storyboard[] = [
+  {
+    _id: '1',
+    title: 'La aventura del robot perdido',
+    originalText: 'Un robot se pierde en una ciudad desconocida y debe encontrar su camino de regreso a casa.',
+    inputMode: 'voice',
+    frames: [
+      {
+        frame: 1,
+        scene: 'Robot en la ciudad',
+        visualDescription: 'Un pequeño robot azul se encuentra solo en una gran ciudad llena de luces de neón.',
+        dialogue: '¿Dónde estoy?'
+      },
+      {
+        frame: 2,
+        scene: 'Encuentra un mapa',
+        visualDescription: 'El robot descubre un viejo mapa holográfico en un callejón oscuro.',
+        dialogue: '¡Esto me ayudará!'
+      },
+      {
+        frame: 3,
+        scene: 'Camino a casa',
+        visualDescription: 'El robot sigue las indicaciones del mapa bajo la lluvia nocturna.',
+      }
+    ],
+    comicPageUrl: 'https://via.placeholder.com/800x1200/1a1a1a/ffffff?text=Comic+Page',
+    createdAt: '2026-02-24T10:30:00.000Z',
+    updatedAt: '2026-02-24T10:30:00.000Z'
+  },
+  {
+    _id: '2',
+    title: 'El misterio del bosque encantado',
+    originalText: 'Una niña descubre que su abuelo era un mago y debe resolver un antiguo misterio en el bosque.',
+    inputMode: 'text',
+    frames: [
+      {
+        frame: 1,
+        scene: 'La carta misteriosa',
+        visualDescription: 'Una niña encuentra una carta antigua en el ático de su abuelo.',
+        dialogue: 'Nunca supe que el abuelo tenía secretos...'
+      }
+    ],
+    createdAt: '2026-02-23T15:20:00.000Z',
+    updatedAt: '2026-02-23T15:20:00.000Z'
+  },
+  {
+    _id: '3',
+    title: 'Superhéroe por un día',
+    originalText: 'Un chico tímido obtiene superpoderes por 24 horas y debe decidir qué hacer con ellos.',
+    inputMode: 'voice',
+    frames: [
+      {
+        frame: 1,
+        scene: 'El despertar',
+        visualDescription: 'El protagonista se despierta flotando sobre su cama.',
+        dialogue: '¡¿QUÉ ME ESTÁ PASANDO?!'
+      }
+    ],
+    comicPageUrl: 'https://via.placeholder.com/800x1200/2a2a2a/00ff00?text=Super+Hero',
+    createdAt: '2026-02-22T09:15:00.000Z',
+    updatedAt: '2026-02-22T09:15:00.000Z'
+  }
+];
+
 export default function StoryboardsView() {
-  const [storyboards, setStoryboards] = useState<Storyboard[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [storyboards, setStoryboards] = useState<Storyboard[]>(MOCK_STORYBOARDS);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchStoryboards();
+    // fetchStoryboards(); // DISABLED FOR MOCK
   }, []);
 
   const fetchStoryboards = async () => {
@@ -90,6 +155,7 @@ export default function StoryboardsView() {
     <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8 bg-slate-900">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-6">Mis Storyboards</h1>
+        <p className="text-yellow-400 text-sm mb-4">⚠️ Mostrando datos de prueba (mock)</p>
 
         {storyboards.length === 0 ? (
           <div className="text-center py-12">
@@ -119,12 +185,17 @@ export default function StoryboardsView() {
 
                 {/* Info */}
                 <div className="p-4">
-                  <h3 className="text-white font-semibold mb-2 truncate">{storyboard.title}</h3>
-                  <p className="text-slate-400 text-sm mb-2 line-clamp-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs px-2 py-1 rounded bg-blue-600/20 text-blue-400 border border-blue-600/30">
+                      {storyboard.inputMode === 'voice' ? '🎙️ Voz' : '📝 Texto'}
+                    </span>
+                  </div>
+                  <h3 className="text-white font-semibold mb-2">{storyboard.title}</h3>
+                  <p className="text-slate-400 text-sm mb-3 line-clamp-2">
                     {storyboard.originalText}
                   </p>
                   <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>{storyboard.frames.length} viñetas</span>
+                    <span>📚 {storyboard.frames.length} viñetas</span>
                     <span>{new Date(storyboard.createdAt).toLocaleDateString('es-AR')}</span>
                   </div>
                 </div>
