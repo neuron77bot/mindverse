@@ -7,6 +7,7 @@ import MapaPage       from './pages/MapaPage';
 import DetailPage     from './pages/DetailPage';
 import ProfilePage    from './pages/ProfilePage';
 import RecordingPage  from './pages/RecordingPage';
+import StoryboardsPage from './pages/StoryboardsPage';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/mapa" element={<MapaPage />} />
           <Route path="/detail/:id" element={<DetailPage />} />
           <Route path="/recording/:id" element={<RecordingPage />} />
+          <Route path="/storyboards" element={<StoryboardsPage />} />
           <Route path="/perfil"     element={<ProfilePage />} />
         </Route>
       </Route>

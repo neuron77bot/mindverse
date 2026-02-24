@@ -28,6 +28,8 @@ export default function RecordingView() {
   const [comicPageUrl, setComicPageUrl] = useState<string | null>(null);
   const [frameImages, setFrameImages] = useState<Map<number, string>>(new Map());
   const [generatingFrame, setGeneratingFrame] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [storyboardTitle, setStoryboardTitle] = useState<string>('');
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -241,6 +243,53 @@ export default function RecordingView() {
     }
   };
 
+  const saveStoryboard = async () => {
+    if (!storyboard || storyboard.length === 0) return;
+    if (!storyboardTitle.trim()) {
+      setError('Por favor ingresá un título para el storyboard');
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      // Mapear frames con las imágenes generadas
+      const framesWithImages = storyboard.map(frame => ({
+        ...frame,
+        imageUrl: frameImages.get(frame.frame) || undefined,
+      }));
+
+      const res = await fetch(`${API_BASE}/storyboards`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          title: storyboardTitle,
+          originalText: inputMode === 'voice' ? transcription : textInput,
+          inputMode,
+          frames: framesWithImages,
+          mermaidDiagram,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Error guardando storyboard');
+      }
+
+      // Limpiar después de guardar exitosamente
+      alert('✅ Storyboard guardado exitosamente');
+      setStoryboardTitle('');
+      // Opcionalmente resetear todo
+      // newRecording();
+    } catch (err: any) {
+      console.error('Error al guardar storyboard:', err);
+      setError('Error al guardar storyboard: ' + err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleModeChange = (mode: InputMode) => {
     if (recordingState !== 'idle') return; // No cambiar modo durante grabación
     setInputMode(mode);
@@ -249,6 +298,7 @@ export default function RecordingView() {
     setMermaidDiagram(null);
     setComicPageUrl(null);
     setFrameImages(new Map());
+    setStoryboardTitle('');
   };
 
   const formatDuration = (seconds: number) => {
@@ -681,6 +731,40 @@ export default function RecordingView() {
                 </div>
               </div>
             )}
+
+            {/* Guardar Storyboard */}
+            <div className="mt-6 p-4 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg border border-blue-500/30">
+              <h4 className="text-white font-medium mb-3">Guardar Storyboard</h4>
+              <input
+                type="text"
+                value={storyboardTitle}
+                onChange={(e) => setStoryboardTitle(e.target.value)}
+                placeholder="Título del storyboard..."
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
+              />
+              <button
+                onClick={saveStoryboard}
+                disabled={isSaving || !storyboardTitle.trim()}
+                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    Guardar Storyboard
+                  </>
+                )}
+              </button>
+            </div>
 
             <button
               onClick={analyzeWithAI}

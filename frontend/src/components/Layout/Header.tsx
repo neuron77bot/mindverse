@@ -1,3 +1,4 @@
+import { useNavigate, useLocation } from 'react-router-dom';
 import ProfileMenu from '../Auth/ProfileMenu';
 
 type View = 'home' | 'mapa';
@@ -11,6 +12,10 @@ interface HeaderProps {
 }
 
 export default function Header({ activeView, onViewChange, syncStatus = 'idle', onLogout, onProfile }: HeaderProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isStoryboardsPage = location.pathname === '/storyboards';
+
   return (
     <header className="bg-slate-800 border-b border-slate-700 px-3 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-3">
       {/* Logo + Nombre */}
@@ -60,6 +65,16 @@ export default function Header({ activeView, onViewChange, syncStatus = 'idle', 
           }`}
         >
           🗺️ <span>Mapa</span>
+        </button>
+        <button
+          onClick={() => navigate('/storyboards')}
+          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+            isStoryboardsPage
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700'
+          }`}
+        >
+          📚 <span>Storyboards</span>
         </button>
       </nav>
 

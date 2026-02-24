@@ -10,6 +10,7 @@ import { thoughtRoutes } from './routes/thoughts';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { transcriptionRoutes } from './routes/transcription';
+import { storyboardRoutes } from './routes/storyboards';
 import { connectDatabase } from './services/database';
 import { authMiddleware } from './middleware/auth';
 
@@ -54,6 +55,7 @@ async function main() {
         { name: 'thoughts',      description: 'CRUD de pensamientos' },
         { name: 'images',        description: 'Generación de imágenes con IA (fal.ai)' },
         { name: 'transcription', description: 'Transcripción de audio con Whisper' },
+        { name: 'storyboards',   description: 'CRUD de storyboards generados' },
         { name: 'health',        description: 'Estado del servicio' },
       ],
     },
@@ -80,6 +82,9 @@ async function main() {
 
   // Rutas de transcripción (audio → texto)
   await app.register(transcriptionRoutes, { prefix: '/transcription' });
+
+  // Rutas de storyboards
+  await app.register(storyboardRoutes, { prefix: '/storyboards' });
 
   // Health check
   app.get('/health', {
