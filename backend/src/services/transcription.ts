@@ -478,3 +478,66 @@ export async function refineStep(step: string, actions: string[], context?: stri
     return refineStepWithFal(step, actions, context);
   }
 }
+
+/**
+ * Genera una imagen de página de cómic completa con todas las viñetas del storyboard
+ */
+export async function generateComicPage(frames: StoryboardFrame[]): Promise<{ imageUrl: string; duration: number }> {
+  const startTime = Date.now();
+
+  // Construir prompt detallado para la página de cómic
+  const frameDescriptions = frames.map((frame, idx) => {
+    let desc = `Panel ${frame.frame}: ${frame.visualDescription}`;
+    if (frame.dialogue) {
+      desc += ` Texto/diálogo: "${frame.dialogue}"`;
+    }
+    return desc;
+  }).join('\n\n');
+
+  const prompt = `Create a single black and white comic book page layout with ${frames.length} panels arranged in a traditional comic grid format.
+
+Style: 
+- High contrast black and white ink drawing
+- Clean panel borders
+- Professional comic book page composition
+- Each panel clearly separated and numbered
+
+Layout:
+- ${frames.length} total panels on one page
+- Traditional comic grid layout (2-3 columns)
+- Panels flow left to right, top to bottom
+
+Panel contents:
+${frameDescriptions}
+
+Important:
+- All panels must be on ONE single page
+- Black and white only (no color, no grayscale)
+- Comic book ink style
+- Clear panel separation
+- Professional comic page layout`;
+
+  try {
+    console.log('[FAL] Generando página de cómic con fal.ai...');
+    console.log(`[FAL] Número de panels: ${frames.length}`);
+
+    const result = await fal.subscribe('fal-ai/flux/schnell', {
+      input: {
+        prompt,
+        image_size: 'portrait_16_9', // Formato vertical para página de cómic
+        num_inference_steps: 4,
+        num_images: 1,
+      },
+    });
+
+    const imageUrl = (result.data as any)?.images?.[0]?.url || '';
+    const duration = Date.now() - startTime;
+
+    console.log(`[FAL] Imagen generada: ${imageUrl}`);
+    console.log(`[FAL] Duración: ${duration}ms`);
+
+    return { imageUrl, duration };
+  } catch (error: any) {
+    throw new Error(`Error generando página de cómic: ${error.message}`);
+  }
+}
