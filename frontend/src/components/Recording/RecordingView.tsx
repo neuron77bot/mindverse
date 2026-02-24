@@ -7,17 +7,11 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 type RecordingState = 'idle' | 'recording' | 'paused' | 'processing';
 type InputMode = 'voice' | 'text';
 
-interface ThoughtStep {
-  step: string;
-  actions: string[];
-}
-
-interface StepRefinement {
-  explanation: string;
-  substeps: {
-    substep: string;
-    details: string[];
-  }[];
+interface StoryboardFrame {
+  frame: number;
+  scene: string;
+  visualDescription: string;
+  dialogue?: string;
 }
 
 export default function RecordingView() {
@@ -28,11 +22,8 @@ export default function RecordingView() {
   const [duration, setDuration] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
-  const [analysis, setAnalysis] = useState<ThoughtStep[] | null>(null);
+  const [storyboard, setStoryboard] = useState<StoryboardFrame[] | null>(null);
   const [mermaidDiagram, setMermaidDiagram] = useState<string | null>(null);
-  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
-  const [stepRefinements, setStepRefinements] = useState<Map<number, StepRefinement>>(new Map());
-  const [refiningStep, setRefiningStep] = useState<number | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -152,10 +143,8 @@ export default function RecordingView() {
     setTextInput('');
     setDuration(0);
     setError(null);
-    setAnalysis(null);
+    setStoryboard(null);
     setMermaidDiagram(null);
-    setExpandedSteps(new Set());
-    setStepRefinements(new Map());
     chunksRef.current = [];
     timerRef.current = 0;
   };
@@ -180,7 +169,7 @@ export default function RecordingView() {
       }
 
       const data = await res.json();
-      setAnalysis(data.steps || []);
+      setStoryboard(data.frames || []);
       setMermaidDiagram(data.mermaid || null);
     } catch (err: any) {
       console.error('Error al analizar:', err);
@@ -190,60 +179,12 @@ export default function RecordingView() {
     }
   };
 
-  const refineStepFunc = async (stepIndex: number, step: ThoughtStep) => {
-    setRefiningStep(stepIndex);
-    setError(null);
-
-    try {
-      const res = await fetch(`${API_BASE}/transcription/refine-step`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          step: step.step,
-          actions: step.actions,
-          context: inputMode === 'voice' ? transcription : textInput,
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Error al refinar paso');
-      }
-
-      const data = await res.json();
-      const newRefinements = new Map(stepRefinements);
-      newRefinements.set(stepIndex, data.refinement);
-      setStepRefinements(newRefinements);
-
-      const newExpanded = new Set(expandedSteps);
-      newExpanded.add(stepIndex);
-      setExpandedSteps(newExpanded);
-    } catch (err: any) {
-      console.error('Error al refinar paso:', err);
-      setError('Error al refinar paso: ' + err.message);
-    } finally {
-      setRefiningStep(null);
-    }
-  };
-
-  const toggleStepExpansion = (stepIndex: number) => {
-    const newExpanded = new Set(expandedSteps);
-    if (newExpanded.has(stepIndex)) {
-      newExpanded.delete(stepIndex);
-    } else {
-      newExpanded.add(stepIndex);
-    }
-    setExpandedSteps(newExpanded);
-  };
-
   const handleModeChange = (mode: InputMode) => {
     if (recordingState !== 'idle') return; // No cambiar modo durante grabación
     setInputMode(mode);
     setError(null);
-    setAnalysis(null);
+    setStoryboard(null);
     setMermaidDiagram(null);
-    setExpandedSteps(new Set());
-    setStepRefinements(new Map());
   };
 
   const formatDuration = (seconds: number) => {
@@ -441,13 +382,13 @@ export default function RecordingView() {
           </div>
         )}
 
-        {/* Botón de análisis (ambos modos) */}
-        {hasContent && !analysis && (
+        {/* Botón de generación de storyboard */}
+        {hasContent && !storyboard && (
           <div className="mb-6">
             <button
               onClick={analyzeWithAI}
               disabled={isAnalyzing}
-              className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-6 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-600"
             >
               {isAnalyzing ? (
                 <>
@@ -455,27 +396,27 @@ export default function RecordingView() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Analizando con IA...
+                  Generando storyboard...
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                   </svg>
-                  Analizar con IA
+                  Generar Storyboard (6-8 viñetas)
                 </>
               )}
             </button>
           </div>
         )}
 
-        {/* Análisis con IA */}
-        {analysis && analysis.length > 0 && (
-          <div className="mb-6 p-6 bg-gradient-to-br from-purple-900/30 to-blue-900/30 rounded-xl border border-purple-500/30">
-            {/* Texto original analizado */}
+        {/* Storyboard generado */}
+        {storyboard && storyboard.length > 0 && (
+          <div className="mb-6 p-6 bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border-2 border-slate-700">
+            {/* Historia original */}
             <div className="mb-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
               <h4 className="text-slate-400 text-sm font-medium mb-2">
-                {inputMode === 'voice' ? '🎙️ Transcripción original:' : '📝 Texto original:'}
+                {inputMode === 'voice' ? '🎙️ Historia original:' : '📝 Historia original:'}
               </h4>
               <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
                 {inputMode === 'voice' ? transcription : textInput}
@@ -484,20 +425,18 @@ export default function RecordingView() {
 
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-white font-semibold flex items-center gap-2">
-                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                <svg className="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                 </svg>
-                Análisis IA - Plan de Acción
+                Storyboard ({storyboard.length} viñetas)
               </h3>
               <button
                 onClick={() => {
-                  setAnalysis(null);
+                  setStoryboard(null);
                   setMermaidDiagram(null);
-                  setExpandedSteps(new Set());
-                  setStepRefinements(new Map());
                 }}
                 className="text-slate-400 hover:text-white transition-colors"
-                title="Cerrar análisis"
+                title="Cerrar storyboard"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -505,112 +444,56 @@ export default function RecordingView() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              {analysis.map((item, idx) => (
-                <div key={idx} className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
-                  <div className="flex items-start gap-3 mb-2">
-                    <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
-                      {idx + 1}
+            {/* Grid de viñetas del storyboard */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {storyboard.map((frame) => (
+                <div key={frame.frame} className="bg-slate-800/80 rounded-lg border-2 border-slate-600 overflow-hidden hover:border-slate-500 transition-colors">
+                  {/* Header de la viñeta */}
+                  <div className="bg-slate-700/50 px-3 py-2 border-b border-slate-600 flex items-center gap-2">
+                    <div className="w-7 h-7 rounded bg-slate-600 flex items-center justify-center text-white text-sm font-bold">
+                      {frame.frame}
                     </div>
-                    <h4 className="text-white font-medium flex-1">{item.step}</h4>
-                    
-                    {/* Botón Expandir/Refinar */}
-                    <div className="flex gap-2">
-                      {stepRefinements.has(idx) && (
-                        <button
-                          onClick={() => toggleStepExpansion(idx)}
-                          className="text-slate-400 hover:text-white transition-colors"
-                          title={expandedSteps.has(idx) ? "Contraer" : "Expandir"}
-                        >
-                          <svg className={`w-5 h-5 transition-transform ${expandedSteps.has(idx) ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      )}
-                      
-                      <button
-                        onClick={() => refineStepFunc(idx, item)}
-                        disabled={refiningStep === idx}
-                        className="text-purple-400 hover:text-purple-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Refinar paso con más detalle"
-                      >
-                        {refiningStep === idx ? (
-                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                          </svg>
-                        )}
-                      </button>
+                    <h4 className="text-white font-medium text-sm flex-1">{frame.scene}</h4>
+                  </div>
+
+                  {/* Contenido de la viñeta */}
+                  <div className="p-4 space-y-3">
+                    {/* Descripción visual */}
+                    <div>
+                      <h5 className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">Descripción Visual</h5>
+                      <p className="text-slate-300 text-sm leading-relaxed">{frame.visualDescription}</p>
+                    </div>
+
+                    {/* Diálogo (si existe) */}
+                    {frame.dialogue && (
+                      <div className="pt-2 border-t border-slate-700/50">
+                        <h5 className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">Diálogo</h5>
+                        <p className="text-slate-200 text-sm italic">"{frame.dialogue}"</p>
+                      </div>
+                    )}
+
+                    {/* Placeholder para imagen (futuro) */}
+                    <div className="aspect-video bg-slate-900/50 rounded border-2 border-dashed border-slate-700 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-12 h-12 text-slate-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-slate-600 text-xs">Imagen pendiente</p>
+                      </div>
                     </div>
                   </div>
-                  
-                  {item.actions && item.actions.length > 0 && (
-                    <div className="ml-9 space-y-2 mb-3">
-                      {item.actions.map((action, actionIdx) => (
-                        <div key={actionIdx} className="flex items-start gap-2 text-slate-300 text-sm">
-                          <svg className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                          <span>{action}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Refinamiento expandido */}
-                  {stepRefinements.has(idx) && expandedSteps.has(idx) && (
-                    <div className="ml-9 mt-4 p-4 bg-slate-900/50 rounded-lg border border-purple-500/30">
-                      <div className="mb-3">
-                        <h5 className="text-purple-400 text-sm font-medium mb-1 flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Análisis detallado
-                        </h5>
-                        <p className="text-slate-400 text-sm">{stepRefinements.get(idx)!.explanation}</p>
-                      </div>
-
-                      <div className="space-y-3">
-                        {stepRefinements.get(idx)!.substeps.map((substep, subIdx) => (
-                          <div key={subIdx} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50">
-                            <div className="flex items-start gap-2 mb-2">
-                              <div className="w-5 h-5 rounded bg-purple-600/30 flex items-center justify-center text-purple-400 text-xs font-bold shrink-0 mt-0.5">
-                                {subIdx + 1}
-                              </div>
-                              <h6 className="text-white text-sm font-medium">{substep.substep}</h6>
-                            </div>
-                            
-                            {substep.details && substep.details.length > 0 && (
-                              <div className="ml-7 space-y-1">
-                                {substep.details.map((detail, detailIdx) => (
-                                  <div key={detailIdx} className="flex items-start gap-2 text-slate-400 text-xs">
-                                    <span className="text-purple-400 mt-0.5">•</span>
-                                    <span>{detail}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
 
-            {/* Diagrama Mermaid */}
+            {/* Timeline Mermaid */}
             {mermaidDiagram && (
-              <div className="mt-6">
+              <div>
                 <h4 className="text-white font-medium mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  Diagrama de flujo
+                  Timeline de la historia
                 </h4>
                 <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
                   <MermaidDiagram chart={mermaidDiagram} />

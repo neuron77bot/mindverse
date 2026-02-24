@@ -55,16 +55,16 @@ export async function transcriptionRoutes(app: FastifyInstance) {
     }
   });
 
-  // POST /transcription/analyze - Analizar pensamiento con LLM
+  // POST /transcription/analyze - Generar storyboard con LLM
   app.post<{ Body: { text: string } }>('/analyze', {
     schema: {
       tags: ['transcription'],
-      summary: 'Analizar pensamiento transcrito con LLM para obtener pasos y acciones',
+      summary: 'Generar storyboard de 6-8 frames estilo cómic blanco y negro',
       body: {
         type: 'object',
         required: ['text'],
         properties: {
-          text: { type: 'string', description: 'Texto del pensamiento a analizar' },
+          text: { type: 'string', description: 'Historia o idea para convertir en storyboard' },
         },
       },
       response: {
@@ -72,13 +72,15 @@ export async function transcriptionRoutes(app: FastifyInstance) {
           type: 'object',
           properties: {
             success: { type: 'boolean' },
-            steps: {
+            frames: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
-                  step: { type: 'string' },
-                  actions: { type: 'array', items: { type: 'string' } },
+                  frame: { type: 'number' },
+                  scene: { type: 'string' },
+                  visualDescription: { type: 'string' },
+                  dialogue: { type: 'string' },
                 },
               },
             },
@@ -101,12 +103,12 @@ export async function transcriptionRoutes(app: FastifyInstance) {
         return reply.status(400).send({ success: false, error: 'El texto es requerido' });
       }
 
-      // Analizar pensamiento con LLM
+      // Generar storyboard con LLM
       const result = await analyzeThought(text);
 
       return reply.send({
         success: true,
-        steps: result.steps,
+        frames: result.frames,
         mermaid: result.mermaid,
         duration: result.duration,
       });

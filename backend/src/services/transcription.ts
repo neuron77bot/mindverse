@@ -18,13 +18,15 @@ export interface TranscriptionResult {
   duration: number;
 }
 
-export interface ThoughtStep {
-  step: string;
-  actions: string[];
+export interface StoryboardFrame {
+  frame: number;
+  scene: string;
+  visualDescription: string;
+  dialogue?: string;
 }
 
 export interface AnalysisResult {
-  steps: ThoughtStep[];
+  frames: StoryboardFrame[];
   mermaid: string;
   duration: number;
 }
@@ -43,44 +45,35 @@ export interface RefinementResult {
 }
 
 /**
- * Genera un diagrama Mermaid flowchart a partir de los steps
+ * Genera un diagrama Mermaid timeline a partir de los frames del storyboard
  */
-function generateMermaidDiagram(steps: ThoughtStep[]): string {
-  const lines: string[] = ['flowchart TD'];
-  lines.push('  Start([Inicio])');
+function generateMermaidDiagram(frames: StoryboardFrame[]): string {
+  const lines: string[] = ['flowchart LR'];
+  lines.push('  Start([🎬 Inicio])');
   
-  steps.forEach((step, idx) => {
-    const stepId = `Step${idx + 1}`;
-    const stepLabel = step.step.replace(/"/g, '\\"');
-    lines.push(`  ${stepId}["${stepLabel}"]`);
+  frames.forEach((frame, idx) => {
+    const frameId = `Frame${frame.frame}`;
+    const sceneLabel = frame.scene.replace(/"/g, '\\"').substring(0, 40);
+    lines.push(`  ${frameId}["📷 Frame ${frame.frame}<br/>${sceneLabel}..."]`);
     
-    // Conectar con el paso anterior o con Start
+    // Conectar frames secuencialmente
     if (idx === 0) {
-      lines.push(`  Start --> ${stepId}`);
+      lines.push(`  Start --> ${frameId}`);
     } else {
-      lines.push(`  Step${idx} --> ${stepId}`);
+      lines.push(`  Frame${frames[idx - 1].frame} --> ${frameId}`);
     }
     
-    // Agregar acciones como nodos secundarios
-    step.actions.forEach((action, actionIdx) => {
-      const actionId = `Action${idx + 1}_${actionIdx + 1}`;
-      const actionLabel = action.replace(/"/g, '\\"');
-      lines.push(`  ${actionId}["✓ ${actionLabel}"]`);
-      lines.push(`  ${stepId} -.-> ${actionId}`);
-      
-      // Aplicar estilos a las acciones (verde brillante con texto negro)
-      lines.push(`  style ${actionId} fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000000`);
-    });
-    
-    // Aplicar estilos a los pasos (azul brillante con texto negro)
-    lines.push(`  style ${stepId} fill:#3b82f6,stroke:#2563eb,stroke-width:3px,color:#000000`);
+    // Aplicar estilos a los frames (escala de grises para storyboard B&N)
+    const fillColor = idx % 2 === 0 ? '#e5e7eb' : '#d1d5db';
+    const strokeColor = '#6b7280';
+    lines.push(`  style ${frameId} fill:${fillColor},stroke:${strokeColor},stroke-width:3px,color:#000000`);
   });
   
   // Agregar nodo final
-  lines.push('  End([Fin])');
-  lines.push(`  Step${steps.length} --> End`);
+  lines.push('  End([🎬 Fin])');
+  lines.push(`  Frame${frames[frames.length - 1].frame} --> End`);
   
-  // Estilos para inicio y fin (amarillo y verde brillante con texto negro)
+  // Estilos para inicio y fin
   lines.push('  style Start fill:#fbbf24,stroke:#f59e0b,stroke-width:3px,color:#000000');
   lines.push('  style End fill:#10b981,stroke:#059669,stroke-width:3px,color:#000000');
   
@@ -130,28 +123,31 @@ async function analyzeWithGemini(thoughtText: string): Promise<AnalysisResult> {
 
   const startTime = Date.now();
 
-  const systemPrompt = `Eres un asistente experto en análisis de objetivos y planificación. 
-Tu tarea es analizar pensamientos o ideas y descomponerlos en pasos concretos y accionables.
+  const systemPrompt = `Eres un guionista experto en crear storyboards para cómics en blanco y negro.
+Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 6 a 8 escenas/viñetas.
 
 Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 {
-  "steps": [
+  "frames": [
     {
-      "step": "Descripción del paso",
-      "actions": ["Acción específica 1", "Acción específica 2"]
+      "frame": 1,
+      "scene": "Descripción breve de la escena",
+      "visualDescription": "Descripción detallada de lo que se ve en la viñeta (composición, ángulos, elementos visuales). Estilo cómic blanco y negro.",
+      "dialogue": "Diálogo o texto opcional de la viñeta"
     }
   ]
 }
 
-Características de tu análisis:
-- Identifica el objetivo principal del pensamiento
-- Descompone en pasos lógicos y secuenciales
-- Cada paso debe tener acciones concretas y medibles
-- Usa lenguaje claro y directo
-- Prioriza pasos por orden de ejecución
+Características de tu storyboard:
+- Genera exactamente 6 a 8 frames/viñetas
+- Estilo cómic en blanco y negro (sin color, alto contraste)
+- Cada frame debe tener descripción visual muy detallada y específica
+- Piensa en composición, planos (close-up, wide shot, etc.), iluminación, sombras
+- Crea una narrativa visual coherente y fluida
+- El diálogo es opcional, solo cuando enriquece la escena
 - Responde en español`;
 
-  const userPrompt = `Analiza el siguiente pensamiento y devuelve los pasos necesarios para cumplir con el objetivo, incluyendo acciones específicas:
+  const userPrompt = `Crea un storyboard en blanco y negro basado en la siguiente historia o idea:
 
 "${thoughtText}"
 
@@ -169,7 +165,7 @@ Responde únicamente con el JSON, sin texto adicional.`;
     const duration = Date.now() - startTime;
 
     // Parsear respuesta JSON
-    let steps: ThoughtStep[] = [];
+    let frames: StoryboardFrame[] = [];
     try {
       // Limpiar markdown code blocks si existen
       let cleanedText = responseText.trim();
@@ -182,21 +178,22 @@ Responde únicamente con el JSON, sin texto adicional.`;
       const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        steps = parsed.steps || [];
+        frames = parsed.frames || [];
       } else {
         throw new Error('No se encontró JSON válido en la respuesta');
       }
     } catch (parseError) {
       console.error('Error parseando respuesta de Gemini:', parseError);
       console.error('Respuesta completa:', responseText);
-      steps = [{
-        step: 'Análisis del pensamiento',
-        actions: [responseText || 'No se pudo analizar el pensamiento'],
+      frames = [{
+        frame: 1,
+        scene: 'Error al generar storyboard',
+        visualDescription: responseText || 'No se pudo generar el storyboard',
       }];
     }
 
-    const mermaid = generateMermaidDiagram(steps);
-    return { steps, mermaid, duration };
+    const mermaid = generateMermaidDiagram(frames);
+    return { frames, mermaid, duration };
   } catch (error: any) {
     throw new Error(`Error en análisis con Gemini: ${error.message}`);
   }
@@ -208,28 +205,31 @@ Responde únicamente con el JSON, sin texto adicional.`;
 async function analyzeWithFal(thoughtText: string): Promise<AnalysisResult> {
   const startTime = Date.now();
 
-  const systemPrompt = `Eres un asistente experto en análisis de objetivos y planificación. 
-Tu tarea es analizar pensamientos o ideas y descomponerlos en pasos concretos y accionables.
+  const systemPrompt = `Eres un guionista experto en crear storyboards para cómics en blanco y negro.
+Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 6 a 8 escenas/viñetas.
 
 Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 {
-  "steps": [
+  "frames": [
     {
-      "step": "Descripción del paso",
-      "actions": ["Acción específica 1", "Acción específica 2"]
+      "frame": 1,
+      "scene": "Descripción breve de la escena",
+      "visualDescription": "Descripción detallada de lo que se ve en la viñeta (composición, ángulos, elementos visuales). Estilo cómic blanco y negro.",
+      "dialogue": "Diálogo o texto opcional de la viñeta"
     }
   ]
 }
 
-Características de tu análisis:
-- Identifica el objetivo principal del pensamiento
-- Descompone en pasos lógicos y secuenciales
-- Cada paso debe tener acciones concretas y medibles
-- Usa lenguaje claro y directo
-- Prioriza pasos por orden de ejecución
+Características de tu storyboard:
+- Genera exactamente 6 a 8 frames/viñetas
+- Estilo cómic en blanco y negro (sin color, alto contraste)
+- Cada frame debe tener descripción visual muy detallada y específica
+- Piensa en composición, planos (close-up, wide shot, etc.), iluminación, sombras
+- Crea una narrativa visual coherente y fluida
+- El diálogo es opcional, solo cuando enriquece la escena
 - Responde en español`;
 
-  const userPrompt = `Analiza el siguiente pensamiento y devuelve los pasos necesarios para cumplir con el objetivo, incluyendo acciones específicas:
+  const userPrompt = `Crea un storyboard en blanco y negro basado en la siguiente historia o idea:
 
 "${thoughtText}"
 
@@ -258,26 +258,27 @@ Responde en formato JSON.`;
 
     const duration = Date.now() - startTime;
 
-    let steps: ThoughtStep[] = [];
+    let frames: StoryboardFrame[] = [];
     try {
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        steps = parsed.steps || [];
+        frames = parsed.frames || [];
       } else {
         throw new Error('No se encontró JSON válido en la respuesta');
       }
     } catch (parseError) {
       console.error('Error parseando respuesta del LLM:', parseError);
       console.error('Respuesta completa:', responseText);
-      steps = [{
-        step: 'Análisis del pensamiento',
-        actions: [responseText || 'No se pudo analizar el pensamiento'],
+      frames = [{
+        frame: 1,
+        scene: 'Error al generar storyboard',
+        visualDescription: responseText || 'No se pudo generar el storyboard',
       }];
     }
 
-    const mermaid = generateMermaidDiagram(steps);
-    return { steps, mermaid, duration };
+    const mermaid = generateMermaidDiagram(frames);
+    return { frames, mermaid, duration };
   } catch (error: any) {
     throw new Error(`Error en análisis con fal.ai: ${error.message}`);
   }
