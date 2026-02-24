@@ -248,4 +248,64 @@ export async function transcriptionRoutes(app: FastifyInstance) {
       return reply.status(500).send({ success: false, error: err.message });
     }
   });
+
+  // POST /transcription/generate-frame-image - Generar imagen de una viñeta individual
+  app.post<{ Body: { frame: any } }>('/generate-frame-image', {
+    schema: {
+      tags: ['transcription'],
+      summary: 'Generar imagen para una viñeta individual del storyboard',
+      body: {
+        type: 'object',
+        required: ['frame'],
+        properties: {
+          frame: {
+            type: 'object',
+            description: 'Frame del storyboard para generar imagen',
+            properties: {
+              frame: { type: 'number' },
+              scene: { type: 'string' },
+              visualDescription: { type: 'string' },
+              dialogue: { type: 'string' },
+            },
+          },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            imageUrl: { type: 'string' },
+            duration: { type: 'number' },
+          },
+        },
+        400: errorShape,
+        401: errorShape,
+        500: errorShape,
+      },
+    },
+  }, async (req, reply) => {
+    try {
+      const userId = req.jwtUser?.sub;
+      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+
+      const { frame } = req.body;
+      if (!frame) {
+        return reply.status(400).send({ success: false, error: 'Frame es requerido' });
+      }
+
+      // Importar función de generación de frame individual
+      const { generateFrameImage } = await import('../services/transcription');
+      const result = await generateFrameImage(frame);
+
+      return reply.send({
+        success: true,
+        imageUrl: result.imageUrl,
+        duration: result.duration,
+      });
+    } catch (err: any) {
+      console.error('Error generando imagen de frame:', err);
+      return reply.status(500).send({ success: false, error: err.message });
+    }
+  });
 }

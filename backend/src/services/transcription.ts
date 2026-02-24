@@ -541,3 +541,44 @@ Important:
     throw new Error(`Error generando página de cómic: ${error.message}`);
   }
 }
+
+/**
+ * Genera una imagen individual para una viñeta del storyboard
+ */
+export async function generateFrameImage(frame: StoryboardFrame): Promise<{ imageUrl: string; duration: number }> {
+  const startTime = Date.now();
+
+  // Construir prompt detallado para la viñeta individual
+  let prompt = `Black and white comic book panel, high contrast ink drawing style.
+
+Panel ${frame.frame}: ${frame.visualDescription}`;
+
+  if (frame.dialogue) {
+    prompt += `\n\nDialogue/text: "${frame.dialogue}"`;
+  }
+
+  prompt += `\n\nStyle: Professional comic book art, black and white only, clean ink lines, dynamic composition.`;
+
+  try {
+    console.log(`[FAL] Generando imagen para frame ${frame.frame} con nano-banana...`);
+
+    const result = await fal.subscribe('fal-ai/nano-banana', {
+      input: {
+        prompt,
+        num_images: 1,
+        aspect_ratio: '16:9', // Formato horizontal para viñeta individual
+        output_format: 'png',
+      },
+    });
+
+    const imageUrl = (result.data as any)?.images?.[0]?.url || '';
+    const duration = Date.now() - startTime;
+
+    console.log(`[FAL] Imagen frame ${frame.frame} generada: ${imageUrl}`);
+    console.log(`[FAL] Duración: ${duration}ms`);
+
+    return { imageUrl, duration };
+  } catch (error: any) {
+    throw new Error(`Error generando imagen de frame ${frame.frame}: ${error.message}`);
+  }
+}
