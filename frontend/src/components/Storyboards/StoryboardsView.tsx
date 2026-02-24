@@ -23,78 +23,14 @@ interface Storyboard {
   updatedAt: string;
 }
 
-// MOCK DATA FOR TESTING
-const MOCK_STORYBOARDS: Storyboard[] = [
-  {
-    _id: '1',
-    title: 'La aventura del robot perdido',
-    originalText: 'Un robot se pierde en una ciudad desconocida y debe encontrar su camino de regreso a casa.',
-    inputMode: 'voice',
-    frames: [
-      {
-        frame: 1,
-        scene: 'Robot en la ciudad',
-        visualDescription: 'Un pequeño robot azul se encuentra solo en una gran ciudad llena de luces de neón.',
-        dialogue: '¿Dónde estoy?'
-      },
-      {
-        frame: 2,
-        scene: 'Encuentra un mapa',
-        visualDescription: 'El robot descubre un viejo mapa holográfico en un callejón oscuro.',
-        dialogue: '¡Esto me ayudará!'
-      },
-      {
-        frame: 3,
-        scene: 'Camino a casa',
-        visualDescription: 'El robot sigue las indicaciones del mapa bajo la lluvia nocturna.',
-      }
-    ],
-    comicPageUrl: 'https://via.placeholder.com/800x1200/1a1a1a/ffffff?text=Comic+Page',
-    createdAt: '2026-02-24T10:30:00.000Z',
-    updatedAt: '2026-02-24T10:30:00.000Z'
-  },
-  {
-    _id: '2',
-    title: 'El misterio del bosque encantado',
-    originalText: 'Una niña descubre que su abuelo era un mago y debe resolver un antiguo misterio en el bosque.',
-    inputMode: 'text',
-    frames: [
-      {
-        frame: 1,
-        scene: 'La carta misteriosa',
-        visualDescription: 'Una niña encuentra una carta antigua en el ático de su abuelo.',
-        dialogue: 'Nunca supe que el abuelo tenía secretos...'
-      }
-    ],
-    createdAt: '2026-02-23T15:20:00.000Z',
-    updatedAt: '2026-02-23T15:20:00.000Z'
-  },
-  {
-    _id: '3',
-    title: 'Superhéroe por un día',
-    originalText: 'Un chico tímido obtiene superpoderes por 24 horas y debe decidir qué hacer con ellos.',
-    inputMode: 'voice',
-    frames: [
-      {
-        frame: 1,
-        scene: 'El despertar',
-        visualDescription: 'El protagonista se despierta flotando sobre su cama.',
-        dialogue: '¡¿QUÉ ME ESTÁ PASANDO?!'
-      }
-    ],
-    comicPageUrl: 'https://via.placeholder.com/800x1200/2a2a2a/00ff00?text=Super+Hero',
-    createdAt: '2026-02-22T09:15:00.000Z',
-    updatedAt: '2026-02-22T09:15:00.000Z'
-  }
-];
-
 export default function StoryboardsView() {
-  const [storyboards, setStoryboards] = useState<Storyboard[]>(MOCK_STORYBOARDS);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [storyboards, setStoryboards] = useState<Storyboard[]>([]);
+  const [selectedStoryboard, setSelectedStoryboard] = useState<Storyboard | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // fetchStoryboards(); // DISABLED FOR MOCK
+    fetchStoryboards();
   }, []);
 
   const fetchStoryboards = async () => {
@@ -118,6 +54,29 @@ export default function StoryboardsView() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteStoryboard = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar este storyboard?')) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/storyboards/${id}`, {
+        method: 'DELETE',
+        headers: authHeadersOnly(),
+      });
+
+      if (!res.ok) {
+        throw new Error('Error eliminando storyboard');
+      }
+
+      setStoryboards(storyboards.filter(s => s._id !== id));
+      if (selectedStoryboard?._id === id) {
+        setSelectedStoryboard(null);
+      }
+      alert('✅ Storyboard eliminado');
+    } catch (err: any) {
+      alert('Error: ' + err.message);
     }
   };
 
@@ -151,11 +110,125 @@ export default function StoryboardsView() {
     );
   }
 
+  // Vista detalle de un storyboard específico
+  if (selectedStoryboard) {
+    return (
+      <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8 bg-slate-900">
+        <div className="max-w-4xl mx-auto">
+          {/* Header con botón volver y eliminar */}
+          <div className="mb-6 flex items-center justify-between">
+            <button
+              onClick={() => setSelectedStoryboard(null)}
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Volver
+            </button>
+            <button
+              onClick={() => deleteStoryboard(selectedStoryboard._id)}
+              className="text-red-400 hover:text-red-300 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Título y metadata */}
+          <h1 className="text-3xl font-bold text-white mb-2">{selectedStoryboard.title}</h1>
+          <p className="text-slate-400 text-sm mb-2">
+            Creado: {new Date(selectedStoryboard.createdAt).toLocaleString('es-AR')}
+          </p>
+          <p className="text-slate-500 text-xs mb-6">
+            Modo: {selectedStoryboard.inputMode === 'voice' ? '🎙️ Voz' : '📝 Texto'}
+          </p>
+
+          {/* Historia original */}
+          <div className="mb-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+            <h3 className="text-white font-semibold mb-2">Historia Original:</h3>
+            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+              {selectedStoryboard.originalText}
+            </p>
+          </div>
+
+          {/* Página de cómic completa */}
+          {selectedStoryboard.comicPageUrl && (
+            <div className="mb-6 p-4 bg-gradient-to-br from-slate-900 to-black rounded-xl border-2 border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Página de Cómic Completa</h3>
+              <img
+                src={selectedStoryboard.comicPageUrl}
+                alt="Página de cómic"
+                className="w-full rounded-lg"
+              />
+              <a
+                href={selectedStoryboard.comicPageUrl}
+                download="comic-page.png"
+                className="mt-3 w-full block py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium text-center transition-colors"
+              >
+                Descargar Página Completa
+              </a>
+            </div>
+          )}
+
+          {/* Grid de viñetas */}
+          <h3 className="text-white font-semibold mb-4">Viñetas ({selectedStoryboard.frames.length})</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {selectedStoryboard.frames.map((frame) => (
+              <div key={frame.frame} className="bg-slate-800/80 rounded-lg border-2 border-slate-600 overflow-hidden">
+                {/* Header del frame */}
+                <div className="bg-slate-700/50 px-3 py-2 border-b border-slate-600 flex items-center gap-2">
+                  <div className="w-7 h-7 rounded bg-slate-600 flex items-center justify-center text-white text-sm font-bold">
+                    {frame.frame}
+                  </div>
+                  <h4 className="text-white font-medium text-sm flex-1">{frame.scene}</h4>
+                </div>
+
+                {/* Contenido del frame */}
+                <div className="p-4 space-y-3">
+                  {/* Imagen generada */}
+                  {frame.imageUrl && (
+                    <div className="aspect-video bg-slate-900/50 rounded overflow-hidden">
+                      <img
+                        src={frame.imageUrl}
+                        alt={`Viñeta ${frame.frame}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Descripción visual */}
+                  <div>
+                    <h5 className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">
+                      Descripción Visual
+                    </h5>
+                    <p className="text-slate-300 text-sm leading-relaxed">{frame.visualDescription}</p>
+                  </div>
+
+                  {/* Diálogo */}
+                  {frame.dialogue && (
+                    <div className="pt-2 border-t border-slate-700/50">
+                      <h5 className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">
+                        Diálogo
+                      </h5>
+                      <p className="text-slate-200 text-sm italic">"{frame.dialogue}"</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Vista lista de storyboards
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8 bg-slate-900">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-6">Mis Storyboards</h1>
-        <p className="text-yellow-400 text-sm mb-4">⚠️ Mostrando datos de prueba (mock)</p>
 
         {storyboards.length === 0 ? (
           <div className="text-center py-12">
@@ -170,7 +243,8 @@ export default function StoryboardsView() {
             {storyboards.map((storyboard) => (
               <div
                 key={storyboard._id}
-                className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-slate-600 transition-colors"
+                onClick={() => setSelectedStoryboard(storyboard)}
+                className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-slate-600 transition-colors cursor-pointer"
               >
                 {/* Thumbnail */}
                 {storyboard.comicPageUrl && (
