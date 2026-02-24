@@ -30,10 +30,12 @@ export default function StoryboardsView() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('StoryboardsView mounted');
     fetchStoryboards();
   }, []);
 
   const fetchStoryboards = async () => {
+    console.log('fetchStoryboards called');
     setLoading(true);
     setError(null);
 
@@ -42,14 +44,18 @@ export default function StoryboardsView() {
         headers: authHeadersOnly(),
       });
 
+      console.log('Response status:', res.status);
+
       if (!res.ok) {
-        throw new Error('Error cargando storyboards');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Error cargando storyboards');
       }
 
       const data = await res.json();
+      console.log('Storyboards data:', data);
       setStoryboards(data.storyboards || []);
     } catch (err: any) {
-      console.error('Error:', err);
+      console.error('Error fetching storyboards:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -81,7 +87,7 @@ export default function StoryboardsView() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center bg-slate-900 min-h-screen">
         <div className="text-center">
           <svg className="w-12 h-12 text-slate-600 mx-auto mb-3 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -95,7 +101,7 @@ export default function StoryboardsView() {
 
   if (error) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center bg-slate-900 min-h-screen">
         <div className="text-center">
           <p className="text-red-400">Error: {error}</p>
           <button onClick={fetchStoryboards} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg">
@@ -108,7 +114,7 @@ export default function StoryboardsView() {
 
   if (selectedStoryboard) {
     return (
-      <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+      <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8 bg-slate-900">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
@@ -220,7 +226,7 @@ export default function StoryboardsView() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+    <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8 bg-slate-900">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-6">Mis Storyboards</h1>
 
