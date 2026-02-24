@@ -518,15 +518,15 @@ Important:
 - Professional comic page layout`;
 
   try {
-    console.log('[FAL] Generando página de cómic con fal.ai...');
+    console.log('[FAL] Generando página de cómic con nano-banana...');
     console.log(`[FAL] Número de panels: ${frames.length}`);
 
-    const result = await fal.subscribe('fal-ai/flux/schnell', {
+    const result = await fal.subscribe('fal-ai/nano-banana', {
       input: {
         prompt,
-        image_size: 'portrait_16_9', // Formato vertical para página de cómic
-        num_inference_steps: 4,
         num_images: 1,
+        aspect_ratio: '2:3', // Formato vertical para página de cómic
+        output_format: 'png',
       },
     });
 
