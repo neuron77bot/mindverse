@@ -38,22 +38,29 @@ export default function StoryboardsView() {
     setError(null);
 
     try {
+      console.log('Fetching storyboards from:', `${API_BASE}/storyboards`);
       const res = await fetch(`${API_BASE}/storyboards`, {
         headers: authHeadersOnly(),
       });
 
+      console.log('Response status:', res.status);
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        console.error('Error response:', errData);
         throw new Error(errData.error || 'Error cargando storyboards');
       }
 
       const data = await res.json();
+      console.log('Received data:', data);
+      console.log('Storyboards count:', data.storyboards?.length || 0);
       setStoryboards(data.storyboards || []);
     } catch (err: any) {
       console.error('Error fetching storyboards:', err);
       setError(err.message);
     } finally {
       setLoading(false);
+      console.log('Loading finished');
     }
   };
 
@@ -225,10 +232,17 @@ export default function StoryboardsView() {
   }
 
   // Vista lista de storyboards
+  console.log('Rendering list view. Storyboards:', storyboards.length);
+  
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8 bg-slate-900">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-6">Mis Storyboards</h1>
+        
+        {/* Debug info */}
+        <div className="mb-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded text-blue-300 text-xs">
+          Estado: Loading={loading.toString()}, Error={error || 'none'}, Count={storyboards.length}
+        </div>
 
         {storyboards.length === 0 ? (
           <div className="text-center py-12">
