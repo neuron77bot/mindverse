@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 import MermaidDiagram from '../UI/MermaidDiagram';
 
@@ -13,10 +13,15 @@ interface StoryboardFrame {
   scene: string;
   visualDescription: string;
   dialogue?: string;
+  imageUrl?: string;
+  imagePrompt?: string;
 }
 
 export default function RecordingView() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isViewMode = !!id;
+  
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [transcription, setTranscription] = useState<string>('');
@@ -32,11 +37,65 @@ export default function RecordingView() {
   const [generatingFrame, setGeneratingFrame] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [storyboardTitle, setStoryboardTitle] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Cargar storyboard existente si hay ID
+  useEffect(() => {
+    if (isViewMode && id) {
+      loadStoryboard(id);
+    }
+  }, [id, isViewMode]);
+
+  const loadStoryboard = async (storyboardId: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/storyboards/${storyboardId}`, {
+        headers: authHeadersOnly(),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Error cargando storyboard');
+      }
+
+      const data = await res.json();
+      const sb = data.storyboard;
+
+      console.log('📚 Storyboard cargado:', sb);
+
+      // Poblar los estados con el storyboard cargado
+      setStoryboardTitle(sb.title || '');
+      setInputMode(sb.inputMode || 'text');
+      setTranscription(sb.inputMode === 'voice' ? sb.originalText : '');
+      setTextInput(sb.inputMode === 'text' ? sb.originalText : '');
+      setStoryboard(sb.frames || []);
+      setMermaidDiagram(sb.mermaidDiagram || null);
+      setComicPageUrl(sb.comicPageUrl || null);
+
+      // Cargar imágenes de frames si existen
+      if (sb.frames) {
+        const newFrameImages = new Map<number, string>();
+        sb.frames.forEach((frame: StoryboardFrame) => {
+          if (frame.imageUrl) {
+            newFrameImages.set(frame.frame, frame.imageUrl);
+          }
+        });
+        setFrameImages(newFrameImages);
+      }
+    } catch (err: any) {
+      console.error('Error cargando storyboard:', err);
+      setError('Error al cargar el storyboard: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -322,13 +381,68 @@ export default function RecordingView() {
 
   const hasContent = inputMode === 'voice' ? transcription : textInput;
 
+  // Mostrar loading state
+  if (isLoading) {
+    return (
+      <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+        <div className="max-w-2xl mx-auto flex items-center justify-center py-20">
+          <div className="text-center">
+            <svg
+              className="animate-spin h-12 w-12 text-indigo-500 mx-auto mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+            <p className="text-slate-400">Cargando storyboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">Crear Storyboard</h2>
+        {/* Header con título y botón volver (solo en modo view) */}
+        {isViewMode && (
+          <div className="mb-6 flex items-center gap-4">
+            <button
+              onClick={() => navigate('/storyboards')}
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              <span className="text-sm font-medium">Volver</span>
+            </button>
+          </div>
+        )}
 
-        {/* Selector de modo: Voice / Text */}
-        <div className="mb-6 flex gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700">
+        <h2 className="text-2xl font-bold text-white mb-6">
+          {isViewMode ? storyboardTitle || 'Storyboard' : 'Crear Storyboard'}
+        </h2>
+
+        {/* Selector de modo: Voice / Text - Solo en modo creación */}
+        {!isViewMode && (
+          <div className="mb-6 flex gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700">
           <button
             onClick={() => handleModeChange('voice')}
             disabled={recordingState !== 'idle'}
@@ -367,9 +481,10 @@ export default function RecordingView() {
             Entrada de Texto
           </button>
         </div>
+        )}
 
-        {/* Advertencia de contexto no seguro (solo en modo voz) */}
-        {inputMode === 'voice' && !isSecureContext && (
+        {/* Advertencia de contexto no seguro (solo en modo voz y modo creación) */}
+        {!isViewMode && inputMode === 'voice' && !isSecureContext && (
           <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <div className="flex items-start gap-3">
               <svg
@@ -397,8 +512,8 @@ export default function RecordingView() {
           </div>
         )}
 
-        {/* Modo VOZ: Estado de grabación */}
-        {inputMode === 'voice' && (
+        {/* Modo VOZ: Estado de grabación - Solo en modo creación */}
+        {!isViewMode && inputMode === 'voice' && (
           <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -487,8 +602,8 @@ export default function RecordingView() {
           </div>
         )}
 
-        {/* Modo TEXTO: Editor de texto */}
-        {inputMode === 'text' && (
+        {/* Modo TEXTO: Editor de texto - Solo en modo creación */}
+        {!isViewMode && inputMode === 'text' && (
           <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
             <h3 className="text-white font-semibold mb-3">Describe tu pensamiento u objetivo:</h3>
             <textarea
@@ -527,8 +642,8 @@ export default function RecordingView() {
           </div>
         )}
 
-        {/* Botón de generación de storyboard */}
-        {hasContent && !storyboard && (
+        {/* Botón de generación de storyboard - Solo en modo creación */}
+        {!isViewMode && hasContent && !storyboard && (
           <div className="mb-6">
             <button
               onClick={analyzeWithAI}
@@ -869,8 +984,9 @@ export default function RecordingView() {
               </div>
             )}
 
-            {/* Guardar Storyboard */}
-            <div className="mt-6 p-4 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg border border-blue-500/30">
+            {/* Guardar Storyboard - Solo en modo creación */}
+            {!isViewMode && (
+              <div className="mt-6 p-4 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg border border-blue-500/30">
               <h4 className="text-white font-medium mb-3">Guardar Storyboard</h4>
               <input
                 type="text"
@@ -917,15 +1033,19 @@ export default function RecordingView() {
                   </>
                 )}
               </button>
-            </div>
+              </div>
+            )}
 
-            <button
-              onClick={analyzeWithAI}
-              disabled={isAnalyzing}
-              className="mt-4 w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              Volver a analizar
-            </button>
+            {/* Botón volver a analizar - Solo en modo creación */}
+            {!isViewMode && (
+              <button
+                onClick={analyzeWithAI}
+                disabled={isAnalyzing}
+                className="mt-4 w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                Volver a analizar
+              </button>
+            )}
           </div>
         )}
       </div>
