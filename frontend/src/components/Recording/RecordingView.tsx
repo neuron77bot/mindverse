@@ -289,7 +289,7 @@ export default function RecordingView() {
 
       const data = await res.json();
       console.log('✅ Storyboard guardado exitosamente:', data.storyboard?._id);
-      
+
       // Redirigir a la lista de storyboards
       navigate('/storyboards');
     } catch (err: any) {

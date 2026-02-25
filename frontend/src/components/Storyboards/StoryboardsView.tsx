@@ -144,7 +144,7 @@ export default function StoryboardsView() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/storyboards`, {
+      const res = await fetch(`${API_BASE}/storyboards/debug`, {
         headers: authHeadersOnly(),
       });
 
@@ -156,7 +156,7 @@ export default function StoryboardsView() {
       const data = await res.json();
       console.log('📚 Storyboards recibidos del backend:', data.storyboards?.length);
       console.log('📚 Primer storyboard:', data.storyboards?.[0]);
-      
+
       // Filtrar storyboards válidos (con frames)
       const validStoryboards = (data.storyboards || []).filter(
         (s: Storyboard) => s.frames && Array.isArray(s.frames) && s.frames.length > 0

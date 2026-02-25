@@ -7,6 +7,29 @@ const errorShape = {
 };
 
 export async function storyboardRoutes(app: FastifyInstance) {
+  // GET /storyboards/debug - Endpoint temporal sin schema validation
+  app.get('/debug', async (req, reply) => {
+    try {
+      const userId = req.jwtUser?.sub;
+      if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+
+      const storyboards = await Storyboard.find({ userId }).sort({ createdAt: -1 }).lean();
+
+      app.log.info({
+        msg: 'GET /storyboards/debug',
+        userId,
+        count: storyboards.length,
+        firstKeys: storyboards[0] ? Object.keys(storyboards[0]) : [],
+      });
+
+      // Sin schema validation - devuelve todo
+      return reply.type('application/json').send({ success: true, storyboards });
+    } catch (err: any) {
+      app.log.error(err);
+      return reply.status(500).send({ success: false, error: err.message });
+    }
+  });
+
   // GET /storyboards - Listar todos los storyboards del usuario
   app.get(
     '/',
