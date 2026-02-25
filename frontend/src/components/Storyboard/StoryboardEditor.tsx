@@ -46,9 +46,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
 
   // Estados para generación de imágenes con 3 modos
   const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
-  const [selectedFrameForImage, setSelectedFrameForImage] = useState<StoryboardFrame | null>(
-    null
-  );
+  const [selectedFrameForImage, setSelectedFrameForImage] = useState<StoryboardFrame | null>(null);
   const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url'>('text');
   const [imagePrompt, setImagePrompt] = useState<string>('');
   const [imageUrlInput, setImageUrlInput] = useState<string>('');
@@ -1098,12 +1096,38 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                     {/* Imagen generada o botón para generar */}
                     <div className="aspect-video bg-slate-900/50 rounded border-2 border-slate-700 flex items-center justify-center overflow-hidden">
                       {frameImages.has(frame.frame) ? (
-                        // Mostrar imagen generada
-                        <img
-                          src={frameImages.get(frame.frame)}
-                          alt={`Viñeta ${frame.frame}`}
-                          className="w-full h-full object-cover"
-                        />
+                        // Mostrar imagen generada con botón regenerar en edit mode
+                        <div className="relative w-full h-full group">
+                          <img
+                            src={frameImages.get(frame.frame)}
+                            alt={`Viñeta ${frame.frame}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {isEditMode && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-4">
+                              <button
+                                onClick={() => openImageModal(frame)}
+                                disabled={generatingFrame === frame.frame}
+                                className="px-4 py-2 bg-white/90 hover:bg-white text-slate-900 rounded-lg font-semibold text-sm transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                  />
+                                </svg>
+                                Regenerar Imagen
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         // Botón para generar imagen
                         <button
@@ -1587,12 +1611,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                   </>
                 ) : imageMode === 'url' ? (
                   <>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1604,12 +1623,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                   </>
                 ) : imageMode === 'img2img' ? (
                   <>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1621,12 +1635,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                   </>
                 ) : (
                   <>
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
