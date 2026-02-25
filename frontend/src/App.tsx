@@ -7,8 +7,9 @@ import MapaPage from './pages/MapaPage';
 import DetailPage from './pages/DetailPage';
 import ProfilePage from './pages/ProfilePage';
 import StoryboardCreatePage from './pages/StoryboardCreatePage';
+import StoryboardEditPage from './pages/StoryboardEditPage';
 import StoryboardDetailPage from './pages/StoryboardDetailPage';
-import StoryboardsPage from './pages/StoryboardsPage';
+import StoryboardListPage from './pages/StoryboardListPage';
 
 export default function App() {
   return (
@@ -24,8 +25,8 @@ export default function App() {
           <Route path="/detail/:id" element={<DetailPage />} />
           <Route path="/storyboard/create" element={<StoryboardCreatePage />} />
           <Route path="/storyboard/detail/:id" element={<StoryboardDetailPage />} />
-          <Route path="/storyboard/edit/:id" element={<StoryboardDetailPage />} />
-          <Route path="/storyboards" element={<StoryboardsPage />} />
+          <Route path="/storyboard/edit/:id" element={<StoryboardEditPage />} />
+          <Route path="/storyboards" element={<StoryboardListPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
         </Route>
       </Route>

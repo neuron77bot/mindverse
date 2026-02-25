@@ -7,6 +7,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 type RecordingState = 'idle' | 'recording' | 'paused' | 'processing';
 type InputMode = 'voice' | 'text';
+type EditorMode = 'edit' | 'create';
 
 interface StoryboardFrame {
   frame: number;
@@ -17,10 +18,14 @@ interface StoryboardFrame {
   imagePrompt?: string;
 }
 
-export default function StoryboardEditor() {
+interface StoryboardEditorProps {
+  mode: EditorMode;
+}
+
+export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const isViewMode = !!id;
+  const isEditMode = mode === 'edit';
 
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
@@ -46,10 +51,10 @@ export default function StoryboardEditor() {
 
   // Cargar storyboard existente si hay ID
   useEffect(() => {
-    if (isViewMode && id) {
+    if (isEditMode && id) {
       loadStoryboard(id);
     }
-  }, [id, isViewMode]);
+  }, [id, isEditMode]);
 
   const loadStoryboard = async (storyboardId: string) => {
     console.log('📚 Cargando storyboard:', storyboardId);
@@ -416,8 +421,8 @@ export default function StoryboardEditor() {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        {/* Header con título y botón volver (solo en modo view) */}
-        {isViewMode && (
+        {/* Header con título y botón volver (solo en modo edit) */}
+        {isEditMode && (
               <button
               onClick={() => navigate('/storyboards')}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
@@ -435,11 +440,11 @@ export default function StoryboardEditor() {
             )}
 
         <h2 className="text-2xl font-bold text-white mb-6">
-          {isViewMode ? storyboardTitle || 'Storyboard' : 'Crear Storyboard'}
+          {isEditMode ? storyboardTitle || 'Storyboard' : 'Crear Storyboard'}
         </h2>
 
         {/* Selector de modo: Voice / Text - Solo en modo creación */}
-        {!isViewMode && (
+        {!isEditMode && (
           <div className="mb-6 flex gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700">
             <button
               onClick={() => handleModeChange('voice')}
@@ -482,7 +487,7 @@ export default function StoryboardEditor() {
         )}
 
         {/* Advertencia de contexto no seguro (solo en modo voz y modo creación) */}
-        {!isViewMode && inputMode === 'voice' && !isSecureContext && (
+        {!isEditMode && inputMode === 'voice' && !isSecureContext && (
           <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <div className="flex items-start gap-3">
               <svg
@@ -511,7 +516,7 @@ export default function StoryboardEditor() {
         )}
 
         {/* Modo VOZ: Estado de grabación - Solo en modo creación */}
-        {!isViewMode && inputMode === 'voice' && (
+        {!isEditMode && inputMode === 'voice' && (
           <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -601,7 +606,7 @@ export default function StoryboardEditor() {
         )}
 
         {/* Modo TEXTO: Editor de texto - Solo en modo creación */}
-        {!isViewMode && inputMode === 'text' && (
+        {!isEditMode && inputMode === 'text' && (
           <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
             <h3 className="text-white font-semibold mb-3">Describe tu pensamiento u objetivo:</h3>
             <textarea
@@ -641,7 +646,7 @@ export default function StoryboardEditor() {
         )}
 
         {/* Botón de generación de storyboard - Solo en modo creación */}
-        {!isViewMode && hasContent && !storyboard && (
+        {!isEditMode && hasContent && !storyboard && (
           <div className="mb-6">
             <button
               onClick={analyzeWithAI}
@@ -707,7 +712,7 @@ export default function StoryboardEditor() {
                 </svg>
                 Storyboard ({storyboard.length} viñetas)
               </h3>
-              {!isViewMode && (
+              {!isEditMode && (
                 <button
                   onClick={() => {
                     setStoryboard(null);
@@ -985,7 +990,7 @@ export default function StoryboardEditor() {
             )}
 
             {/* Guardar Storyboard - Solo en modo creación */}
-            {!isViewMode && (
+            {!isEditMode && (
               <div className="mt-6 p-4 bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-lg border border-blue-500/30">
                 <h4 className="text-white font-medium mb-3">Guardar Storyboard</h4>
                 <input
@@ -1042,7 +1047,7 @@ export default function StoryboardEditor() {
             )}
 
             {/* Botón volver a analizar - Solo en modo creación */}
-            {!isViewMode && (
+            {!isEditMode && (
               <button
                 onClick={analyzeWithAI}
                 disabled={isAnalyzing}

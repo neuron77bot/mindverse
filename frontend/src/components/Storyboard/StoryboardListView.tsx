@@ -22,7 +22,7 @@ interface Storyboard {
   createdAt: string;
 }
 
-export default function StoryboardsView() {
+export default function StoryboardListView() {
   const navigate = useNavigate();
   const [storyboards, setStoryboards] = useState<Storyboard[]>([]);
   const [selectedStoryboard, setSelectedStoryboard] = useState<Storyboard | null>(null);

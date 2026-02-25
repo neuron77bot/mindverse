@@ -1,5 +1,5 @@
-import StoryboardEditor from '../components/Storyboard/StoryboardEditor';
+import StoryboardDetailView from '../components/Storyboard/StoryboardDetailView';
 
 export default function StoryboardDetailPage() {
-  return <StoryboardEditor />;
+  return <StoryboardDetailView />;
 }
