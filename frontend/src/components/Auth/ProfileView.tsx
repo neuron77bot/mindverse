@@ -62,10 +62,9 @@ export default function ProfileView({ onBack }: ProfileViewProps) {
   const initial = (user?.name ?? 'U')[0].toUpperCase();
 
   return (
-    <div className="flex-1 overflow-y-auto">
-
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-900">
       {/* Breadcrumb */}
-      <div className="px-4 py-3 lg:px-8 flex items-center gap-3 border-b border-slate-700/60 bg-slate-800/40 shrink-0">
+      <div className="px-4 py-3 lg:px-8 flex items-center gap-3 border-b border-slate-700/60 bg-slate-800/40 flex-shrink-0">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-sm font-medium"
@@ -79,8 +78,9 @@ export default function ProfileView({ onBack }: ProfileViewProps) {
         <span className="text-slate-400 text-sm">Mi perfil</span>
       </div>
 
-      {/* Layout */}
-      <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto">
+      {/* Layout - Con scroll contenido */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto">
         <div className="lg:grid lg:grid-cols-[300px_1fr] xl:grid-cols-[340px_1fr] lg:gap-8 space-y-6 lg:space-y-0">
 
           {/* ── Columna izquierda: tarjeta de identidad ─────────────────── */}
@@ -274,6 +274,7 @@ export default function ProfileView({ onBack }: ProfileViewProps) {
             </div>
           </div>
 
+        </div>
         </div>
       </div>
     </div>
