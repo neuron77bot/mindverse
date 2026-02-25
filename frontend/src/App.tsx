@@ -22,6 +22,7 @@ export default function App() {
           <Route path="/mapa" element={<MapaPage />} />
           <Route path="/detail/:id" element={<DetailPage />} />
           <Route path="/recording/:id" element={<RecordingPage />} />
+          <Route path="/storyboard/create" element={<RecordingPage />} />
           <Route path="/storyboards" element={<StoryboardsPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
         </Route>

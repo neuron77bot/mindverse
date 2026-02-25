@@ -487,19 +487,14 @@ export default function StoryboardsView() {
 
       {/* Floating Action Button - Generar Storyboard */}
       <button
-        onClick={() => navigate('/recording')}
+        onClick={() => navigate('/storyboard/create')}
         className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/75 hover:scale-110 transition-all flex items-center justify-center group"
         aria-label="Generar nuevo storyboard"
       >
         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4v16m8-8H4"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
-        
+
         {/* Tooltip */}
         <span className="absolute right-16 whitespace-nowrap px-3 py-2 bg-slate-800 text-white text-sm rounded-lg shadow-lg border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
           Generar Storyboard
