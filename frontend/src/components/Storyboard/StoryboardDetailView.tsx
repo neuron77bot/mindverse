@@ -111,9 +111,7 @@ export default function StoryboardDetailView() {
           )}
 
           <section className="p-6 bg-slate-900 rounded-xl border border-slate-700">
-            <h2 className="text-white font-semibold mb-4">
-              Storyboard ({frames.length} Frames)
-            </h2>
+            <h2 className="text-white font-semibold mb-4">Storyboard ({frames.length} Frames)</h2>
 
             {frames.length === 0 ? (
               <p className="text-slate-400">No hay Frames para este storyboard.</p>
@@ -166,7 +164,11 @@ export default function StoryboardDetailView() {
             <section className="p-6 bg-slate-900 rounded-xl border border-slate-700">
               <h2 className="text-white font-semibold mb-4">Pagina de comic</h2>
               <div className="rounded border border-slate-700 overflow-hidden mb-3">
-                <img src={storyboard.comicPageUrl} alt="Pagina de comic" className="w-full h-auto" />
+                <img
+                  src={storyboard.comicPageUrl}
+                  alt="Pagina de comic"
+                  className="w-full h-auto"
+                />
               </div>
               <a
                 href={storyboard.comicPageUrl}

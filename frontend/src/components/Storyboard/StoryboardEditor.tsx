@@ -423,21 +423,21 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
       <div className="max-w-2xl mx-auto">
         {/* Header con título y botón volver (solo en modo edit) */}
         {isEditMode && (
-              <button
-              onClick={() => navigate('/storyboards')}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              <span className="text-sm font-medium">Volver</span>
-            </button>
-            )}
+          <button
+            onClick={() => navigate('/storyboards')}
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            <span className="text-sm font-medium">Volver</span>
+          </button>
+        )}
 
         <h2 className="text-2xl font-bold text-white mb-6">
           {isEditMode ? storyboardTitle || 'Storyboard' : 'Crear Storyboard'}
