@@ -1,20 +1,15 @@
 import { useEffect } from 'react';
-import { useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { useMindverseStore } from '../../store/mindverseStore';
-import Header from './Header';
+import Sidebar from './Sidebar';
 import NodeEditor from '../Mindverse/NodeEditor';
 import { logout } from '../Auth/LoginView';
 
 export default function AppLayout() {
-  const location  = useLocation();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const initFromBackend = useMindverseStore((s) => s.initFromBackend);
-  const syncStatus      = useMindverseStore((s) => s.syncStatus);
 
   useEffect(() => { initFromBackend(); }, []);
-
-  // Determinar qué vista está activa para el Header
-  const activeView: 'home' | 'mapa' = location.pathname.startsWith('/mapa') ? 'mapa' : 'home';
 
   const handleLogout = () => {
     logout();
@@ -22,15 +17,11 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-900">
-      <Header
-        activeView={activeView}
-        onViewChange={(v) => navigate(v === 'mapa' ? '/mapa' : '/')}
-        syncStatus={syncStatus}
-        onLogout={handleLogout}
-        onProfile={() => navigate('/perfil')}
-      />
-      <Outlet />
+    <div className="h-screen flex bg-slate-900">
+      <Sidebar onLogout={handleLogout} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Outlet />
+      </div>
       <NodeEditor />
     </div>
   );
