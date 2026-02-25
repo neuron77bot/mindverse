@@ -436,7 +436,7 @@ export default function StoryboardsView() {
             {storyboards.map((storyboard) => (
               <div
                 key={storyboard._id}
-                onClick={() => setSelectedStoryboard(storyboard)}
+                onClick={() => navigate(`/storyboard/detail/${storyboard._id}`)}
                 className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer active:scale-[0.98]"
               >
                 {/* Thumbnail */}
