@@ -44,10 +44,23 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
   const [storyboardTitle, setStoryboardTitle] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Estados para generación de imágenes con 3 modos
+  const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
+  const [selectedFrameForImage, setSelectedFrameForImage] = useState<StoryboardFrame | null>(
+    null
+  );
+  const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url'>('text');
+  const [imagePrompt, setImagePrompt] = useState<string>('');
+  const [imageUrlInput, setImageUrlInput] = useState<string>('');
+  const [refImageFiles, setRefImageFiles] = useState<File[]>([]);
+  const [refImagePreviews, setRefImagePreviews] = useState<string[]>([]);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Cargar storyboard existente si hay ID
   useEffect(() => {
@@ -106,6 +119,125 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
       setError('Error al cargar el storyboard: ' + err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ── Helpers para generación de imágenes ────────────────────────────────────
+  const readAsDataURL = (file: File): Promise<string> =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(e.target.files ?? []);
+    if (!incoming.length) return;
+    const combined = [...refImageFiles, ...incoming];
+    setRefImageFiles(combined);
+    const previews = await Promise.all(combined.map(readAsDataURL));
+    setRefImagePreviews(previews);
+    e.target.value = '';
+  };
+
+  const removeRefImage = async (index: number) => {
+    const updated = refImageFiles.filter((_, i) => i !== index);
+    setRefImageFiles(updated);
+    setRefImagePreviews(await Promise.all(updated.map(readAsDataURL)));
+  };
+
+  const openImageModal = (frame: StoryboardFrame) => {
+    setSelectedFrameForImage(frame);
+    setIsImageModalOpen(true);
+    setImageMode('text');
+    setImagePrompt(frame.visualDescription || '');
+    setImageUrlInput('');
+    setRefImageFiles([]);
+    setRefImagePreviews([]);
+    setImageError(null);
+  };
+
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setSelectedFrameForImage(null);
+    setImageMode('text');
+    setImagePrompt('');
+    setImageUrlInput('');
+    setRefImageFiles([]);
+    setRefImagePreviews([]);
+    setImageError(null);
+  };
+
+  const handleGenerateFrameImage = async () => {
+    if (!selectedFrameForImage) return;
+
+    setGeneratingFrame(selectedFrameForImage.frame);
+    setImageError(null);
+
+    try {
+      let imageUrl: string;
+
+      if (imageMode === 'url') {
+        if (!imageUrlInput.trim()) throw new Error('Ingresá una URL de imagen');
+        imageUrl = imageUrlInput.trim();
+      } else if (imageMode === 'img2img') {
+        if (!imagePrompt.trim()) throw new Error('Escribí un prompt');
+        if (refImageFiles.length === 0)
+          throw new Error('Seleccioná al menos una imagen de referencia');
+
+        const uploadedUrls = await Promise.all(
+          refImageFiles.map(async (file) => {
+            const dataUrl = await readAsDataURL(file);
+            const uploadRes = await fetch(`${API_BASE}/images/upload`, {
+              method: 'POST',
+              headers: authHeaders(),
+              body: JSON.stringify({ dataUrl }),
+            });
+            if (!uploadRes.ok) throw new Error(`Error al subir ${file.name}`);
+            const { url } = await uploadRes.json();
+            return url as string;
+          })
+        );
+
+        const res = await fetch(`${API_BASE}/images/image-to-image`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            image_urls: uploadedUrls,
+            aspect_ratio: '1:1',
+          }),
+        });
+        if (!res.ok) throw new Error('Error generando imagen');
+        const data = await res.json();
+        imageUrl = data.images?.[0]?.url ?? null;
+        if (!imageUrl) throw new Error('No se recibió URL de imagen');
+      } else {
+        // text-to-image
+        if (!imagePrompt.trim()) throw new Error('Escribí un prompt');
+        const res = await fetch(`${API_BASE}/images/text-to-image`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ prompt: imagePrompt, aspect_ratio: '1:1' }),
+        });
+        if (!res.ok) throw new Error('Error generando imagen');
+        const data = await res.json();
+        imageUrl = data.images?.[0]?.url ?? null;
+        if (!imageUrl) throw new Error('No se recibió URL de imagen');
+      }
+
+      // Actualizar el mapa de imágenes
+      const newImages = new Map(frameImages);
+      newImages.set(selectedFrameForImage.frame, imageUrl);
+      setFrameImages(newImages);
+
+      // Cerrar modal
+      closeImageModal();
+    } catch (err: any) {
+      console.error('Error al generar imagen de frame:', err);
+      setImageError(err?.message ?? 'Error desconocido');
+    } finally {
+      setGeneratingFrame(null);
     }
   };
 
@@ -290,33 +422,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
     }
   };
 
-  const generateFrameImage = async (frame: StoryboardFrame) => {
-    setGeneratingFrame(frame.frame);
-    setError(null);
-
-    try {
-      const res = await fetch(`${API_BASE}/transcription/generate-frame-image`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ frame }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Error generando imagen de viñeta');
-      }
-
-      const data = await res.json();
-      const newImages = new Map(frameImages);
-      newImages.set(frame.frame, data.imageUrl);
-      setFrameImages(newImages);
-    } catch (err: any) {
-      console.error('Error al generar imagen de viñeta:', err);
-      setError('Error al generar imagen de viñeta: ' + err.message);
-    } finally {
-      setGeneratingFrame(null);
-    }
-  };
+  // Función generateFrameImage reemplazada por modal de 3 modos
 
   const saveStoryboard = async () => {
     if (!storyboard || storyboard.length === 0) return;
@@ -1001,7 +1107,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                       ) : (
                         // Botón para generar imagen
                         <button
-                          onClick={() => generateFrameImage(frame)}
+                          onClick={() => openImageModal(frame)}
                           disabled={generatingFrame === frame.frame}
                           className="w-full h-full flex flex-col items-center justify-center hover:bg-slate-800/50 transition-colors disabled:opacity-70"
                         >
@@ -1286,6 +1392,256 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
           </div>
         )}
       </div>
+
+      {/* Modal de generación de imágenes con 3 modos */}
+      {isImageModalOpen && selectedFrameForImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-900 rounded-2xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-white">
+                  Generar Imagen - Frame #{selectedFrameForImage.frame}
+                </h3>
+                <p className="text-slate-400 text-sm mt-1">{selectedFrameForImage.scene}</p>
+              </div>
+              <button
+                onClick={closeImageModal}
+                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors flex items-center justify-center"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Selector de modo */}
+            <div className="flex rounded-xl overflow-hidden border border-slate-700 bg-slate-900/60 mb-6">
+              {(
+                [
+                  { key: 'text', label: 'Text to Image', icon: '✨' },
+                  { key: 'img2img', label: 'Image to Image', icon: '🖼️' },
+                  { key: 'url', label: 'URL', icon: '🔗' },
+                ] as { key: typeof imageMode; label: string; icon: string }[]
+              ).map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => {
+                    setImageMode(m.key);
+                    setImageError(null);
+                  }}
+                  className={`flex-1 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                    imageMode === m.key
+                      ? 'bg-violet-600 text-white shadow-inner'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <span>{m.icon}</span>
+                  <span>{m.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Contenido según modo */}
+            <div className="space-y-4 mb-6">
+              {/* Modo: Text to Image */}
+              {imageMode === 'text' && (
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Prompt</label>
+                  <textarea
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    placeholder="Describí la imagen que querés generar..."
+                    rows={4}
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors resize-none"
+                  />
+                </div>
+              )}
+
+              {/* Modo: Image to Image */}
+              {imageMode === 'img2img' && (
+                <>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Prompt</label>
+                    <textarea
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      placeholder="Describí qué querés generar a partir de la referencia..."
+                      rows={3}
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">
+                      Imágenes de referencia
+                    </label>
+                    <div className="flex items-center gap-3 flex-wrap mb-3">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm rounded-lg transition-colors border border-slate-600 flex items-center gap-2"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                          />
+                        </svg>
+                        {refImageFiles.length > 0
+                          ? `Agregar más (${refImageFiles.length})`
+                          : 'Seleccionar imágenes'}
+                      </button>
+                      {refImageFiles.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setRefImageFiles([]);
+                            setRefImagePreviews([]);
+                          }}
+                          className="text-slate-500 hover:text-red-400 text-sm transition-colors"
+                        >
+                          ✕ Quitar todas
+                        </button>
+                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                    {refImagePreviews.length > 0 && (
+                      <div className="flex gap-2 flex-wrap">
+                        {refImagePreviews.map((src, i) => (
+                          <div key={i} className="relative group/thumb">
+                            <img
+                              src={src}
+                              alt={`Ref ${i + 1}`}
+                              className="h-20 w-20 object-cover rounded-lg border border-slate-600"
+                            />
+                            <button
+                              onClick={() => removeRefImage(i)}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-black/70 text-white rounded-full text-xs hover:bg-red-600 transition-colors flex items-center justify-center opacity-0 group-hover/thumb:opacity-100"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Modo: URL */}
+              {imageMode === 'url' && (
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">URL de imagen</label>
+                  <input
+                    type="url"
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
+                  />
+                </div>
+              )}
+
+              {/* Error */}
+              {imageError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                  {imageError}
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={closeImageModal}
+                className="flex-1 py-3 px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleGenerateFrameImage}
+                disabled={generatingFrame === selectedFrameForImage.frame}
+                className="flex-1 py-3 px-6 rounded-lg text-white font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 shadow-lg shadow-violet-500/20"
+              >
+                {generatingFrame === selectedFrameForImage.frame ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Generando…
+                  </>
+                ) : imageMode === 'url' ? (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      />
+                    </svg>
+                    Usar URL
+                  </>
+                ) : imageMode === 'img2img' ? (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Generar
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                      />
+                    </svg>
+                    Generar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
