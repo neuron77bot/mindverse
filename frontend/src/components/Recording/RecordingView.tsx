@@ -317,7 +317,7 @@ export default function RecordingView() {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">Agregar Planificación</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Crear Storyboard</h2>
 
         {/* Selector de modo: Voice / Text */}
         <div className="mb-6 flex gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700">

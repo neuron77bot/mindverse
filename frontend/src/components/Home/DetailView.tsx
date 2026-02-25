@@ -367,7 +367,7 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
                     + Agregar paso
                   </button>
                   <button
-                    onClick={() => navigate(`/recording/${node.id}`)}
+                    onClick={() => navigate(`/storyboard/detail/${node.id}`)}
                     className="text-sm px-3 py-1.5 bg-green-600/20 text-green-400 hover:bg-green-600/30 rounded-lg font-medium transition-all flex items-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
