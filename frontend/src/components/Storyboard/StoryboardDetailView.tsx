@@ -109,7 +109,7 @@ export default function StoryboardDetailView() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-indigo-900/20 via-purple-900/20 to-pink-900/20 border-b border-slate-700/50">
         <div className="max-w-7xl mx-auto p-6">
