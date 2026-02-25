@@ -6,7 +6,8 @@ import HomePage from './pages/HomePage';
 import MapaPage from './pages/MapaPage';
 import DetailPage from './pages/DetailPage';
 import ProfilePage from './pages/ProfilePage';
-import RecordingPage from './pages/RecordingPage';
+import StoryboardCreatePage from './pages/StoryboardCreatePage';
+import StoryboardDetailPage from './pages/StoryboardDetailPage';
 import StoryboardsPage from './pages/StoryboardsPage';
 
 export default function App() {
@@ -21,8 +22,9 @@ export default function App() {
           <Route index element={<HomePage />} />
           <Route path="/mapa" element={<MapaPage />} />
           <Route path="/detail/:id" element={<DetailPage />} />
-          <Route path="/storyboard/create" element={<RecordingPage />} />
-          <Route path="/storyboard/detail/:id" element={<RecordingPage />} />
+          <Route path="/storyboard/create" element={<StoryboardCreatePage />} />
+          <Route path="/storyboard/detail/:id" element={<StoryboardDetailPage />} />
+          <Route path="/storyboard/edit/:id" element={<StoryboardDetailPage />} />
           <Route path="/storyboards" element={<StoryboardsPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
         </Route>

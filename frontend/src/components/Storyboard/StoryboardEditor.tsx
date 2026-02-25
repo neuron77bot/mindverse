@@ -17,7 +17,7 @@ interface StoryboardFrame {
   imagePrompt?: string;
 }
 
-export default function RecordingView() {
+export default function StoryboardEditor() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isViewMode = !!id;
@@ -418,8 +418,7 @@ export default function RecordingView() {
       <div className="max-w-2xl mx-auto">
         {/* Header con título y botón volver (solo en modo view) */}
         {isViewMode && (
-          <div className="mb-6 flex items-center gap-4">
-            <button
+              <button
               onClick={() => navigate('/storyboards')}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
             >
@@ -433,8 +432,7 @@ export default function RecordingView() {
               </svg>
               <span className="text-sm font-medium">Volver</span>
             </button>
-          </div>
-        )}
+            )}
 
         <h2 className="text-2xl font-bold text-white mb-6">
           {isViewMode ? storyboardTitle || 'Storyboard' : 'Crear Storyboard'}

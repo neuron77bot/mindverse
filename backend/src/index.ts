@@ -94,7 +94,12 @@ async function main() {
       schema: {
         tags: ['health'],
         summary: 'Estado del servicio',
-        response: { 200: { type: 'object', properties: { status: { type: 'string' }, service: { type: 'string' } } } },
+        response: {
+          200: {
+            type: 'object',
+            properties: { status: { type: 'string' }, service: { type: 'string' } },
+          },
+        },
       },
     },
     async () => ({ status: 'ok', service: 'mindverse-backend' })
