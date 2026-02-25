@@ -264,6 +264,12 @@ export default function RecordingView() {
         imageUrl: frameImages.get(frame.frame) || undefined,
       }));
 
+      console.log('💾 Guardando storyboard:', {
+        title: storyboardTitle,
+        framesCount: framesWithImages.length,
+        inputMode,
+      });
+
       const res = await fetch(`${API_BASE}/storyboards`, {
         method: 'POST',
         headers: authHeaders(),
@@ -282,12 +288,10 @@ export default function RecordingView() {
       }
 
       const data = await res.json();
-      const createdStoryboard = data.storyboard;
-
-      // Redirigir al detalle del storyboard creado
-      if (createdStoryboard && createdStoryboard._id) {
-        navigate(`/storyboard/detail/${createdStoryboard._id}`);
-      }
+      console.log('✅ Storyboard guardado exitosamente:', data.storyboard?._id);
+      
+      // Redirigir a la lista de storyboards
+      navigate('/storyboards');
     } catch (err: any) {
       console.error('Error al guardar storyboard:', err);
       setError('Error al guardar storyboard: ' + err.message);
