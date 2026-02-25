@@ -134,6 +134,21 @@ export async function storyboardRoutes(app: FastifyInstance) {
 
         const { title, originalText, inputMode, frames, mermaidDiagram } = req.body;
 
+        // Validar que frames no esté vacío
+        if (!frames || !Array.isArray(frames) || frames.length === 0) {
+          return reply
+            .status(400)
+            .send({ success: false, error: 'Frames es requerido y no puede estar vacío' });
+        }
+
+        app.log.info({
+          msg: 'Creating storyboard',
+          userId,
+          title,
+          framesCount: frames.length,
+          inputMode,
+        });
+
         const storyboard = await Storyboard.create({
           userId,
           title,
@@ -142,6 +157,8 @@ export async function storyboardRoutes(app: FastifyInstance) {
           frames,
           mermaidDiagram,
         });
+
+        app.log.info({ msg: 'Storyboard created', storyboardId: storyboard._id });
 
         return reply.send({ success: true, storyboard });
       } catch (err: any) {

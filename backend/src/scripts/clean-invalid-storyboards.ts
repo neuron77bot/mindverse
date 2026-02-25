@@ -1,7 +1,7 @@
 // Script para eliminar storyboards inválidos (sin frames o frames vacío)
 import 'dotenv/config';
-import { connectDatabase } from '../services/database';
-import { Storyboard } from '../models/Storyboard';
+import { connectDatabase } from '../services/database.js';
+import { Storyboard } from '../models/Storyboard.js';
 
 async function cleanInvalidStoryboards() {
   try {

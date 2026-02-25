@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authHeadersOnly } from '../../services/authHeaders';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -128,6 +129,7 @@ const MOCK_STORYBOARDS: Storyboard[] = [
 ];
 
 export default function StoryboardsView() {
+  const navigate = useNavigate();
   const [storyboards, setStoryboards] = useState<Storyboard[]>([]);
   const [selectedStoryboard, setSelectedStoryboard] = useState<Storyboard | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -482,6 +484,27 @@ export default function StoryboardsView() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Button - Generar Storyboard */}
+      <button
+        onClick={() => navigate('/recording')}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/75 hover:scale-110 transition-all flex items-center justify-center group"
+        aria-label="Generar nuevo storyboard"
+      >
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+        
+        {/* Tooltip */}
+        <span className="absolute right-16 whitespace-nowrap px-3 py-2 bg-slate-800 text-white text-sm rounded-lg shadow-lg border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          Generar Storyboard
+        </span>
+      </button>
     </div>
   );
 }

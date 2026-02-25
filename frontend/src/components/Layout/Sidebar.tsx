@@ -30,9 +30,7 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
   return (
     <>
       {/* Overlay para mobile */}
-      {isOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={onClose} />
-      )}
+      {isOpen && <div className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={onClose} />}
 
       {/* Sidebar */}
       <aside
@@ -48,7 +46,12 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
         <div className="p-6 border-b border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-6 h-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
