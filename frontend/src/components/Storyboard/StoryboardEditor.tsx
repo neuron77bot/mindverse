@@ -1133,7 +1133,10 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                         {/* Botón regenerar debajo de la imagen */}
                         {isEditMode && (
                           <button
-                            onClick={() => openImageModal(frame)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openImageModal(frame);
+                            }}
                             disabled={generatingFrame === frame.frame}
                             className="mt-3 w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
                           >
