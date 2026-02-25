@@ -332,11 +332,16 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
       // Mapear frames con las imágenes generadas
       const framesWithImages = storyboard.map((frame) => ({
         ...frame,
-        imageUrl: frameImages.get(frame.frame) || undefined,
+        imageUrl: frameImages.get(frame.frame) || frame.imageUrl || undefined,
       }));
 
-      const res = await fetch(`${API_BASE}/storyboards`, {
-        method: 'POST',
+      // En modo edit: PATCH para actualizar
+      // En modo create: POST para crear
+      const url = isEditMode && id ? `${API_BASE}/storyboards/${id}` : `${API_BASE}/storyboards`;
+      const method = isEditMode && id ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: authHeaders(),
         body: JSON.stringify({
           title: storyboardTitle,
@@ -344,6 +349,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
           inputMode,
           frames: framesWithImages,
           mermaidDiagram,
+          comicPageUrl,
         }),
       });
 
@@ -354,8 +360,13 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
 
       await res.json();
 
-      // Redirigir a la lista de storyboards
-      navigate('/storyboards');
+      // En modo edit: volver al detalle
+      // En modo create: ir a la lista
+      if (isEditMode && id) {
+        navigate(`/storyboard/detail/${id}`);
+      } else {
+        navigate('/storyboards');
+      }
     } catch (err: any) {
       console.error('Error al guardar storyboard:', err);
       setError('Error al guardar storyboard: ' + err.message);
