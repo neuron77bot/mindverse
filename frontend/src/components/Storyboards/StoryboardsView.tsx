@@ -152,7 +152,11 @@ export default function StoryboardsView() {
       }
 
       const data = await res.json();
-      setStoryboards(data.storyboards || []);
+      // Filtrar storyboards válidos (con frames)
+      const validStoryboards = (data.storyboards || []).filter(
+        (s: Storyboard) => s.frames && Array.isArray(s.frames) && s.frames.length > 0
+      );
+      setStoryboards(validStoryboards);
     } catch (err: any) {
       console.error('Error fetching storyboards:', err);
       setError(err.message);
