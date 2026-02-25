@@ -56,7 +56,7 @@ export default function RecordingView() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/storyboards/${storyboardId}`, {
+      const res = await fetch(`${API_BASE}/storyboards/debug/${storyboardId}`, {
         headers: authHeadersOnly(),
       });
 
