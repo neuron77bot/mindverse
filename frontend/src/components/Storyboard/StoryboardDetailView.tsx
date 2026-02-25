@@ -599,9 +599,9 @@ export default function StoryboardDetailView() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
           onClick={() => setLightboxImage(null)}
         >
-          <div className="relative max-w-7xl w-full max-h-[90vh] flex flex-col">
+          <div className="relative max-w-7xl w-full h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 px-4">
+            <div className="flex items-center justify-between mb-4 px-4 shrink-0">
               <h3 className="text-white font-semibold text-lg">{lightboxImage.title}</h3>
               <button
                 onClick={() => setLightboxImage(null)}
@@ -620,18 +620,18 @@ export default function StoryboardDetailView() {
 
             {/* Image Container */}
             <div
-              className="flex-1 flex items-center justify-center"
+              className="flex-1 flex items-center justify-center overflow-hidden min-h-0"
               onClick={(e) => e.stopPropagation()}
             >
               <img
                 src={lightboxImage.url}
                 alt={lightboxImage.title}
-                className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl"
               />
             </div>
 
             {/* Download button */}
-            <div className="flex justify-center mt-4">
+            <div className="flex justify-center mt-4 shrink-0">
               <a
                 href={lightboxImage.url}
                 target="_blank"
