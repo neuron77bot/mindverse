@@ -419,30 +419,139 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header con título y botón volver (solo en modo edit) */}
-        {isEditMode && (
-          <button
-            onClick={() => navigate('/storyboards')}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            <span className="text-sm font-medium">Volver</span>
-          </button>
-        )}
+    <div className="min-h-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-indigo-900/20 via-purple-900/20 to-pink-900/20 border-b border-slate-700/50">
+        <div className="max-w-7xl mx-auto p-6">
+          {/* Action Bar */}
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={() => navigate(isEditMode ? `/storyboard/detail/${id}` : '/storyboards')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600 transition-all duration-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              {isEditMode ? 'Volver al detalle' : 'Volver'}
+            </button>
 
-        <h2 className="text-2xl font-bold text-white mb-6">
-          {isEditMode ? storyboardTitle || 'Storyboard' : 'Crear Storyboard'}
-        </h2>
+            {isEditMode && storyboard && (
+              <button
+                onClick={saveStoryboard}
+                disabled={isSaving || !storyboardTitle.trim()}
+                className="flex items-center gap-2 px-6 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white transition-all duration-200 shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Guardar Cambios
+                  </>
+                )}
+              </button>
+            )}
+          </div>
 
+          {/* Hero Content */}
+          <div className="space-y-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-white">
+              {isEditMode ? storyboardTitle || 'Editar Storyboard' : 'Crear Storyboard'}
+            </h1>
+
+            {/* Metadata Badges */}
+            <div className="flex flex-wrap gap-2">
+              {storyboard && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-medium">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                    />
+                  </svg>
+                  {storyboard.length} frames
+                </span>
+              )}
+
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-medium">
+                {inputMode === 'voice' ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                      />
+                    </svg>
+                    Entrada: Voz
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Entrada: Texto
+                  </>
+                )}
+              </span>
+
+              {isEditMode && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Modo edición
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-6">
         {/* Selector de modo: Voice / Text - Solo en modo creación */}
         {!isEditMode && (
           <div className="mb-6 flex gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700">
@@ -517,36 +626,62 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
 
         {/* Modo VOZ: Estado de grabación - Solo en modo creación */}
         {!isEditMode && inputMode === 'voice' && (
-          <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                {recordingState === 'recording' && (
-                  <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
-                )}
-                {recordingState === 'paused' && (
-                  <div className="w-4 h-4 bg-yellow-500 rounded-full" />
-                )}
-                {recordingState === 'processing' && (
-                  <div className="w-4 h-4 bg-blue-500 rounded-full animate-spin border-2 border-white border-t-transparent" />
-                )}
-                <span className="text-white font-medium">
-                  {recordingState === 'idle' && 'Listo para grabar'}
-                  {recordingState === 'recording' && 'Grabando...'}
-                  {recordingState === 'paused' && 'Pausado'}
-                  {recordingState === 'processing' && 'Procesando...'}
-                </span>
+          <div className="mb-6 p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+            {/* Status Bar */}
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-700/50">
+              <div className="flex items-center gap-4">
+                {/* Status Indicator */}
+                <div className="relative">
+                  {recordingState === 'recording' && (
+                    <>
+                      <div className="w-6 h-6 bg-red-500 rounded-full animate-pulse" />
+                      <div className="absolute inset-0 w-6 h-6 bg-red-500 rounded-full animate-ping opacity-75" />
+                    </>
+                  )}
+                  {recordingState === 'paused' && (
+                    <div className="w-6 h-6 bg-yellow-500 rounded-full shadow-lg shadow-yellow-500/50" />
+                  )}
+                  {recordingState === 'processing' && (
+                    <div className="w-6 h-6 bg-blue-500 rounded-full animate-spin border-2 border-white border-t-transparent" />
+                  )}
+                  {recordingState === 'idle' && (
+                    <div className="w-6 h-6 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/50" />
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-white font-semibold text-lg block">
+                    {recordingState === 'idle' && '🎤 Listo para grabar'}
+                    {recordingState === 'recording' && '🔴 Grabando...'}
+                    {recordingState === 'paused' && '⏸️ Pausado'}
+                    {recordingState === 'processing' && '⚙️ Procesando audio...'}
+                  </span>
+                  <span className="text-slate-400 text-sm">
+                    {recordingState === 'idle' && 'Presioná el botón rojo para comenzar'}
+                    {recordingState === 'recording' && 'La grabación está en curso'}
+                    {recordingState === 'paused' && 'Pausado - presioná reanudar para continuar'}
+                    {recordingState === 'processing' && 'Transcribiendo tu audio...'}
+                  </span>
+                </div>
               </div>
-              <span className="text-slate-400 font-mono text-lg">{formatDuration(duration)}</span>
+
+              {/* Timer */}
+              <div className="text-right">
+                <span className="text-white font-mono text-3xl font-bold block">
+                  {formatDuration(duration)}
+                </span>
+                <span className="text-slate-500 text-xs uppercase tracking-wider">Duración</span>
+              </div>
             </div>
 
             {/* Controles */}
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               {recordingState === 'idle' && (
                 <>
                   <button
                     onClick={startRecording}
                     disabled={!hasMediaDevices}
-                    className="flex-1 py-3 px-6 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-4 px-8 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-red-500/30 hover:shadow-2xl hover:shadow-red-500/40 hover:scale-105 active:scale-95"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path
@@ -572,14 +707,28 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                 <>
                   <button
                     onClick={pauseRecording}
-                    className="flex-1 py-3 px-6 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-medium transition-colors"
+                    className="flex-1 py-4 px-8 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-3 shadow-xl shadow-yellow-500/20 hover:scale-105 active:scale-95"
                   >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                     Pausar
                   </button>
                   <button
                     onClick={stopRecording}
-                    className="flex-1 py-3 px-6 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+                    className="flex-1 py-4 px-8 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-500/10 hover:scale-105 active:scale-95"
                   >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                     Detener
                   </button>
                 </>
@@ -589,14 +738,28 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                 <>
                   <button
                     onClick={resumeRecording}
-                    className="flex-1 py-3 px-6 bg-green-600 hover:bg-green-500 text-white rounded-lg font-medium transition-colors"
+                    className="flex-1 py-4 px-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-3 shadow-xl shadow-green-500/20 hover:scale-105 active:scale-95"
                   >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                     Reanudar
                   </button>
                   <button
                     onClick={stopRecording}
-                    className="flex-1 py-3 px-6 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+                    className="flex-1 py-4 px-8 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-500/10 hover:scale-105 active:scale-95"
                   >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                     Detener
                   </button>
                 </>
@@ -607,22 +770,65 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
 
         {/* Modo TEXTO: Editor de texto - Solo en modo creación */}
         {!isEditMode && inputMode === 'text' && (
-          <div className="mb-6 p-6 bg-slate-800 rounded-xl border border-slate-700">
-            <h3 className="text-white font-semibold mb-3">Describe tu pensamiento u objetivo:</h3>
+          <div className="mb-6 p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-white font-semibold text-lg">Describe tu historia</h3>
+                <p className="text-slate-400 text-sm">
+                  Contanos qué querés convertir en storyboard
+                </p>
+              </div>
+            </div>
+
             <textarea
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
-              placeholder="Escribe aquí tu pensamiento, objetivo o idea que quieras analizar y convertir en un plan de acción..."
-              className="w-full min-h-[200px] p-4 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y"
+              placeholder="Ejemplo: Un perrito juega en el parque, encuentra una pelota y la lleva a su dueño..."
+              className="w-full min-h-[240px] p-4 bg-slate-900/50 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y transition-all"
               disabled={isAnalyzing}
             />
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-slate-400">{textInput.length} caracteres</span>
+            <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-sm">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  {textInput.length} caracteres
+                </span>
+              </div>
               {textInput.trim() && (
                 <button
                   onClick={() => setTextInput('')}
-                  className="text-slate-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all flex items-center gap-2"
                 >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
                   Limpiar
                 </button>
               )}
@@ -734,18 +940,20 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
             </div>
 
             {/* Grid de viñetas del storyboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {storyboard.map((frame) => (
                 <div
                   key={frame.frame}
-                  className="bg-slate-800/80 rounded-lg border-2 border-slate-600 overflow-hidden hover:border-slate-500 transition-colors"
+                  className="group bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 overflow-hidden hover:border-indigo-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1"
                 >
                   {/* Header de la viñeta */}
-                  <div className="bg-slate-700/50 px-3 py-2 border-b border-slate-600 flex items-center gap-2">
-                    <div className="w-7 h-7 rounded bg-slate-600 flex items-center justify-center text-white text-sm font-bold">
-                      {frame.frame}
+                  <div className="bg-gradient-to-r from-slate-800/80 to-slate-700/80 px-4 py-3 border-b border-slate-700/50 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                      #{frame.frame}
                     </div>
-                    <h4 className="text-white font-medium text-sm flex-1">{frame.scene}</h4>
+                    <h4 className="text-white font-semibold flex-1 group-hover:text-indigo-300 transition-colors">
+                      {frame.scene}
+                    </h4>
                   </div>
 
                   {/* Contenido de la viñeta */}
@@ -1051,8 +1259,16 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
               <button
                 onClick={analyzeWithAI}
                 disabled={isAnalyzing}
-                className="mt-4 w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                className="mt-4 w-full py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg font-semibold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
                 Volver a analizar
               </button>
             )}
