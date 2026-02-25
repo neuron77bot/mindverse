@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getStoredUser, type GoogleUser } from './LoginView';
+import { getStoredUser, type GoogleUser } from '../../services/auth';
 import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';

@@ -4,7 +4,7 @@ import { useMindverseStore } from '../../store/mindverseStore';
 import Sidebar from './Sidebar';
 import MobileHeader from './MobileHeader';
 import NodeEditor from '../Mindverse/NodeEditor';
-import { logout } from '../Auth/LoginView';
+import { logout } from '../../services/auth';
 
 export default function AppLayout() {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     initFromBackend();
-  }, []);
+  }, [initFromBackend]);
 
   const handleLogout = () => {
     logout();

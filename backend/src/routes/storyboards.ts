@@ -65,11 +65,19 @@ export async function storyboardRoutes(app: FastifyInstance) {
         const { id } = req.params;
         const storyboard = await Storyboard.findOne({ _id: id, userId } as any).lean();
 
+        app.log.info(`Storyboard encontrado: ${!!storyboard}`);
+        if (storyboard) {
+          app.log.info(`Campos: ${Object.keys(storyboard).join(', ')}`);
+          app.log.info(`Frames: ${storyboard.frames?.length || 0}`);
+        }
+
         if (!storyboard) {
           return reply.status(404).send({ success: false, error: 'Storyboard no encontrado' });
         }
 
-        return reply.send({ success: true, storyboard });
+        // Forzar serialización manual para evitar stripping
+        reply.type('application/json');
+        return reply.send(JSON.stringify({ success: true, storyboard }));
       } catch (err: any) {
         app.log.error(err);
         return reply.status(500).send({ success: false, error: err.message });

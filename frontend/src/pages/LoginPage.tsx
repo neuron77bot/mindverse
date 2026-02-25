@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom';
-import LoginView, { isAuthenticated } from '../components/Auth/LoginView';
-import { Navigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import LoginView from '../components/Auth/LoginView';
+import { isAuthenticated } from '../services/auth';
 
 export default function LoginPage() {
   const navigate = useNavigate();

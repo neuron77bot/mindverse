@@ -52,6 +52,7 @@ export default function RecordingView() {
   }, [id, isViewMode]);
 
   const loadStoryboard = async (storyboardId: string) => {
+    console.log('📚 Cargando storyboard:', storyboardId);
     setIsLoading(true);
     setError(null);
 
@@ -60,13 +61,19 @@ export default function RecordingView() {
         headers: authHeadersOnly(),
       });
 
+      console.log('📚 Response status:', res.status);
+
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        console.error('📚 Error response:', errData);
         throw new Error(errData.error || 'Error cargando storyboard');
       }
 
       const data = await res.json();
+      console.log('📚 Data recibida:', data);
       const sb = data.storyboard;
+      console.log('📚 Storyboard:', sb);
+      console.log('📚 Frames:', sb?.frames?.length);
 
       // Poblar los estados con el storyboard cargado
       setStoryboardTitle(sb.title || '');
@@ -76,6 +83,8 @@ export default function RecordingView() {
       setStoryboard(sb.frames || []);
       setMermaidDiagram(sb.mermaidDiagram || null);
       setComicPageUrl(sb.comicPageUrl || null);
+
+      console.log('📚 Estados actualizados - frames:', sb.frames?.length);
 
       // Cargar imágenes de frames si existen
       if (sb.frames) {
@@ -88,7 +97,7 @@ export default function RecordingView() {
         setFrameImages(newFrameImages);
       }
     } catch (err: any) {
-      console.error('Error cargando storyboard:', err);
+      console.error('❌ Error cargando storyboard:', err);
       setError('Error al cargar el storyboard: ' + err.message);
     } finally {
       setIsLoading(false);
@@ -700,23 +709,25 @@ export default function RecordingView() {
                 </svg>
                 Storyboard ({storyboard.length} viñetas)
               </h3>
-              <button
-                onClick={() => {
-                  setStoryboard(null);
-                  setMermaidDiagram(null);
-                }}
-                className="text-slate-400 hover:text-white transition-colors"
-                title="Cerrar storyboard"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+              {!isViewMode && (
+                <button
+                  onClick={() => {
+                    setStoryboard(null);
+                    setMermaidDiagram(null);
+                  }}
+                  className="text-slate-400 hover:text-white transition-colors"
+                  title="Cerrar storyboard"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
 
             {/* Grid de viñetas del storyboard */}

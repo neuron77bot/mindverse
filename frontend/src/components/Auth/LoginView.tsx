@@ -1,37 +1,9 @@
 import { GoogleLogin } from '@react-oauth/google';
-import { setToken, removeToken } from '../../services/authHeaders';
+import { setToken } from '../../services/authHeaders';
 
 const STORAGE_KEY = 'mv_auth';
 const USER_KEY = 'mv_user';
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
-
-// ── Tipos ─────────────────────────────────────────────────────────────────────
-export interface GoogleUser {
-  sub: string;
-  name: string;
-  email: string;
-  picture: string;
-}
-
-// ── Helpers de sesión ─────────────────────────────────────────────────────────
-export function isAuthenticated(): boolean {
-  return localStorage.getItem(STORAGE_KEY) === '1';
-}
-
-export function getStoredUser(): GoogleUser | null {
-  try {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function logout(): void {
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(USER_KEY);
-  removeToken();
-}
 
 // ── Componente ────────────────────────────────────────────────────────────────
 interface LoginViewProps {

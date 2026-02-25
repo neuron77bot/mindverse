@@ -93,25 +93,29 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
   const vibColor = EMOTIONAL_COLORS[node.emotionalLevel] || color;
 
   // BFS para obtener TODOS los descendientes
-  const steps: MindverseNode[] = [];
-  const visited = new Set<string>([node.id]);
-  const queue = [node.id];
+  const steps = useMemo(() => {
+    const result: MindverseNode[] = [];
+    const visited = new Set<string>([node.id]);
+    const queue = [node.id];
 
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const childIds = connections
-      .filter((c) => c.source === current && !visited.has(c.target))
-      .map((c) => c.target);
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const childIds = connections
+        .filter((c) => c.source === current && !visited.has(c.target))
+        .map((c) => c.target);
 
-    for (const childId of childIds) {
-      const childNode = nodes.find((n) => n.id === childId);
-      if (childNode) {
-        visited.add(childId);
-        queue.push(childId);
-        steps.push(childNode);
+      for (const childId of childIds) {
+        const childNode = nodes.find((n) => n.id === childId);
+        if (childNode) {
+          visited.add(childId);
+          queue.push(childId);
+          result.push(childNode);
+        }
       }
     }
-  }
+
+    return result;
+  }, [node.id, connections, nodes]);
 
   // Generar código Mermaid para el esquema
   const mermaidCode = useMemo(() => {

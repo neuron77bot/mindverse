@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { logout, getStoredUser } from './LoginView';
+import { logout, getStoredUser } from '../../services/auth';
 
 interface ProfileMenuProps {
   onLogout: () => void;

@@ -532,7 +532,7 @@ export async function generateComicPage(
 
   // Construir prompt detallado para la página de cómic
   const frameDescriptions = frames
-    .map((frame, idx) => {
+    .map((frame) => {
       let desc = `Panel ${frame.frame}: ${frame.visualDescription}`;
       if (frame.dialogue) {
         desc += ` Texto/diálogo: "${frame.dialogue}"`;
