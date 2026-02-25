@@ -2,6 +2,16 @@
 
 Este proyecto usa **ESLint** para linting y **Prettier** para formateo de código.
 
+## Prebuild Script
+
+Se incluye un script `prebuild.sh` que ejecuta linting y formateo en backend y frontend:
+
+```bash
+./prebuild.sh
+```
+
+Este script se ejecuta **automáticamente antes de cada push** gracias al git hook `pre-push`.
+
 ## Configuración
 
 - **Prettier:** `.prettierrc.json` (compartido entre backend y frontend)
