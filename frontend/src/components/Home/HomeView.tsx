@@ -1,20 +1,35 @@
 import { useState } from 'react';
 import { useMindverseStore } from '../../store/mindverseStore';
-import { CATEGORY_COLORS, CATEGORY_LABELS, EMOTIONAL_COLORS, HAWKINS_SCALE } from '../../data/mockData';
+import {
+  CATEGORY_COLORS,
+  CATEGORY_LABELS,
+  EMOTIONAL_COLORS,
+  HAWKINS_SCALE,
+} from '../../data/mockData';
 import type { MindverseNode } from '../../types';
 import ExpandableText from '../UI/ExpandableText';
 import { getFreqLabel } from '../../utils/vibration';
 
 const TEMPORAL_ICONS: Record<string, string> = {
-  PAST: '⏮️', PRESENT: '⏺️', FUTURE: '⏭️',
+  PAST: '⏮️',
+  PRESENT: '⏺️',
+  FUTURE: '⏭️',
 };
 const TEMPORAL_LABELS_MAP: Record<string, string> = {
-  PAST: 'Pasado', PRESENT: 'Presente', FUTURE: 'Futuro',
+  PAST: 'Pasado',
+  PRESENT: 'Presente',
+  FUTURE: 'Futuro',
 };
 const CATEGORY_ICONS: Record<string, string> = {
-  HEALTH: '💪', FINANCES: '💰', WORK: '💼', LOVE: '❤️',
-  FAMILY: '👨‍👩‍👧', PERSONAL_GROWTH: '🚀', LEISURE: '🎉',
-  SPIRITUALITY: '🔮', SOCIAL: '🤝',
+  HEALTH: '💪',
+  FINANCES: '💰',
+  WORK: '💼',
+  LOVE: '❤️',
+  FAMILY: '👨‍👩‍👧',
+  PERSONAL_GROWTH: '🚀',
+  LEISURE: '🎉',
+  SPIRITUALITY: '🔮',
+  SOCIAL: '🤝',
 };
 
 interface HomeViewProps {
@@ -29,10 +44,8 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
 
   // Nodos marcados como raíz (isRoot=true)
   const allRootNodes = nodes.filter((n) => n.isRoot === true);
-  
-  const mainNodes = showOnlyFavorites
-    ? allRootNodes.filter((n) => n.isFavorite)
-    : allRootNodes;
+
+  const mainNodes = showOnlyFavorites ? allRootNodes.filter((n) => n.isFavorite) : allRootNodes;
 
   const getStepCount = (nodeId: string): number => {
     const visited = new Set<string>([nodeId]);
@@ -58,9 +71,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
     <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
       <div className="mb-6">
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-1">Mis pensamientos</h2>
-        <p className="text-slate-400 text-sm">
-          {mainNodes.length} pensamientos raíz
-        </p>
+        <p className="text-slate-400 text-sm">{mainNodes.length} pensamientos raíz</p>
       </div>
 
       {/* Botón nuevo pensamiento + filtro favoritos + toggle vista */}
@@ -81,7 +92,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
         >
           <span>⭐</span> {showOnlyFavorites ? 'Todos' : 'Favoritos'}
         </button>
-        
+
         {/* Toggle Grid/List */}
         <div className="flex rounded-lg overflow-hidden border border-slate-700">
           <button
@@ -93,7 +104,12 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+              />
             </svg>
           </button>
           <button
@@ -105,7 +121,12 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </div>
@@ -144,13 +165,21 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                 {/* Thumbnail pequeño */}
                 <div className="relative shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden">
                   {node.imageUrl ? (
-                    <img src={node.imageUrl} alt={node.content} className="w-full h-full object-cover" />
+                    <img
+                      src={node.imageUrl}
+                      alt={node.content}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div
                       className="w-full h-full flex items-center justify-center"
-                      style={{ background: `linear-gradient(135deg, ${vibColor}25 0%, ${vibColor}10 100%)` }}
+                      style={{
+                        background: `linear-gradient(135deg, ${vibColor}25 0%, ${vibColor}10 100%)`,
+                      }}
                     >
-                      <span className="text-[8px] font-semibold tracking-widest uppercase opacity-30 text-white">IMG</span>
+                      <span className="text-[8px] font-semibold tracking-widest uppercase opacity-30 text-white">
+                        IMG
+                      </span>
                     </div>
                   )}
                   {node.isFavorite && (
@@ -162,12 +191,18 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base mb-1 line-clamp-1">{node.content}</h3>
+                  <h3 className="text-white font-bold text-base mb-1 line-clamp-1">
+                    {node.content}
+                  </h3>
                   <div className="flex flex-wrap items-center gap-1.5 mb-2">
                     {hawkins && (
                       <span
                         className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full border text-[10px] font-semibold"
-                        style={{ borderColor: `${vibColor}50`, color: vibColor, backgroundColor: `${vibColor}15` }}
+                        style={{
+                          borderColor: `${vibColor}50`,
+                          color: vibColor,
+                          backgroundColor: `${vibColor}15`,
+                        }}
                       >
                         {hawkins.calibration}
                       </span>
@@ -181,14 +216,15 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-700/40 text-[10px] text-slate-400 font-medium">
                       {stepCount} paso{stepCount !== 1 ? 's' : ''}
                     </span>
-                    {node.tags && node.tags.slice(0, 2).map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center px-2 py-0.5 bg-emerald-600/20 text-emerald-300 text-[10px] font-medium rounded-full"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
+                    {node.tags &&
+                      node.tags.slice(0, 2).map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center px-2 py-0.5 bg-emerald-600/20 text-emerald-300 text-[10px] font-medium rounded-full"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
                   </div>
                   {node.description && (
                     <p className="text-slate-400 text-xs line-clamp-1">{node.description}</p>
@@ -198,21 +234,37 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                 {/* Acción rápida */}
                 <div className="shrink-0 hidden sm:flex items-center gap-2">
                   <button
-                    onClick={(e) => { e.stopPropagation(); openEditor(node); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditor(node);
+                    }}
                     className="p-2 text-slate-500 hover:text-indigo-400 transition-colors"
                     title="Editar"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                      />
                     </svg>
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onNavigateToMap(node.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigateToMap(node.id);
+                    }}
                     className="p-2 text-slate-500 hover:text-purple-400 transition-colors"
                     title="Ver en mapa"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -250,7 +302,9 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                   ) : (
                     <div
                       className="w-full h-full flex items-center justify-center"
-                      style={{ background: `linear-gradient(135deg, ${vibColor}25 0%, ${vibColor}10 100%)` }}
+                      style={{
+                        background: `linear-gradient(135deg, ${vibColor}25 0%, ${vibColor}10 100%)`,
+                      }}
                     >
                       <span className="text-xs font-semibold tracking-widest uppercase opacity-30 text-white">
                         Sin imagen
@@ -279,7 +333,11 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                     {hawkins && (
                       <span
                         className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold"
-                        style={{ borderColor: `${vibColor}50`, color: vibColor, backgroundColor: `${vibColor}15` }}
+                        style={{
+                          borderColor: `${vibColor}50`,
+                          color: vibColor,
+                          backgroundColor: `${vibColor}15`,
+                        }}
                       >
                         {hawkins.label} · {hawkins.calibration}
                       </span>
@@ -324,7 +382,10 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-3 border-t gap-2" style={{ borderColor: `${vibColor}25` }}>
+                  <div
+                    className="flex items-center justify-between pt-3 border-t gap-2"
+                    style={{ borderColor: `${vibColor}25` }}
+                  >
                     {/* Ver detalle */}
                     <button
                       onClick={() => onNavigateToDetail(node)}

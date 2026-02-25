@@ -3,9 +3,13 @@ import { persist } from 'zustand/middleware';
 import type { MindverseNode, Connection, Category, TemporalState } from '../types';
 import type { LayoutDirection } from '../utils/layoutUtils';
 import {
-  apiGetThoughts, apiCreateThought, apiUpdateThought,
-  apiDeleteThought, apiBulkSync,
-  backendToNode, extractConnections,
+  apiGetThoughts,
+  apiCreateThought,
+  apiUpdateThought,
+  apiDeleteThought,
+  apiBulkSync,
+  backendToNode,
+  extractConnections,
 } from '../services/thoughtsApi';
 
 // ── Debounce helper ───────────────────────────────────────────────────────────
@@ -14,7 +18,13 @@ const positionTimers = new Map<string, ReturnType<typeof setTimeout>>();
 function debouncePosition(nodeId: string, fn: () => void, delay = 1200) {
   const prev = positionTimers.get(nodeId);
   if (prev) clearTimeout(prev);
-  positionTimers.set(nodeId, setTimeout(() => { fn(); positionTimers.delete(nodeId); }, delay));
+  positionTimers.set(
+    nodeId,
+    setTimeout(() => {
+      fn();
+      positionTimers.delete(nodeId);
+    }, delay)
+  );
 }
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -79,14 +89,14 @@ export const useMindverseStore = create<MindverseStore>()(
       addNode: async (node) => {
         const tempId = node.id; // UUID temporal
         set((state) => ({ nodes: [...state.nodes, node] }));
-        
+
         try {
           const { connections } = get();
           const { _id } = await apiCreateThought(node, connections);
-          
+
           // Actualizar el nodo con el _id de MongoDB
           set((state) => ({
-            nodes: state.nodes.map((n) => n.id === tempId ? { ...n, id: _id } : n),
+            nodes: state.nodes.map((n) => (n.id === tempId ? { ...n, id: _id } : n)),
             connections: state.connections.map((c) => ({
               ...c,
               source: c.source === tempId ? _id : c.source,
@@ -102,14 +112,13 @@ export const useMindverseStore = create<MindverseStore>()(
 
       updateNode: (id, updates) => {
         set((state) => ({
-          nodes: state.nodes.map((n) => n.id === id ? { ...n, ...updates } : n),
+          nodes: state.nodes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
         }));
         const { connections } = get();
         apiUpdateThought(id, updates, connections).catch(console.error);
       },
 
       deleteNode: (id) => {
-        
         set((state) => ({
           nodes: state.nodes.filter((n) => n.id !== id),
           connections: state.connections.filter((c) => c.source !== id && c.target !== id),
@@ -119,7 +128,7 @@ export const useMindverseStore = create<MindverseStore>()(
 
       updateNodePosition: (id, x, y) => {
         set((state) => ({
-          nodes: state.nodes.map((n) => n.id === id ? { ...n, positionX: x, positionY: y } : n),
+          nodes: state.nodes.map((n) => (n.id === id ? { ...n, positionX: x, positionY: y } : n)),
         }));
         debouncePosition(id, () => {
           const { connections } = get();
@@ -148,25 +157,25 @@ export const useMindverseStore = create<MindverseStore>()(
       },
 
       // ── Filtros ───────────────────────────────────────────────────────────────
-      setTemporalFilter:  (filter)    => set({ activeTemporalFilter: filter }),
-      setCategoryFilter:  (filter)    => set({ activeCategoryFilter: filter }),
+      setTemporalFilter: (filter) => set({ activeTemporalFilter: filter }),
+      setCategoryFilter: (filter) => set({ activeCategoryFilter: filter }),
       setLayoutDirection: (direction) => set({ layoutDirection: direction }),
-      setFocusedNode:     (id)        => set({ focusedNodeId: id }),
+      setFocusedNode: (id) => set({ focusedNodeId: id }),
 
       // ── Editor ────────────────────────────────────────────────────────────────
       setSelectedNode: (node) => set({ selectedNode: node }),
-      openEditor:  (node, parentNodeId) => set({ 
-        selectedNode: node || null, 
-        isEditorOpen: true,
-        parentNodeId: parentNodeId || null 
-      }),
-      closeEditor: ()     => set({ selectedNode: null, isEditorOpen: false, parentNodeId: null }),
+      openEditor: (node, parentNodeId) =>
+        set({
+          selectedNode: node || null,
+          isEditorOpen: true,
+          parentNodeId: parentNodeId || null,
+        }),
+      closeEditor: () => set({ selectedNode: null, isEditorOpen: false, parentNodeId: null }),
 
       // ── Getters ───────────────────────────────────────────────────────────────
       getFilteredNodes: () => {
         const { nodes, activeTemporalFilter, activeCategoryFilter } = get();
         return nodes.filter((node) => {
-          
           const matchesTemporal =
             activeTemporalFilter === 'ALL' || node.temporalState === activeTemporalFilter;
           const matchesCategory =
@@ -209,8 +218,8 @@ export const useMindverseStore = create<MindverseStore>()(
     {
       name: 'mindverse-storage',
       partialize: (state) => ({
-        nodes:                state.nodes,
-        connections:          state.connections,
+        nodes: state.nodes,
+        connections: state.connections,
         activeTemporalFilter: state.activeTemporalFilter,
         activeCategoryFilter: state.activeCategoryFilter,
       }),

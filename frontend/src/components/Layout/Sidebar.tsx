@@ -1,14 +1,14 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
 
 interface SidebarProps {
   onLogout: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export default function Sidebar({ onLogout }: SidebarProps) {
+export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
     { path: '/', label: 'Home', icon: '🏠' },
@@ -22,24 +22,16 @@ export default function Sidebar({ onLogout }: SidebarProps) {
     return location.pathname.startsWith(path);
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    onClose();
+  };
+
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center border border-slate-700 hover:bg-slate-700 transition-colors"
-      >
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
       {/* Overlay para mobile */}
       {isOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/60 z-40"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={onClose} />
       )}
 
       {/* Sidebar */}
@@ -57,7 +49,10 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
                   d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                 />
               </svg>
@@ -74,10 +69,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           {menuItems.map((item) => (
             <button
               key={item.path}
-              onClick={() => {
-                navigate(item.path);
-                setIsOpen(false);
-              }}
+              onClick={() => handleNavigation(item.path)}
               className={`
                 w-full flex items-center gap-3 px-4 py-3 rounded-lg
                 text-sm font-medium transition-all
@@ -101,7 +93,12 @@ export default function Sidebar({ onLogout }: SidebarProps) {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-900/20 transition-all"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
             </svg>
             <span>Cerrar sesión</span>
           </button>

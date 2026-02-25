@@ -1,15 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { useMindverseStore } from '../../store/mindverseStore';
 import Sidebar from './Sidebar';
+import MobileHeader from './MobileHeader';
 import NodeEditor from '../Mindverse/NodeEditor';
 import { logout } from '../Auth/LoginView';
 
 export default function AppLayout() {
   const navigate = useNavigate();
   const initFromBackend = useMindverseStore((s) => s.initFromBackend);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => { initFromBackend(); }, []);
+  useEffect(() => {
+    initFromBackend();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -17,11 +21,23 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="h-screen flex bg-slate-900">
-      <Sidebar onLogout={handleLogout} />
+    <div className="h-screen flex flex-col lg:flex-row bg-slate-900">
+      {/* Mobile Header - Solo visible en mobile */}
+      <MobileHeader
+        onMenuClick={() => setIsSidebarOpen(true)}
+        onLogout={handleLogout}
+        onProfile={() => navigate('/perfil')}
+      />
+
+      {/* Sidebar */}
+      <Sidebar onLogout={handleLogout} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Outlet />
       </div>
+
+      {/* Node Editor (overlay) */}
       <NodeEditor />
     </div>
   );

@@ -35,11 +35,7 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
       {/* Banner: imagen real o placeholder */}
       <div className="relative h-28 w-full overflow-hidden">
         {node.imageUrl ? (
-          <img
-            src={node.imageUrl}
-            alt={node.content}
-            className="w-full h-full object-cover"
-          />
+          <img src={node.imageUrl} alt={node.content} className="w-full h-full object-cover" />
         ) : (
           <div
             className="w-full h-full flex items-center justify-center"
@@ -69,13 +65,9 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
           </span>
         </div>
 
-        <h3 className="font-semibold text-sm leading-tight mb-1">
-          {node.content}
-        </h3>
+        <h3 className="font-semibold text-sm leading-tight mb-1">{node.content}</h3>
 
-        {node.description && (
-          <p className="text-xs opacity-80 line-clamp-2">{node.description}</p>
-        )}
+        {node.description && <p className="text-xs opacity-80 line-clamp-2">{node.description}</p>}
       </div>
 
       <Handle

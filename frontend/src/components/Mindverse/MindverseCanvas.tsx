@@ -78,9 +78,7 @@ function MindverseCanvasInner() {
   // Filtrar conexiones según los nodos visibles
   const filteredConnections = useMemo(() => {
     const nodeIds = new Set(filteredNodes.map((n) => n.id));
-    return storeConnections.filter(
-      (conn) => nodeIds.has(conn.source) && nodeIds.has(conn.target)
-    );
+    return storeConnections.filter((conn) => nodeIds.has(conn.source) && nodeIds.has(conn.target));
   }, [storeConnections, filteredNodes]);
 
   // Convertir nodos del store a nodos de React Flow
@@ -149,7 +147,7 @@ function MindverseCanvasInner() {
   // Reaccionar a cambios del layoutDirection en el store
   useEffect(() => {
     onLayout(layoutDirection);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutDirection]);
 
   // Manejar cambios de posición de nodos
@@ -202,7 +200,6 @@ function MindverseCanvasInner() {
         className="!bg-slate-800 !shadow-lg !rounded-lg !border !border-slate-700"
         maskColor="rgba(0,0,0,0.6)"
       />
-      
     </ReactFlow>
   );
 }

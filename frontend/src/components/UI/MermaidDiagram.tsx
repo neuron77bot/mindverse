@@ -83,7 +83,12 @@ export default function MermaidDiagram({ chart, className = '' }: MermaidDiagram
                 title="Zoom in"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
               </button>
               <button
@@ -101,7 +106,12 @@ export default function MermaidDiagram({ chart, className = '' }: MermaidDiagram
                 title="Resetear zoom"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
               </button>
             </div>
@@ -111,16 +121,22 @@ export default function MermaidDiagram({ chart, className = '' }: MermaidDiagram
               wrapperStyle={{ width: '100%', height: '500px' }}
               contentStyle={{ width: '100%', height: '100%' }}
             >
-              <div 
-                ref={containerRef} 
+              <div
+                ref={containerRef}
                 className={`mermaid-container ${className}`}
-                style={{ minWidth: '100%', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{
+                  minWidth: '100%',
+                  minHeight: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               />
             </TransformComponent>
           </>
         )}
       </TransformWrapper>
-      
+
       {/* Indicador de instrucciones */}
       <div className="mt-2 text-center text-xs text-slate-500">
         Arrastrá para mover • Rueda del mouse para zoom • Click en botones para controlar

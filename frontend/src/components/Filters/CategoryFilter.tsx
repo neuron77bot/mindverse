@@ -15,9 +15,7 @@ const categories: Category[] = [
 ];
 
 export default function CategoryFilter() {
-  const activeCategoryFilter = useMindverseStore(
-    (state) => state.activeCategoryFilter
-  );
+  const activeCategoryFilter = useMindverseStore((state) => state.activeCategoryFilter);
   const setCategoryFilter = useMindverseStore((state) => state.setCategoryFilter);
 
   return (
@@ -42,19 +40,14 @@ export default function CategoryFilter() {
             key={category}
             onClick={() => setCategoryFilter(category)}
             className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
-              activeCategoryFilter === category
-                ? 'text-white shadow-lg'
-                : 'hover:opacity-90'
+              activeCategoryFilter === category ? 'text-white shadow-lg' : 'hover:opacity-90'
             }`}
             style={{
               backgroundColor:
                 activeCategoryFilter === category
                   ? CATEGORY_COLORS[category]
                   : `${CATEGORY_COLORS[category]}30`,
-              color:
-                activeCategoryFilter === category
-                  ? 'white'
-                  : CATEGORY_COLORS[category],
+              color: activeCategoryFilter === category ? 'white' : CATEGORY_COLORS[category],
             }}
           >
             {CATEGORY_LABELS[category]}

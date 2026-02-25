@@ -6,8 +6,8 @@ import CategoryFilter from '../components/Filters/CategoryFilter';
 import LayoutFilter from '../components/Filters/LayoutFilter';
 
 export default function MapaPage() {
-  const navigate       = useNavigate();
-  const focusedNodeId  = useMindverseStore((s) => s.focusedNodeId);
+  const navigate = useNavigate();
+  const focusedNodeId = useMindverseStore((s) => s.focusedNodeId);
   const setFocusedNode = useMindverseStore((s) => s.setFocusedNode);
 
   return (
@@ -17,7 +17,10 @@ export default function MapaPage() {
           <div className="flex items-center justify-between px-3 py-2 bg-indigo-600/20 border border-indigo-500/30 rounded-xl text-sm">
             <span className="text-indigo-300">🔍 Vista enfocada</span>
             <button
-              onClick={() => { setFocusedNode(null); navigate('/mapa'); }}
+              onClick={() => {
+                setFocusedNode(null);
+                navigate('/mapa');
+              }}
               className="text-indigo-400 hover:text-white transition-colors font-medium"
             >
               Ver mapa completo →

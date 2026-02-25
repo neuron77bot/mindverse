@@ -12,9 +12,7 @@ const temporalIcons: Record<string, string> = {
 };
 
 export default function TemporalFilter() {
-  const activeTemporalFilter = useMindverseStore(
-    (state) => state.activeTemporalFilter
-  );
+  const activeTemporalFilter = useMindverseStore((state) => state.activeTemporalFilter);
   const setTemporalFilter = useMindverseStore((state) => state.setTemporalFilter);
 
   return (

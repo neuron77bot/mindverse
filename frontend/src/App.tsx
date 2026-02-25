@@ -1,12 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './router/ProtectedRoute';
 import AppLayout from './components/Layout/AppLayout';
-import LoginPage      from './pages/LoginPage';
-import HomePage       from './pages/HomePage';
-import MapaPage       from './pages/MapaPage';
-import DetailPage     from './pages/DetailPage';
-import ProfilePage    from './pages/ProfilePage';
-import RecordingPage  from './pages/RecordingPage';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import MapaPage from './pages/MapaPage';
+import DetailPage from './pages/DetailPage';
+import ProfilePage from './pages/ProfilePage';
+import RecordingPage from './pages/RecordingPage';
 import StoryboardsPage from './pages/StoryboardsPage';
 
 export default function App() {
@@ -18,12 +18,12 @@ export default function App() {
       {/* Protegidas — envueltas en AppLayout (Header + NodeEditor) */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route index        element={<HomePage />} />
+          <Route index element={<HomePage />} />
           <Route path="/mapa" element={<MapaPage />} />
           <Route path="/detail/:id" element={<DetailPage />} />
           <Route path="/recording/:id" element={<RecordingPage />} />
           <Route path="/storyboards" element={<StoryboardsPage />} />
-          <Route path="/perfil"     element={<ProfilePage />} />
+          <Route path="/perfil" element={<ProfilePage />} />
         </Route>
       </Route>
 

@@ -11,10 +11,10 @@ export default function ProfileMenu({ onLogout, onProfile }: ProfileMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const user = getStoredUser();
 
-  const displayName  = user?.name    ?? 'Usuario';
-  const displayEmail = user?.email   ?? '';
-  const picture      = user?.picture ?? null;
-  const initial      = displayName[0]?.toUpperCase() ?? 'U';
+  const displayName = user?.name ?? 'Usuario';
+  const displayEmail = user?.email ?? '';
+  const picture = user?.picture ?? null;
+  const initial = displayName[0]?.toUpperCase() ?? 'U';
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -55,7 +55,9 @@ export default function ProfileMenu({ onLogout, onProfile }: ProfileMenuProps) {
         </span>
         <svg
           className={`hidden sm:block w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -90,11 +92,22 @@ export default function ProfileMenu({ onLogout, onProfile }: ProfileMenuProps) {
           <div className="p-1.5 space-y-0.5">
             {onProfile && (
               <button
-                onClick={() => { setOpen(false); onProfile(); }}
+                onClick={() => {
+                  setOpen(false);
+                  onProfile();
+                }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors font-medium"
               >
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
@@ -105,8 +118,16 @@ export default function ProfileMenu({ onLogout, onProfile }: ProfileMenuProps) {
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors font-medium"
             >
-              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              <svg
+                className="w-4 h-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>

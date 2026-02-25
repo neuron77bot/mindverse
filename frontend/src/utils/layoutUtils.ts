@@ -3,7 +3,7 @@ import type { Node, Edge } from 'reactflow';
 
 export type LayoutDirection = 'TB' | 'BT' | 'LR' | 'RL';
 
-const NODE_WIDTH  = 260;
+const NODE_WIDTH = 260;
 const NODE_HEIGHT = 220; // banner (112px) + contenido (~80px) + margen
 
 export function getLayoutedElements(
@@ -15,7 +15,7 @@ export function getLayoutedElements(
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
   const isHorizontal = direction === 'LR' || direction === 'RL';
-  
+
   dagreGraph.setGraph({
     rankdir: direction,
     nodesep: 60,
@@ -40,7 +40,7 @@ export function getLayoutedElements(
   // Get positioned nodes
   const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
-    
+
     return {
       ...node,
       targetPosition: isHorizontal ? 'left' : 'top',
@@ -83,7 +83,7 @@ export function getAutoLayoutedElements(
   const GRID_COLS = 4;
   const GRID_GAP_X = 300;
   const GRID_GAP_Y = 260;
-  
+
   // Find the bounds of the layouted tree
   let maxY = 0;
   let minX = 0;
@@ -102,7 +102,7 @@ export function getAutoLayoutedElements(
   const layoutedDisconnectedNodes = disconnectedNodes.map((node, index) => {
     const col = index % GRID_COLS;
     const row = Math.floor(index / GRID_COLS);
-    
+
     return {
       ...node,
       position: {

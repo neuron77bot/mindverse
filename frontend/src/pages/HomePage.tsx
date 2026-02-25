@@ -4,7 +4,7 @@ import HomeView from '../components/Home/HomeView';
 import type { MindverseNode } from '../types';
 
 export default function HomePage() {
-  const navigate       = useNavigate();
+  const navigate = useNavigate();
   const setFocusedNode = useMindverseStore((s) => s.setFocusedNode);
 
   const handleNavigateToMap = (nodeId?: string) => {
@@ -17,9 +17,6 @@ export default function HomePage() {
   };
 
   return (
-    <HomeView
-      onNavigateToMap={handleNavigateToMap}
-      onNavigateToDetail={handleNavigateToDetail}
-    />
+    <HomeView onNavigateToMap={handleNavigateToMap} onNavigateToDetail={handleNavigateToDetail} />
   );
 }

@@ -1,15 +1,15 @@
 import { GoogleLogin } from '@react-oauth/google';
 import { setToken, removeToken } from '../../services/authHeaders';
 
-const STORAGE_KEY  = 'mv_auth';
-const USER_KEY     = 'mv_user';
-const API_BASE     = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+const STORAGE_KEY = 'mv_auth';
+const USER_KEY = 'mv_user';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 export interface GoogleUser {
-  sub:     string;
-  name:    string;
-  email:   string;
+  sub: string;
+  name: string;
+  email: string;
   picture: string;
 }
 
@@ -39,7 +39,6 @@ interface LoginViewProps {
 }
 
 export default function LoginView({ onSuccess }: LoginViewProps) {
-
   const handleSuccess = async (credentialResponse: { credential?: string }) => {
     const { credential } = credentialResponse;
     if (!credential) return;
@@ -76,8 +75,16 @@ export default function LoginView({ onSuccess }: LoginViewProps) {
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/40 mb-4">
-            <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            <svg
+              className="w-9 h-9 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
                 d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
               />
             </svg>
@@ -100,9 +107,7 @@ export default function LoginView({ onSuccess }: LoginViewProps) {
           </div>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-6">
-          Solo usuarios autorizados
-        </p>
+        <p className="text-center text-slate-600 text-xs mt-6">Solo usuarios autorizados</p>
       </div>
     </div>
   );

@@ -45,10 +45,10 @@ export interface MindverseNode {
   positionY: number;
   color: string;
   createdAt: Date;
-  imageUrl?: string;   // thumbnail generado con IA
-  tags?: string[];     // etiquetas personalizadas
+  imageUrl?: string; // thumbnail generado con IA
+  tags?: string[]; // etiquetas personalizadas
   isFavorite?: boolean; // destacado
-  isRoot?: boolean;    // pensamiento raíz (se muestra en Home)
+  isRoot?: boolean; // pensamiento raíz (se muestra en Home)
 }
 
 // Interfaz para una conexión entre pensamientos

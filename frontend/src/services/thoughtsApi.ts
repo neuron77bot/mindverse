@@ -32,20 +32,20 @@ export interface BackendThought {
 
 export function backendToNode(t: BackendThought): MindverseNode {
   return {
-    id:            t._id,
-    content:       t.content,
-    description:   t.description ?? '',
-    category:      t.category as MindverseNode['category'],
+    id: t._id,
+    content: t.content,
+    description: t.description ?? '',
+    category: t.category as MindverseNode['category'],
     temporalState: t.temporalState as MindverseNode['temporalState'],
     emotionalLevel: t.emotionalLevel as MindverseNode['emotionalLevel'],
-    positionX:     t.positionX,
-    positionY:     t.positionY,
-    color:         t.color,
-    imageUrl:      t.imageUrl ?? undefined,
-    tags:          t.tags ?? [],
-    isFavorite:    t.isFavorite ?? false,
-    isRoot:        t.isRoot ?? false,
-    createdAt:     new Date(t.createdAt),
+    positionX: t.positionX,
+    positionY: t.positionY,
+    color: t.color,
+    imageUrl: t.imageUrl ?? undefined,
+    tags: t.tags ?? [],
+    isFavorite: t.isFavorite ?? false,
+    isRoot: t.isRoot ?? false,
+    createdAt: new Date(t.createdAt),
   };
 }
 
@@ -73,24 +73,27 @@ export async function apiGetThoughts(): Promise<BackendThought[]> {
   return data.data as BackendThought[];
 }
 
-export async function apiCreateThought(node: MindverseNode, connections: Connection[]): Promise<{ _id: string }> {
+export async function apiCreateThought(
+  node: MindverseNode,
+  connections: Connection[]
+): Promise<{ _id: string }> {
   const res = await fetch(`${API_BASE}/thoughts`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({
-      content:        node.content,
-      description:    node.description ?? '',
-      category:       node.category,
-      temporalState:  node.temporalState,
+      content: node.content,
+      description: node.description ?? '',
+      category: node.category,
+      temporalState: node.temporalState,
       emotionalLevel: node.emotionalLevel,
-      positionX:      node.positionX,
-      positionY:      node.positionY,
-      color:          node.color,
-      imageUrl:       node.imageUrl ?? null,
-      tags:           node.tags ?? [],
-      isFavorite:     node.isFavorite ?? false,
-      isRoot:         node.isRoot ?? false,
-      connections:    outgoingConns(node.id, connections),
+      positionX: node.positionX,
+      positionY: node.positionY,
+      color: node.color,
+      imageUrl: node.imageUrl ?? null,
+      tags: node.tags ?? [],
+      isFavorite: node.isFavorite ?? false,
+      isRoot: node.isRoot ?? false,
+      connections: outgoingConns(node.id, connections),
     }),
   });
   if (!res.ok) {
@@ -108,7 +111,9 @@ export async function apiUpdateThought(
 ): Promise<void> {
   const body: Record<string, any> = { ...updates };
   // Renombrar id→frontendId si viene en updates
-  if ('id' in body) { delete body.id; }
+  if ('id' in body) {
+    delete body.id;
+  }
   if (connections !== undefined) {
     body.connections = outgoingConns(nodeId, connections);
   }
@@ -124,29 +129,35 @@ export async function apiUpdateThought(
 }
 
 export async function apiDeleteThought(nodeId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, { method: 'DELETE', headers: authHeadersOnly() });
+  const res = await fetch(`${API_BASE}/thoughts/${nodeId}`, {
+    method: 'DELETE',
+    headers: authHeadersOnly(),
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? 'Error al eliminar pensamiento');
   }
 }
 
-export async function apiBulkSync(nodes: MindverseNode[], connections: Connection[]): Promise<void> {
+export async function apiBulkSync(
+  nodes: MindverseNode[],
+  connections: Connection[]
+): Promise<void> {
   const thoughts = nodes.map((node) => ({
-    _id:            node.id, // _id de MongoDB
-    content:        node.content,
-    description:    node.description ?? '',
-    category:       node.category,
-    temporalState:  node.temporalState,
+    _id: node.id, // _id de MongoDB
+    content: node.content,
+    description: node.description ?? '',
+    category: node.category,
+    temporalState: node.temporalState,
     emotionalLevel: node.emotionalLevel,
-    positionX:      node.positionX,
-    positionY:      node.positionY,
-    color:          node.color,
-    imageUrl:       node.imageUrl ?? null,
-    tags:           node.tags ?? [],
-    isFavorite:     node.isFavorite ?? false,
-    isRoot:         node.isRoot ?? false,
-    connections:    outgoingConns(node.id, connections),
+    positionX: node.positionX,
+    positionY: node.positionY,
+    color: node.color,
+    imageUrl: node.imageUrl ?? null,
+    tags: node.tags ?? [],
+    isFavorite: node.isFavorite ?? false,
+    isRoot: node.isRoot ?? false,
+    connections: outgoingConns(node.id, connections),
   }));
   const res = await fetch(`${API_BASE}/thoughts/bulk`, {
     method: 'POST',

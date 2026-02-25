@@ -27,15 +27,15 @@ export default function ExpandableText({ text, className = '', clamp = 2 }: Expa
 
   return (
     <div>
-      <p
-        ref={ref}
-        className={`${className} ${expanded ? '' : CLAMP_CLASS[clamp]}`}
-      >
+      <p ref={ref} className={`${className} ${expanded ? '' : CLAMP_CLASS[clamp]}`}>
         {text}
       </p>
       {isClamped && (
         <button
-          onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpanded((v) => !v);
+          }}
           className="mt-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
         >
           {expanded ? 'Leer menos ↑' : 'Leer más ↓'}
