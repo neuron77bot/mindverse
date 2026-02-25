@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { authHeadersOnly } from '../../services/authHeaders';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 interface StoryboardFrame {
   frame: number;
@@ -18,7 +21,7 @@ interface Storyboard {
   createdAt: string;
 }
 
-// MOCK DATA - Preparado para reemplazar con backend
+// MOCK DATA - Solo para fallback si backend falla
 const MOCK_STORYBOARDS: Storyboard[] = [
   {
     _id: '1',
@@ -113,7 +116,78 @@ const MOCK_STORYBOARDS: Storyboard[] = [
 ];
 
 export default function StoryboardsView() {
+  const [storyboards, setStoryboards] = useState<Storyboard[]>([]);
   const [selectedStoryboard, setSelectedStoryboard] = useState<Storyboard | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchStoryboards();
+  }, []);
+
+  const fetchStoryboards = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/storyboards`, {
+        headers: authHeadersOnly(),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Error cargando storyboards');
+      }
+
+      const data = await res.json();
+      setStoryboards(data.storyboards || []);
+    } catch (err: any) {
+      console.error('Error fetching storyboards:', err);
+      setError(err.message);
+      // Fallback a mock data en caso de error
+      setStoryboards(MOCK_STORYBOARDS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteStoryboard = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar este storyboard?')) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/storyboards/${id}`, {
+        method: 'DELETE',
+        headers: authHeadersOnly(),
+      });
+
+      if (!res.ok) {
+        throw new Error('Error eliminando storyboard');
+      }
+
+      setStoryboards(storyboards.filter(s => s._id !== id));
+      if (selectedStoryboard?._id === id) {
+        setSelectedStoryboard(null);
+      }
+      alert('✅ Storyboard eliminado');
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-900">
+        <div className="text-center">
+          <svg className="w-12 h-12 text-slate-600 mx-auto mb-3 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p className="text-slate-400">Cargando storyboards...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Vista detalle
   if (selectedStoryboard) {
@@ -121,7 +195,7 @@ export default function StoryboardsView() {
       <div className="flex-1 overflow-y-auto bg-slate-900">
         <div className="max-w-4xl mx-auto">
           {/* Header sticky */}
-          <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 px-4 py-3">
+          <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => setSelectedStoryboard(null)}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
@@ -130,6 +204,15 @@ export default function StoryboardsView() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               <span className="text-sm font-medium">Volver</span>
+            </button>
+            <button
+              onClick={() => deleteStoryboard(selectedStoryboard._id)}
+              className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span className="text-sm font-medium">Eliminar</span>
             </button>
           </div>
 
@@ -254,25 +337,38 @@ export default function StoryboardsView() {
         {/* Header */}
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Mis Storyboards</h1>
         <p className="text-slate-400 text-sm mb-6">
-          {MOCK_STORYBOARDS.length} storyboard{MOCK_STORYBOARDS.length !== 1 ? 's' : ''} guardado{MOCK_STORYBOARDS.length !== 1 ? 's' : ''}
+          {storyboards.length} storyboard{storyboards.length !== 1 ? 's' : ''} guardado{storyboards.length !== 1 ? 's' : ''}
         </p>
 
-        {/* Warning temporal */}
-        <div className="mb-6 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-          <div className="flex items-start gap-3">
-            <span className="text-yellow-400 text-lg">⚠️</span>
-            <div>
-              <p className="text-yellow-300 text-sm font-medium mb-1">Vista de prueba con datos mock</p>
-              <p className="text-yellow-400/80 text-xs">
-                Siguiente paso: conectar al backend para cargar tus storyboards reales
-              </p>
+        {/* Status banner */}
+        {error && (
+          <div className="mb-6 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              <span className="text-yellow-400 text-lg">⚠️</span>
+              <div>
+                <p className="text-yellow-300 text-sm font-medium mb-1">Mostrando datos de prueba</p>
+                <p className="text-yellow-400/80 text-xs">
+                  Error conectando al backend: {error}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Grid de cards - Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {MOCK_STORYBOARDS.map((storyboard) => (
+        {/* Empty state o Grid de cards */}
+        {storyboards.length === 0 ? (
+          <div className="text-center py-20">
+            <svg className="w-20 h-20 text-slate-600 mx-auto mb-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+            </svg>
+            <p className="text-slate-400 text-xl font-medium mb-2">No hay storyboards guardados</p>
+            <p className="text-slate-600 text-sm">
+              Generá y guardá tu primer storyboard desde la sección de grabación
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {storyboards.map((storyboard) => (
             <div
               key={storyboard._id}
               onClick={() => setSelectedStoryboard(storyboard)}
@@ -324,7 +420,8 @@ export default function StoryboardsView() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
