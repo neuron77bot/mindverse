@@ -38,7 +38,7 @@ export default function StoryboardsView() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/storyboards/debug`, {
+      const res = await fetch(`${API_BASE}/storyboards`, {
         headers: authHeadersOnly(),
       });
 
