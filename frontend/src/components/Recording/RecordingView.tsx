@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 import MermaidDiagram from '../UI/MermaidDiagram';
 
@@ -15,6 +16,7 @@ interface StoryboardFrame {
 }
 
 export default function RecordingView() {
+  const navigate = useNavigate();
   const [inputMode, setInputMode] = useState<InputMode>('voice');
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [transcription, setTranscription] = useState<string>('');
@@ -279,11 +281,13 @@ export default function RecordingView() {
         throw new Error(errData.error || 'Error guardando storyboard');
       }
 
-      // Limpiar después de guardar exitosamente
-      alert('✅ Storyboard guardado exitosamente');
-      setStoryboardTitle('');
-      // Opcionalmente resetear todo
-      // newRecording();
+      const data = await res.json();
+      const createdStoryboard = data.storyboard;
+
+      // Redirigir al detalle del storyboard creado
+      if (createdStoryboard && createdStoryboard._id) {
+        navigate(`/storyboard/detail/${createdStoryboard._id}`);
+      }
     } catch (err: any) {
       console.error('Error al guardar storyboard:', err);
       setError('Error al guardar storyboard: ' + err.message);
