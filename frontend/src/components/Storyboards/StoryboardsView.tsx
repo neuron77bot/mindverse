@@ -22,112 +22,6 @@ interface Storyboard {
   createdAt: string;
 }
 
-// MOCK DATA - Solo para fallback si backend falla
-const MOCK_STORYBOARDS: Storyboard[] = [
-  {
-    _id: '1',
-    title: 'La aventura del robot perdido',
-    originalText:
-      'Un robot se pierde en una ciudad desconocida y debe encontrar su camino de regreso a casa. Durante su viaje, descubre la importancia de pedir ayuda y hacer nuevos amigos.',
-    inputMode: 'voice',
-    frames: [
-      {
-        frame: 1,
-        scene: 'Robot en la ciudad',
-        visualDescription:
-          'Un pequeño robot azul se encuentra solo en una gran ciudad llena de luces de neón y rascacielos imponentes.',
-        dialogue: '¿Dónde estoy? Todo es tan grande y brillante...',
-        imageUrl: 'https://via.placeholder.com/400x300/1a1a2e/00d9ff?text=Robot+Perdido',
-      },
-      {
-        frame: 2,
-        scene: 'Encuentra un mapa',
-        visualDescription:
-          'El robot descubre un viejo mapa holográfico en un callejón oscuro. La pantalla parpadea mostrando rutas de la ciudad.',
-        dialogue: '¡Esto me ayudará! Aunque está un poco roto...',
-        imageUrl: 'https://via.placeholder.com/400x300/2d2d44/4ecca3?text=Mapa+Hologr%C3%A1fico',
-      },
-      {
-        frame: 3,
-        scene: 'Conoce a un gato robot',
-        visualDescription:
-          'Un gato robot amigable se acerca y ofrece ayuda. Tiene ojos brillantes y una sonrisa digital.',
-        dialogue: 'Hola pequeño, ¿estás perdido? Yo conozco la ciudad.',
-        imageUrl: 'https://via.placeholder.com/400x300/16213e/ff6b6b?text=Gato+Robot',
-      },
-      {
-        frame: 4,
-        scene: 'Camino a casa',
-        visualDescription:
-          'Los dos robots caminan juntos bajo la lluvia nocturna, siguiendo las luces de la ciudad hacia casa.',
-        imageUrl: 'https://via.placeholder.com/400x300/0f3460/ee5a6f?text=Regreso+a+Casa',
-      },
-    ],
-    comicPageUrl: 'https://via.placeholder.com/600x800/1a1a2e/ffffff?text=Comic+Page+Completa',
-    createdAt: '2026-02-24T10:30:00.000Z',
-  },
-  {
-    _id: '2',
-    title: 'El secreto del bosque mágico',
-    originalText:
-      'Una niña descubre que su abuelo era un mago y debe resolver un antiguo misterio en el bosque.',
-    inputMode: 'text',
-    frames: [
-      {
-        frame: 1,
-        scene: 'La carta misteriosa',
-        visualDescription:
-          'Luna encuentra una carta antigua en el ático de su abuelo. El papel tiene símbolos extraños que brillan levemente.',
-        dialogue: 'Nunca supe que el abuelo tenía estos secretos...',
-        imageUrl: 'https://via.placeholder.com/400x300/2c3e50/ecf0f1?text=Carta+Antigua',
-      },
-      {
-        frame: 2,
-        scene: 'La entrada al bosque',
-        visualDescription:
-          'Un árbol enorme con una puerta tallada se abre al toque de Luna. Luz verde emana del interior.',
-        imageUrl: 'https://via.placeholder.com/400x300/27ae60/ecf0f1?text=%C3%81rbol+Portal',
-      },
-    ],
-    createdAt: '2026-02-23T15:20:00.000Z',
-  },
-  {
-    _id: '3',
-    title: 'Superhéroe por un día',
-    originalText:
-      'Lucas, un chico tímido, obtiene superpoderes por 24 horas y debe decidir qué hacer con ellos.',
-    inputMode: 'voice',
-    frames: [
-      {
-        frame: 1,
-        scene: 'El despertar',
-        visualDescription:
-          'Lucas se despierta flotando sobre su cama. Sus manos brillan con energía azul.',
-        dialogue: '¡¿QUÉ ME ESTÁ PASANDO?!',
-        imageUrl: 'https://via.placeholder.com/400x300/34495e/3498db?text=Levitaci%C3%B3n',
-      },
-      {
-        frame: 2,
-        scene: 'Primera prueba',
-        visualDescription:
-          'En el patio, Lucas intenta controlar sus poderes. Hace levitar una pelota.',
-        dialogue: 'Esto es increíble... pero da un poco de miedo.',
-        imageUrl: 'https://via.placeholder.com/400x300/1abc9c/ecf0f1?text=Telequinesis',
-      },
-      {
-        frame: 3,
-        scene: 'La decisión',
-        visualDescription:
-          'Lucas ve a alguien en peligro en la calle. Debe decidir si usar sus poderes.',
-        dialogue: 'Solo tengo 24 horas... ¿qué haría un héroe de verdad?',
-        imageUrl: 'https://via.placeholder.com/400x300/e74c3c/ecf0f1?text=Elecci%C3%B3n',
-      },
-    ],
-    comicPageUrl: 'https://via.placeholder.com/600x800/34495e/ffffff?text=Super+Hero+Page',
-    createdAt: '2026-02-22T09:15:00.000Z',
-  },
-];
-
 export default function StoryboardsView() {
   const navigate = useNavigate();
   const [storyboards, setStoryboards] = useState<Storyboard[]>([]);
@@ -144,7 +38,7 @@ export default function StoryboardsView() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/storyboards/debug`, {
+      const res = await fetch(`${API_BASE}/storyboards`, {
         headers: authHeadersOnly(),
       });
 
@@ -154,20 +48,16 @@ export default function StoryboardsView() {
       }
 
       const data = await res.json();
-      console.log('📚 Storyboards recibidos del backend:', data.storyboards?.length);
-      console.log('📚 Primer storyboard:', data.storyboards?.[0]);
-
+      
       // Filtrar storyboards válidos (con frames)
       const validStoryboards = (data.storyboards || []).filter(
         (s: Storyboard) => s.frames && Array.isArray(s.frames) && s.frames.length > 0
       );
-      console.log('✅ Storyboards válidos (con frames):', validStoryboards.length);
       setStoryboards(validStoryboards);
     } catch (err: any) {
       console.error('Error fetching storyboards:', err);
       setError(err.message);
-      // Fallback a mock data en caso de error
-      setStoryboards(MOCK_STORYBOARDS);
+      setStoryboards([]);
     } finally {
       setLoading(false);
     }

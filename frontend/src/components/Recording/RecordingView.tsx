@@ -56,7 +56,7 @@ export default function RecordingView() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/storyboards/debug/${storyboardId}`, {
+      const res = await fetch(`${API_BASE}/storyboards/${storyboardId}`, {
         headers: authHeadersOnly(),
       });
 
@@ -67,8 +67,6 @@ export default function RecordingView() {
 
       const data = await res.json();
       const sb = data.storyboard;
-
-      console.log('📚 Storyboard cargado:', sb);
 
       // Poblar los estados con el storyboard cargado
       setStoryboardTitle(sb.title || '');
@@ -323,12 +321,6 @@ export default function RecordingView() {
         imageUrl: frameImages.get(frame.frame) || undefined,
       }));
 
-      console.log('💾 Guardando storyboard:', {
-        title: storyboardTitle,
-        framesCount: framesWithImages.length,
-        inputMode,
-      });
-
       const res = await fetch(`${API_BASE}/storyboards`, {
         method: 'POST',
         headers: authHeaders(),
@@ -346,8 +338,7 @@ export default function RecordingView() {
         throw new Error(errData.error || 'Error guardando storyboard');
       }
 
-      const data = await res.json();
-      console.log('✅ Storyboard guardado exitosamente:', data.storyboard?._id);
+      await res.json();
 
       // Redirigir a la lista de storyboards
       navigate('/storyboards');

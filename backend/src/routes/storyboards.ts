@@ -34,21 +34,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
   app.get(
     '/',
     {
-      schema: {
-        tags: ['storyboards'],
-        summary: 'Listar storyboards del usuario',
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              success: { type: 'boolean' },
-              storyboards: { type: 'array', items: { type: 'object' } },
-            },
-          },
-          401: errorShape,
-          500: errorShape,
-        },
-      },
+      // Schema removido para evitar filtrado de campos
     },
     async (req, reply) => {
       try {
@@ -69,27 +55,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>(
     '/:id',
     {
-      schema: {
-        tags: ['storyboards'],
-        summary: 'Obtener un storyboard por ID',
-        params: {
-          type: 'object',
-          required: ['id'],
-          properties: { id: { type: 'string' } },
-        },
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              success: { type: 'boolean' },
-              storyboard: { type: 'object' },
-            },
-          },
-          401: errorShape,
-          404: errorShape,
-          500: errorShape,
-        },
-      },
+      // Schema removido para evitar filtrado de campos
     },
     async (req, reply) => {
       try {
