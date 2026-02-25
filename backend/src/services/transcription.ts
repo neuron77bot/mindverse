@@ -50,40 +50,45 @@ export interface RefinementResult {
 function generateMermaidDiagram(frames: StoryboardFrame[]): string {
   const lines: string[] = ['flowchart LR'];
   lines.push('  Start([🎬 Inicio])');
-  
+
   frames.forEach((frame, idx) => {
     const frameId = `Frame${frame.frame}`;
     const sceneLabel = frame.scene.replace(/"/g, '\\"').substring(0, 40);
     lines.push(`  ${frameId}["📷 Frame ${frame.frame}<br/>${sceneLabel}..."]`);
-    
+
     // Conectar frames secuencialmente
     if (idx === 0) {
       lines.push(`  Start --> ${frameId}`);
     } else {
       lines.push(`  Frame${frames[idx - 1].frame} --> ${frameId}`);
     }
-    
+
     // Aplicar estilos a los frames (escala de grises para storyboard B&N)
     const fillColor = idx % 2 === 0 ? '#e5e7eb' : '#d1d5db';
     const strokeColor = '#6b7280';
-    lines.push(`  style ${frameId} fill:${fillColor},stroke:${strokeColor},stroke-width:3px,color:#000000`);
+    lines.push(
+      `  style ${frameId} fill:${fillColor},stroke:${strokeColor},stroke-width:3px,color:#000000`
+    );
   });
-  
+
   // Agregar nodo final
   lines.push('  End([🎬 Fin])');
   lines.push(`  Frame${frames[frames.length - 1].frame} --> End`);
-  
+
   // Estilos para inicio y fin
   lines.push('  style Start fill:#fbbf24,stroke:#f59e0b,stroke-width:3px,color:#000000');
   lines.push('  style End fill:#10b981,stroke:#059669,stroke-width:3px,color:#000000');
-  
+
   return lines.join('\n');
 }
 
 /**
  * Transcribe audio usando fal.ai Whisper
  */
-export async function transcribeAudio(audioBuffer: Buffer, mimeType: string): Promise<TranscriptionResult> {
+export async function transcribeAudio(
+  audioBuffer: Buffer,
+  mimeType: string
+): Promise<TranscriptionResult> {
   const startTime = Date.now();
 
   try {
@@ -154,7 +159,7 @@ Características de tu storyboard:
 Responde únicamente con el JSON, sin texto adicional.`;
 
   try {
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
     });
@@ -170,9 +175,15 @@ Responde únicamente con el JSON, sin texto adicional.`;
       // Limpiar markdown code blocks si existen
       let cleanedText = responseText.trim();
       if (cleanedText.startsWith('```json')) {
-        cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```$/g, '').trim();
+        cleanedText = cleanedText
+          .replace(/```json\n?/g, '')
+          .replace(/```$/g, '')
+          .trim();
       } else if (cleanedText.startsWith('```')) {
-        cleanedText = cleanedText.replace(/```\n?/g, '').replace(/```$/g, '').trim();
+        cleanedText = cleanedText
+          .replace(/```\n?/g, '')
+          .replace(/```$/g, '')
+          .trim();
       }
 
       const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
@@ -185,11 +196,13 @@ Responde únicamente con el JSON, sin texto adicional.`;
     } catch (parseError) {
       console.error('Error parseando respuesta de Gemini:', parseError);
       console.error('Respuesta completa:', responseText);
-      frames = [{
-        frame: 1,
-        scene: 'Error al generar storyboard',
-        visualDescription: responseText || 'No se pudo generar el storyboard',
-      }];
+      frames = [
+        {
+          frame: 1,
+          scene: 'Error al generar storyboard',
+          visualDescription: responseText || 'No se pudo generar el storyboard',
+        },
+      ];
     }
 
     const mermaid = generateMermaidDiagram(frames);
@@ -270,11 +283,13 @@ Responde en formato JSON.`;
     } catch (parseError) {
       console.error('Error parseando respuesta del LLM:', parseError);
       console.error('Respuesta completa:', responseText);
-      frames = [{
-        frame: 1,
-        scene: 'Error al generar storyboard',
-        visualDescription: responseText || 'No se pudo generar el storyboard',
-      }];
+      frames = [
+        {
+          frame: 1,
+          scene: 'Error al generar storyboard',
+          visualDescription: responseText || 'No se pudo generar el storyboard',
+        },
+      ];
     }
 
     const mermaid = generateMermaidDiagram(frames);
@@ -290,7 +305,7 @@ Responde en formato JSON.`;
  */
 export async function analyzeThought(thoughtText: string): Promise<AnalysisResult> {
   console.log(`[LLM] Analizando con provider: ${LLM_PROVIDER}`);
-  
+
   if (LLM_PROVIDER === 'gemini') {
     return analyzeWithGemini(thoughtText);
   } else {
@@ -301,7 +316,11 @@ export async function analyzeThought(thoughtText: string): Promise<AnalysisResul
 /**
  * Refina un paso específico para obtener más detalle y sub-pasos
  */
-async function refineStepWithGemini(step: string, actions: string[], context?: string): Promise<RefinementResult> {
+async function refineStepWithGemini(
+  step: string,
+  actions: string[],
+  context?: string
+): Promise<RefinementResult> {
   if (!genAI) {
     throw new Error('Gemini no está configurado. Falta GEMINI_API_KEY.');
   }
@@ -330,7 +349,10 @@ Características de tu refinamiento:
 - Usa lenguaje claro y directo
 - Responde en español`;
 
-  const actionsText = actions.length > 0 ? `\nAcciones actuales:\n${actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}` : '';
+  const actionsText =
+    actions.length > 0
+      ? `\nAcciones actuales:\n${actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}`
+      : '';
   const contextText = context ? `\n\nContexto adicional: ${context}` : '';
 
   const userPrompt = `Refina y desglosa el siguiente paso en sub-pasos más detallados:
@@ -359,9 +381,15 @@ Responde únicamente con el JSON, sin texto adicional.`;
     try {
       let cleanedText = responseText.trim();
       if (cleanedText.startsWith('```json')) {
-        cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```$/g, '').trim();
+        cleanedText = cleanedText
+          .replace(/```json\n?/g, '')
+          .replace(/```$/g, '')
+          .trim();
       } else if (cleanedText.startsWith('```')) {
-        cleanedText = cleanedText.replace(/```\n?/g, '').replace(/```$/g, '').trim();
+        cleanedText = cleanedText
+          .replace(/```\n?/g, '')
+          .replace(/```$/g, '')
+          .trim();
       }
 
       const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
@@ -375,10 +403,12 @@ Responde únicamente con el JSON, sin texto adicional.`;
       console.error('Respuesta completa:', responseText);
       refinement = {
         explanation: 'No se pudo refinar el paso automáticamente',
-        substeps: [{
-          substep: step,
-          details: actions.length > 0 ? actions : [responseText || 'Sin detalles disponibles'],
-        }],
+        substeps: [
+          {
+            substep: step,
+            details: actions.length > 0 ? actions : [responseText || 'Sin detalles disponibles'],
+          },
+        ],
       };
     }
 
@@ -388,7 +418,11 @@ Responde únicamente con el JSON, sin texto adicional.`;
   }
 }
 
-async function refineStepWithFal(step: string, actions: string[], context?: string): Promise<RefinementResult> {
+async function refineStepWithFal(
+  step: string,
+  actions: string[],
+  context?: string
+): Promise<RefinementResult> {
   const startTime = Date.now();
 
   const systemPrompt = `Eres un asistente experto en planificación y desglose de tareas complejas.
@@ -405,7 +439,10 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
   ]
 }`;
 
-  const actionsText = actions.length > 0 ? `\nAcciones actuales:\n${actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}` : '';
+  const actionsText =
+    actions.length > 0
+      ? `\nAcciones actuales:\n${actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}`
+      : '';
   const contextText = context ? `\n\nContexto adicional: ${context}` : '';
 
   const userPrompt = `Refina y desglosa el siguiente paso:
@@ -452,10 +489,12 @@ Responde en formato JSON.`;
       console.error('Error parseando respuesta:', parseError);
       refinement = {
         explanation: 'No se pudo refinar el paso',
-        substeps: [{
-          substep: step,
-          details: actions.length > 0 ? actions : [responseText],
-        }],
+        substeps: [
+          {
+            substep: step,
+            details: actions.length > 0 ? actions : [responseText],
+          },
+        ],
       };
     }
 
@@ -469,7 +508,11 @@ Responde en formato JSON.`;
  * Refina un paso específico del análisis
  * Usa el provider configurado (Gemini por defecto, fal.ai como alternativa)
  */
-export async function refineStep(step: string, actions: string[], context?: string): Promise<RefinementResult> {
+export async function refineStep(
+  step: string,
+  actions: string[],
+  context?: string
+): Promise<RefinementResult> {
   console.log(`[LLM] Refinando paso con provider: ${LLM_PROVIDER}`);
 
   if (LLM_PROVIDER === 'gemini') {
@@ -482,17 +525,21 @@ export async function refineStep(step: string, actions: string[], context?: stri
 /**
  * Genera una imagen de página de cómic completa con todas las viñetas del storyboard
  */
-export async function generateComicPage(frames: StoryboardFrame[]): Promise<{ imageUrl: string; duration: number }> {
+export async function generateComicPage(
+  frames: StoryboardFrame[]
+): Promise<{ imageUrl: string; duration: number }> {
   const startTime = Date.now();
 
   // Construir prompt detallado para la página de cómic
-  const frameDescriptions = frames.map((frame, idx) => {
-    let desc = `Panel ${frame.frame}: ${frame.visualDescription}`;
-    if (frame.dialogue) {
-      desc += ` Texto/diálogo: "${frame.dialogue}"`;
-    }
-    return desc;
-  }).join('\n\n');
+  const frameDescriptions = frames
+    .map((frame, idx) => {
+      let desc = `Panel ${frame.frame}: ${frame.visualDescription}`;
+      if (frame.dialogue) {
+        desc += ` Texto/diálogo: "${frame.dialogue}"`;
+      }
+      return desc;
+    })
+    .join('\n\n');
 
   const prompt = `Create a single black and white comic book page layout with ${frames.length} panels arranged in a traditional comic grid format.
 
@@ -545,7 +592,9 @@ Important:
 /**
  * Genera una imagen individual para una viñeta del storyboard
  */
-export async function generateFrameImage(frame: StoryboardFrame): Promise<{ imageUrl: string; duration: number }> {
+export async function generateFrameImage(
+  frame: StoryboardFrame
+): Promise<{ imageUrl: string; duration: number }> {
   const startTime = Date.now();
 
   // Construir prompt detallado para la viñeta individual

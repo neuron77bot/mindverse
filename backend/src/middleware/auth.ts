@@ -4,16 +4,12 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 // Rutas públicas — no requieren token
-const PUBLIC_PREFIXES = [
-  '/auth/',
-  '/health',
-  '/docs',
-];
+const PUBLIC_PREFIXES = ['/auth/', '/health', '/docs'];
 
 export interface JwtPayload {
-  sub:   string;
+  sub: string;
   email: string;
-  name:  string;
+  name: string;
 }
 
 declare module 'fastify' {

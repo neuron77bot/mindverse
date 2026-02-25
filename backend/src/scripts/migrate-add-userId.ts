@@ -6,10 +6,10 @@ import { User } from '../models/User.js';
 async function migrate() {
   try {
     await connectDatabase();
-    
+
     // Buscar el primer usuario (debería ser el único actualmente)
     const user = await User.findOne();
-    
+
     if (!user) {
       console.error('❌ No hay usuarios en la base de datos');
       process.exit(1);

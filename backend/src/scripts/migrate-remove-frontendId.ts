@@ -5,7 +5,7 @@ import { Thought } from '../models/Thought.js';
 async function migrate() {
   try {
     await connectDatabase();
-    
+
     console.log('🔄 Eliminando campo frontendId...');
 
     // Eliminar campo frontendId de todos los documentos
