@@ -29,7 +29,7 @@ export async function galleryRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const { dataUrl, tag, filename } = request.body;
-      const userId = (request as any).userId; // Del middleware de auth
+      const userId = request.jwtUser?.sub; // Del middleware de auth
 
       if (!dataUrl || !tag) {
         return reply.status(400).send({ error: '"dataUrl" y "tag" son requeridos.' });
@@ -88,7 +88,7 @@ export async function galleryRoutes(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const userId = (request as any).userId;
+      const userId = request.jwtUser?.sub;
 
       if (!userId) {
         return reply.status(401).send({ error: 'Usuario no autenticado.' });
@@ -134,7 +134,7 @@ export async function galleryRoutes(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const userId = (request as any).userId;
+      const userId = request.jwtUser?.sub;
 
       if (!userId) {
         return reply.status(401).send({ error: 'Usuario no autenticado.' });
@@ -180,7 +180,7 @@ export async function galleryRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const userId = (request as any).userId;
+      const userId = request.jwtUser?.sub;
 
       if (!userId) {
         return reply.status(401).send({ error: 'Usuario no autenticado.' });
