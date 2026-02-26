@@ -317,8 +317,8 @@ export default function NodeEditor() {
   const showIn = !isEditingRoot; // Ocultar IN al editar pensamiento raíz
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md lg:max-w-2xl mx-4 overflow-hidden border border-slate-700 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+      <div className="animate-scale-in bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md lg:max-w-2xl mx-4 overflow-hidden border border-slate-700 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 shrink-0">
           <h2 className="text-xl font-bold text-white">

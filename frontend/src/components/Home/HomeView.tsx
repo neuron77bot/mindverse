@@ -79,19 +79,19 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <button
           onClick={() => openEditor()}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors font-medium text-sm shadow-lg shadow-indigo-500/25"
+          className="btn-hover-lift btn-press-scale flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors font-medium text-sm shadow-lg shadow-indigo-500/25"
         >
           <span className="text-lg leading-none">+</span> Nuevo pensamiento
         </button>
         <button
           onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors font-medium text-sm ${
+          className={`btn-press-scale flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors font-medium text-sm ${
             showOnlyFavorites
               ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/25'
               : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
           }`}
         >
-          <span>⭐</span> {showOnlyFavorites ? 'Todos' : 'Favoritos'}
+          <span className="icon-bounce">⭐</span> {showOnlyFavorites ? 'Todos' : 'Favoritos'}
         </button>
 
         {/* Toggle Grid/List */}
@@ -142,7 +142,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
           </p>
           <button
             onClick={() => openEditor()}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors font-medium"
+            className="btn-hover-lift btn-press-scale px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors font-medium"
           >
             + Nuevo Pensamiento
           </button>
@@ -159,7 +159,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
             return (
               <div
                 key={node.id}
-                className="group flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 hover:shadow-lg cursor-pointer"
+                className="stagger-item card-hover-subtle group flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 hover:shadow-lg cursor-pointer"
                 style={{ backgroundColor: `${vibColor}10`, borderColor: `${vibColor}30` }}
                 onClick={() => onNavigateToDetail(node)}
               >
@@ -282,7 +282,7 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
             return (
               <div
                 key={node.id}
-                className="group rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-xl hover:-translate-y-1"
+                className="stagger-item card-hover group rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-xl cursor-pointer"
                 style={{
                   backgroundColor: `${vibColor}18`,
                   borderColor: `${vibColor}40`,
@@ -408,9 +408,9 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
           {/* Nueva card */}
           <div
             onClick={() => openEditor()}
-            className="bg-slate-800/50 rounded-2xl border border-dashed border-slate-600 p-5 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-slate-800 transition-all duration-200 min-h-[160px]"
+            className="card-hover-subtle bg-slate-800/50 rounded-2xl border border-dashed border-slate-600 p-5 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-slate-800 transition-all duration-200 min-h-[160px]"
           >
-            <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 text-2xl mb-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 text-2xl mb-3 transition-transform duration-200 group-hover:scale-110">
               +
             </div>
             <p className="text-slate-400 text-sm font-medium">Nuevo pensamiento</p>

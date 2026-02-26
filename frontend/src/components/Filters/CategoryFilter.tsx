@@ -27,7 +27,7 @@ export default function CategoryFilter() {
       <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap scrollbar-hide">
         <button
           onClick={() => setCategoryFilter('ALL')}
-          className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
+          className={`btn-press-scale px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
             activeCategoryFilter === 'ALL'
               ? 'bg-white text-slate-900 shadow-lg'
               : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
@@ -41,7 +41,7 @@ export default function CategoryFilter() {
             <button
               key={category}
               onClick={() => setCategoryFilter(category)}
-              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
+              className={`btn-press-scale px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
                 isActive ? 'category-btn-active shadow-lg' : 'category-btn-inactive hover:opacity-90'
               }`}
               style={{
