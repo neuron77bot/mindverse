@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 interface Frame {
   frame: number;
@@ -19,6 +19,7 @@ interface Storyboard {
 
 export default function SharedStoryboardPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -26,10 +27,19 @@ export default function SharedStoryboardPage() {
 
   useEffect(() => {
     const fetchStoryboard = async () => {
+      const token = searchParams.get('token');
+      
+      if (!token) {
+        setError('Token de acceso no proporcionado');
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetch(`/api/storyboards/shared/${id}`);
+        const response = await fetch(`/api/storyboards/shared/${id}?token=${encodeURIComponent(token)}`);
         if (!response.ok) {
-          throw new Error('Storyboard no encontrado o no es público');
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || 'No se puede acceder a este storyboard');
         }
         const data = await response.json();
         setStoryboard(data);
@@ -43,7 +53,7 @@ export default function SharedStoryboardPage() {
     if (id) {
       fetchStoryboard();
     }
-  }, [id]);
+  }, [id, searchParams]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

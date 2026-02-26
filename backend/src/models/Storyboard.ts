@@ -21,7 +21,6 @@ export interface IStoryboard extends Document {
   comicPageUrl?: string;
   comicPagePrompt?: string;
   mermaidDiagram?: string;
-  isPublic?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,7 +50,6 @@ const StoryboardSchema = new Schema<IStoryboard>(
     comicPageUrl: { type: String },
     comicPagePrompt: { type: String },
     mermaidDiagram: { type: String },
-    isPublic: { type: Boolean, default: false, index: true },
   },
   {
     timestamps: true,

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { Storyboard } from '../models/Storyboard';
+import jwt from 'jsonwebtoken';
 
 const errorShape = {
   type: 'object',
@@ -7,17 +8,93 @@ const errorShape = {
 };
 
 export async function storyboardRoutes(app: FastifyInstance) {
-  // GET /storyboards/shared/:id - Obtener storyboard público (sin autenticación)
-  app.get<{ Params: { id: string } }>(
-    '/shared/:id',
+  const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-in-production';
+
+  // POST /storyboards/:id/share - Generar token de compartir (válido 1 semana)
+  app.post<{ Params: { id: string } }>(
+    '/:id/share',
     {
       schema: {
         tags: ['storyboards'],
-        summary: 'Obtener storyboard público',
+        summary: 'Generar token de compartir',
         params: {
           type: 'object',
           required: ['id'],
           properties: { id: { type: 'string' } },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              shareToken: { type: 'string' },
+              shareUrl: { type: 'string' },
+              expiresIn: { type: 'string' },
+            },
+          },
+          401: errorShape,
+          404: errorShape,
+          500: errorShape,
+        },
+      },
+    },
+    async (req, reply) => {
+      try {
+        const userId = req.jwtUser?.sub;
+        if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+
+        const { id } = req.params;
+        
+        // Verificar que el storyboard existe y pertenece al usuario
+        const storyboard = await Storyboard.findOne({ _id: id, userId } as any);
+        if (!storyboard) {
+          return reply.status(404).send({ 
+            success: false, 
+            error: 'Storyboard no encontrado' 
+          });
+        }
+
+        // Generar token válido por 1 semana
+        const shareToken = jwt.sign(
+          { storyboardId: id },
+          JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+
+        const shareUrl = `/storyboard/shared/${id}?token=${shareToken}`;
+
+        return reply.send({
+          success: true,
+          shareToken,
+          shareUrl,
+          expiresIn: '7 días',
+        });
+      } catch (err: any) {
+        app.log.error(err);
+        return reply.status(500).send({ success: false, error: err.message });
+      }
+    }
+  );
+
+  // GET /storyboards/shared/:id - Obtener storyboard con token (sin autenticación de usuario)
+  app.get<{ 
+    Params: { id: string };
+    Querystring: { token: string };
+  }>(
+    '/shared/:id',
+    {
+      schema: {
+        tags: ['storyboards'],
+        summary: 'Obtener storyboard compartido con token',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string' } },
+        },
+        querystring: {
+          type: 'object',
+          required: ['token'],
+          properties: { token: { type: 'string' } },
         },
         response: {
           200: {
@@ -30,6 +107,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
               frames: { type: 'array' },
             },
           },
+          401: errorShape,
           404: errorShape,
           500: errorShape,
         },
@@ -38,14 +116,35 @@ export async function storyboardRoutes(app: FastifyInstance) {
     async (req, reply) => {
       try {
         const { id } = req.params;
-        const storyboard = await Storyboard.findOne({ _id: id, isPublic: true } as any)
+        const { token } = req.query;
+
+        // Validar token
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET) as { storyboardId: string };
+          
+          // Verificar que el token es para este storyboard
+          if (decoded.storyboardId !== id) {
+            return reply.status(401).send({
+              success: false,
+              error: 'Token inválido para este storyboard',
+            });
+          }
+        } catch (jwtErr) {
+          return reply.status(401).send({
+            success: false,
+            error: 'Token inválido o expirado',
+          });
+        }
+
+        // Token válido, devolver storyboard
+        const storyboard = await Storyboard.findById(id)
           .select('_id title description genre frames')
           .lean();
 
         if (!storyboard) {
-          return reply.status(404).send({
-            success: false,
-            error: 'Storyboard no encontrado o no es público',
+          return reply.status(404).send({ 
+            success: false, 
+            error: 'Storyboard no encontrado' 
           });
         }
 
@@ -225,7 +324,6 @@ export async function storyboardRoutes(app: FastifyInstance) {
       frames?: any[];
       comicPageUrl?: string;
       comicPagePrompt?: string;
-      isPublic?: boolean;
     };
   }>(
     '/:id',
@@ -247,7 +345,6 @@ export async function storyboardRoutes(app: FastifyInstance) {
             frames: { type: 'array', items: { type: 'object' } },
             comicPageUrl: { type: 'string' },
             comicPagePrompt: { type: 'string' },
-            isPublic: { type: 'boolean' },
           },
         },
         response: {
