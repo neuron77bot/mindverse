@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { authHeadersOnly } from '../../services/authHeaders';
+import FrameCarousel from './FrameCarousel';
 
 // Lazy load heavy Mermaid component
 const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
@@ -409,6 +410,14 @@ export default function StoryboardDetailView() {
 
             {/* Main Content (Right) */}
             <main className="lg:col-span-8">
+              {/* Frame Carousel - Above frames section */}
+              {frames.length > 0 && (
+                <FrameCarousel
+                  frames={frames}
+                  onImageClick={(url, title) => setLightboxImage({ url, title })}
+                />
+              )}
+
               <section>
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
