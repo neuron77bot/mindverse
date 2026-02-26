@@ -73,7 +73,7 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
   // Auto-scroll thumbnail into view in fullscreen
   useEffect(() => {
     if (!isFullscreen || !thumbnailContainerRef.current) return;
-    
+
     const container = thumbnailContainerRef.current;
     const thumbnails = container.children;
     if (thumbnails[currentIndex]) {
@@ -298,9 +298,6 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
           {/* Header Bar */}
           <div className="shrink-0 bg-gradient-to-b from-black/80 to-transparent p-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="inline-block px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-white text-sm font-bold">
-                Frame #{currentFrame.frame}
-              </span>
               <h3 className="text-white font-semibold text-lg">{currentFrame.scene}</h3>
             </div>
             <div className="flex items-center gap-4">
@@ -401,12 +398,12 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
           {/* Thumbnail Navigation */}
           {totalFrames > 1 && (
             <div className="shrink-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <div 
+              <div
                 ref={thumbnailContainerRef}
-                className="flex gap-3 overflow-x-auto pb-2" 
+                className="flex gap-3 overflow-x-auto pb-2"
                 style={{
                   scrollbarWidth: 'thin',
-                  scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                  scrollbarColor: 'rgba(255,255,255,0.3) transparent',
                 }}
               >
                 {frames.map((frame, index) => (
