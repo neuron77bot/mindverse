@@ -379,14 +379,14 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
 
           {/* Info Footer */}
           <div className="shrink-0 bg-gradient-to-t from-black/80 to-transparent p-6 space-y-3">
-            <h3 className="text-white font-semibold text-xl text-center">{currentFrame.scene}</h3>
             {currentFrame.dialogue && (
               <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur rounded-lg p-4 border-l-4 border-white/30">
-                <p className="text-white text-sm italic text-center">
+                <p className="text-white text-base italic text-center">
                   &ldquo;{currentFrame.dialogue}&rdquo;
                 </p>
               </div>
             )}
+            <h3 className="text-white font-semibold text-lg text-center">{currentFrame.scene}</h3>
           </div>
         </div>
       )}
