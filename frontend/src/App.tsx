@@ -15,6 +15,7 @@ const StoryboardCreatePage = lazy(() => import('./pages/StoryboardCreatePage'));
 const StoryboardEditPage = lazy(() => import('./pages/StoryboardEditPage'));
 const StoryboardDetailPage = lazy(() => import('./pages/StoryboardDetailPage'));
 const StoryboardListPage = lazy(() => import('./pages/StoryboardListPage'));
+const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/storyboard/detail/:id" element={<StoryboardDetailPage />} />
               <Route path="/storyboard/edit/:id" element={<StoryboardEditPage />} />
               <Route path="/storyboards" element={<StoryboardListPage />} />
+              <Route path="/gallery" element={<GalleryPage />} />
               <Route path="/perfil" element={<ProfilePage />} />
             </Route>
           </Route>

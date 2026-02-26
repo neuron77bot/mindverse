@@ -47,16 +47,20 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
   const [storyboardTitle, setStoryboardTitle] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Estados para generación de imágenes con 3 modos
+  // Estados para generación de imágenes con 4 modos
   const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
   const [selectedFrameForImage, setSelectedFrameForImage] = useState<StoryboardFrame | null>(null);
-  const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url'>('text');
+  const [imageMode, setImageMode] = useState<'text' | 'img2img' | 'url' | 'gallery'>('text');
   const [imagePrompt, setImagePrompt] = useState<string>('');
   const [imageUrlInput, setImageUrlInput] = useState<string>('');
   const [refImageFiles, setRefImageFiles] = useState<File[]>([]);
   const [refImagePreviews, setRefImagePreviews] = useState<string[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
+
+  // Estados para modo Gallery
+  const [galleryTags, setGalleryTags] = useState<string[]>([]);
+  const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -157,7 +161,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
     setRefImagePreviews(await Promise.all(updated.map(readAsDataURL)));
   };
 
-  const openImageModal = (frame: StoryboardFrame) => {
+  const openImageModal = async (frame: StoryboardFrame) => {
     setSelectedFrameForImage(frame);
     setIsImageModalOpen(true);
     setImageMode('text');
@@ -165,7 +169,21 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
     setImageUrlInput('');
     setRefImageFiles([]);
     setRefImagePreviews([]);
+    setSelectedGalleryTags([]);
     setImageError(null);
+
+    // Cargar tags de la galería
+    try {
+      const res = await fetch(`${API_BASE}/gallery/tags`, {
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGalleryTags(data.tags || []);
+      }
+    } catch (err) {
+      console.error('Error cargando tags de galería:', err);
+    }
   };
 
   const closeImageModal = () => {
@@ -176,6 +194,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
     setImageUrlInput('');
     setRefImageFiles([]);
     setRefImagePreviews([]);
+    setSelectedGalleryTags([]);
     setImageError(null);
   };
 
@@ -191,6 +210,28 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
       if (imageMode === 'url') {
         if (!imageUrlInput.trim()) throw new Error('Ingresá una URL de imagen');
         imageUrl = imageUrlInput.trim();
+      } else if (imageMode === 'gallery') {
+        // Modo Gallery: usar tags seleccionados
+        if (!imagePrompt.trim()) throw new Error('Escribí un prompt');
+        if (selectedGalleryTags.length === 0)
+          throw new Error('Seleccioná al menos un tag de la galería');
+
+        const res = await fetch(`${API_BASE}/images/image-to-image`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            gallery_tags: selectedGalleryTags,
+            aspect_ratio: '1:1',
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Error generando imagen');
+        }
+        const data = await res.json();
+        imageUrl = data.images?.[0]?.url ?? null;
+        if (!imageUrl) throw new Error('No se recibió URL de imagen');
       } else if (imageMode === 'img2img') {
         if (!imagePrompt.trim()) throw new Error('Escribí un prompt');
         if (refImageFiles.length === 0)
@@ -1493,11 +1534,12 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
             </div>
 
             {/* Selector de modo */}
-            <div className="flex rounded-xl overflow-hidden border border-slate-700 bg-slate-900/60 mb-6">
+            <div className="grid grid-cols-2 gap-2 mb-6">
               {(
                 [
                   { key: 'text', label: 'Text to Image', icon: '✨' },
                   { key: 'img2img', label: 'Image to Image', icon: '🖼️' },
+                  { key: 'gallery', label: 'Gallery Reference', icon: '📸' },
                   { key: 'url', label: 'URL', icon: '🔗' },
                 ] as { key: typeof imageMode; label: string; icon: string }[]
               ).map((m) => (
@@ -1507,10 +1549,10 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                     setImageMode(m.key);
                     setImageError(null);
                   }}
-                  className={`flex-1 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                  className={`py-3 px-4 text-sm font-semibold transition-all flex items-center justify-center gap-2 rounded-lg border ${
                     imageMode === m.key
-                      ? 'bg-violet-600 text-white shadow-inner'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      ? 'bg-violet-600 text-white border-violet-500 shadow-lg'
+                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:bg-slate-700'
                   }`}
                 >
                   <span>{m.icon}</span>
@@ -1629,6 +1671,68 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors"
                   />
                 </div>
+              )}
+
+              {/* Modo: Gallery Reference */}
+              {imageMode === 'gallery' && (
+                <>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Prompt</label>
+                    <textarea
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      placeholder="Describí qué querés generar con las imágenes de referencia..."
+                      rows={3}
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">
+                      Tags de referencia (seleccioná uno o más)
+                    </label>
+                    {galleryTags.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {galleryTags.map((tag) => (
+                          <button
+                            key={tag}
+                            onClick={() => {
+                              setSelectedGalleryTags((prev) =>
+                                prev.includes(tag)
+                                  ? prev.filter((t) => t !== tag)
+                                  : [...prev, tag]
+                              );
+                            }}
+                            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                              selectedGalleryTags.includes(tag)
+                                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'
+                                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
+                            }`}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-lg text-center">
+                        <p className="text-slate-500 text-sm">
+                          No tenés imágenes en tu galería.{' '}
+                          <a
+                            href="/gallery"
+                            target="_blank"
+                            className="text-indigo-400 hover:text-indigo-300 underline"
+                          >
+                            Subí algunas primero
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                    {selectedGalleryTags.length > 0 && (
+                      <p className="text-xs text-slate-500 mt-2">
+                        {selectedGalleryTags.length} tag(s) seleccionado(s)
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
 
               {/* Error */}
