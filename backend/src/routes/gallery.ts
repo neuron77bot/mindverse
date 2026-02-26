@@ -67,7 +67,7 @@ export async function galleryRoutes(app: FastifyInstance) {
         app.log.error(err);
         return reply.status(500).send({
           error: 'Error al subir imagen a galería.',
-          detail: err?.message
+          detail: err?.message,
         });
       }
     }
@@ -79,41 +79,45 @@ export async function galleryRoutes(app: FastifyInstance) {
    *
    * Returns: Array de { id, imageUrl, tag, filename, createdAt }
    */
-  app.get('/gallery', {
-    schema: {
-      tags: ['gallery'],
-      summary: 'Listar todas las imágenes de la galería del usuario',
+  app.get(
+    '/',
+    {
+      schema: {
+        tags: ['gallery'],
+        summary: 'Listar todas las imágenes de la galería del usuario',
+      },
     },
-  }, async (request, reply) => {
-    const userId = (request as any).userId;
+    async (request, reply) => {
+      const userId = (request as any).userId;
 
-    if (!userId) {
-      return reply.status(401).send({ error: 'Usuario no autenticado.' });
+      if (!userId) {
+        return reply.status(401).send({ error: 'Usuario no autenticado.' });
+      }
+
+      try {
+        const images = await GalleryImage.find({ userId })
+          .sort({ createdAt: -1 }) // Más recientes primero
+          .select('_id imageUrl tag filename createdAt')
+          .lean();
+
+        return reply.send({
+          images: images.map((img) => ({
+            id: img._id.toString(),
+            imageUrl: img.imageUrl,
+            tag: img.tag,
+            filename: img.filename,
+            createdAt: img.createdAt,
+          })),
+        });
+      } catch (err: any) {
+        app.log.error(err);
+        return reply.status(500).send({
+          error: 'Error al listar imágenes de galería.',
+          detail: err?.message,
+        });
+      }
     }
-
-    try {
-      const images = await GalleryImage.find({ userId })
-        .sort({ createdAt: -1 }) // Más recientes primero
-        .select('_id imageUrl tag filename createdAt')
-        .lean();
-
-      return reply.send({
-        images: images.map(img => ({
-          id: img._id.toString(),
-          imageUrl: img.imageUrl,
-          tag: img.tag,
-          filename: img.filename,
-          createdAt: img.createdAt,
-        })),
-      });
-    } catch (err: any) {
-      app.log.error(err);
-      return reply.status(500).send({
-        error: 'Error al listar imágenes de galería.',
-        detail: err?.message
-      });
-    }
-  });
+  );
 
   /**
    * GET /gallery/tags
@@ -121,32 +125,36 @@ export async function galleryRoutes(app: FastifyInstance) {
    *
    * Returns: { tags: string[] }
    */
-  app.get('/tags', {
-    schema: {
-      tags: ['gallery'],
-      summary: 'Listar tags únicos de la galería del usuario',
+  app.get(
+    '/tags',
+    {
+      schema: {
+        tags: ['gallery'],
+        summary: 'Listar tags únicos de la galería del usuario',
+      },
     },
-  }, async (request, reply) => {
-    const userId = (request as any).userId;
+    async (request, reply) => {
+      const userId = (request as any).userId;
 
-    if (!userId) {
-      return reply.status(401).send({ error: 'Usuario no autenticado.' });
+      if (!userId) {
+        return reply.status(401).send({ error: 'Usuario no autenticado.' });
+      }
+
+      try {
+        const tags = await GalleryImage.distinct('tag', { userId });
+
+        return reply.send({
+          tags: tags.sort(), // Orden alfabético
+        });
+      } catch (err: any) {
+        app.log.error(err);
+        return reply.status(500).send({
+          error: 'Error al listar tags.',
+          detail: err?.message,
+        });
+      }
     }
-
-    try {
-      const tags = await GalleryImage.distinct('tag', { userId });
-
-      return reply.send({
-        tags: tags.sort(), // Orden alfabético
-      });
-    } catch (err: any) {
-      app.log.error(err);
-      return reply.status(500).send({
-        error: 'Error al listar tags.',
-        detail: err?.message
-      });
-    }
-  });
+  );
 
   /**
    * DELETE /gallery/:id
@@ -193,7 +201,7 @@ export async function galleryRoutes(app: FastifyInstance) {
         app.log.error(err);
         return reply.status(500).send({
           error: 'Error al eliminar imagen.',
-          detail: err?.message
+          detail: err?.message,
         });
       }
     }
