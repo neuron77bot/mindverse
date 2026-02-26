@@ -14,6 +14,7 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
     { path: '/', label: 'Home', icon: '🏠' },
     { path: '/mapa', label: 'Mapa', icon: '🗺️' },
     { path: '/storyboards', label: 'Storyboards', icon: '📚' },
+    { path: '/gallery', label: 'Galería', icon: '🖼️' },
     { path: '/perfil', label: 'Perfil', icon: '👤' },
   ];
 
