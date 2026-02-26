@@ -9,6 +9,7 @@ import {
 import type { MindverseNode } from '../../types';
 import ExpandableText from '../UI/ExpandableText';
 import { getFreqLabel } from '../../utils/vibration';
+import { vibrationVars, categoryVars, frequencyVars } from '../../utils/designSystem';
 
 const TEMPORAL_ICONS: Record<string, string> = {
   PAST: '⏮️',
@@ -197,19 +198,15 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                   <div className="flex flex-wrap items-center gap-1.5 mb-2">
                     {hawkins && (
                       <span
-                        className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full border text-[10px] font-semibold"
-                        style={{
-                          borderColor: `${vibColor}50`,
-                          color: vibColor,
-                          backgroundColor: `${vibColor}15`,
-                        }}
+                        className="badge-vibration inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full border text-[10px] font-semibold"
+                        style={vibrationVars(vibColor)}
                       >
                         {hawkins.calibration}
                       </span>
                     )}
                     <span
-                      className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                      style={{ backgroundColor: `${color}20`, color }}
+                      className="badge-category inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      style={categoryVars(color)}
                     >
                       {CATEGORY_ICONS[node.category]}
                     </span>
@@ -344,15 +341,15 @@ export default function HomeView({ onNavigateToMap, onNavigateToDetail }: HomeVi
                     )}
                     {freq && (
                       <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                        style={{ color: freq.color, backgroundColor: freq.bg }}
+                        className="badge-frequency inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                        style={frequencyVars(freq.color, freq.bg)}
                       >
                         {freq.icon} {freq.label}
                       </span>
                     )}
                     <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                      style={{ backgroundColor: `${color}20`, color }}
+                      className="badge-category inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                      style={categoryVars(color)}
                     >
                       {CATEGORY_ICONS[node.category]} {CATEGORY_LABELS[node.category]}
                     </span>

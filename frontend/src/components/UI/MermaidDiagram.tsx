@@ -123,14 +123,7 @@ export default function MermaidDiagram({ chart, className = '' }: MermaidDiagram
             >
               <div
                 ref={containerRef}
-                className={`mermaid-container ${className}`}
-                style={{
-                  minWidth: '100%',
-                  minHeight: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                className={`mermaid-container flex items-center justify-center min-w-full min-h-full ${className}`}
               />
             </TransformComponent>
           </>

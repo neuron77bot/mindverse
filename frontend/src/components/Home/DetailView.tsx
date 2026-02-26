@@ -11,6 +11,7 @@ import type { MindverseNode } from '../../types';
 import ExpandableText from '../UI/ExpandableText';
 import MermaidDiagram from '../UI/MermaidDiagram';
 import { getFreqLabel } from '../../utils/vibration';
+import { vibrationVars, categoryVars, frequencyVars } from '../../utils/designSystem';
 
 const TEMPORAL_ICONS: Record<string, string> = {
   PAST: '⏮️',
@@ -51,27 +52,23 @@ function NodeLabels({ node, size = 'md' }: { node: MindverseNode; size?: 'sm' | 
     <div className="flex flex-wrap items-center gap-1.5">
       {hawkins && (
         <span
-          className={`inline-flex items-center gap-1 rounded-full border font-semibold ${cls}`}
-          style={{
-            borderColor: `${vibColor}50`,
-            color: vibColor,
-            backgroundColor: `${vibColor}15`,
-          }}
+          className={`badge-vibration inline-flex items-center gap-1 rounded-full border font-semibold ${cls}`}
+          style={vibrationVars(vibColor)}
         >
           {hawkins.label} · {hawkins.calibration}
         </span>
       )}
       {freq && (
         <span
-          className={`inline-flex items-center gap-1 rounded-full font-semibold ${cls}`}
-          style={{ color: freq.color, backgroundColor: freq.bg }}
+          className={`badge-frequency inline-flex items-center gap-1 rounded-full font-semibold ${cls}`}
+          style={frequencyVars(freq.color, freq.bg)}
         >
           {freq.icon} {freq.label}
         </span>
       )}
       <span
-        className={`inline-flex items-center gap-1 rounded-full font-semibold ${cls}`}
-        style={{ backgroundColor: `${color}20`, color }}
+        className={`badge-category inline-flex items-center gap-1 rounded-full font-semibold ${cls}`}
+        style={categoryVars(color)}
       >
         {CATEGORY_ICONS[node.category]} {CATEGORY_LABELS[node.category]}
       </span>

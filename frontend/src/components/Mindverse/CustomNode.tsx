@@ -21,15 +21,19 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
 
   return (
     <div
-      className="relative rounded-xl shadow-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl min-w-[160px] max-w-[240px] overflow-hidden"
-      style={{ backgroundColor: `${vibColor}cc`, border: `2px solid ${vibColor}` }}
+      className="mind-node relative rounded-xl shadow-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl min-w-[160px] max-w-[240px] overflow-hidden"
+      style={{
+        '--node-color': vibColor,
+        '--node-color-light': `${vibColor}55`,
+        '--node-color-lighter': `${vibColor}22`,
+        backgroundColor: `${vibColor}cc`,
+      } as React.CSSProperties}
       onDoubleClick={handleDoubleClick}
     >
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !bg-white !border-2"
-        style={{ borderColor: vibColor }}
+        className="node-handle !w-3 !h-3 !bg-white !border-2"
       />
 
       {/* Banner: imagen real o placeholder */}
@@ -37,10 +41,7 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
         {node.imageUrl ? (
           <img src={node.imageUrl} alt={node.content} className="w-full h-full object-cover" />
         ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${vibColor}55 0%, ${vibColor}22 100%)` }}
-          >
+          <div className="node-banner-gradient w-full h-full flex items-center justify-center">
             <span className="text-[10px] font-semibold tracking-widest uppercase opacity-30 text-white">
               Sin imagen
             </span>
@@ -51,16 +52,10 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
 
       <div className="px-4 py-3 text-white">
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-          <span
-            className="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-          >
+          <span className="badge-overlay inline-block px-2 py-0.5 text-xs font-medium rounded-full">
             {CATEGORY_LABELS[node.category]}
           </span>
-          <span
-            className="inline-block px-2 py-0.5 text-xs font-medium rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-          >
+          <span className="badge-overlay inline-block px-2 py-0.5 text-xs font-medium rounded-full">
             {EMOTIONAL_LABELS[node.emotionalLevel]}
           </span>
         </div>
@@ -73,8 +68,7 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !bg-white !border-2"
-        style={{ borderColor: vibColor }}
+        className="node-handle !w-3 !h-3 !bg-white !border-2"
       />
     </div>
   );

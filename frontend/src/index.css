@@ -1,6 +1,95 @@
 @import 'tailwindcss';
 
-/* Custom styles */
+/* ===== CSS Variables - Design System ===== */
+:root {
+  /* Categorías */
+  --color-category-health: #10b981;
+  --color-category-work: #3b82f6;
+  --color-category-love: #ef4444;
+  --color-category-family: #f59e0b;
+  --color-category-finances: #8b5cf6;
+  --color-category-personal-growth: #06b6d4;
+  --color-category-leisure: #ec4899;
+  --color-category-spirituality: #6366f1;
+  --color-category-social: #14b8a6;
+
+  /* Hawkins Scale */
+  --color-hawkins-shame: #4a0404;
+  --color-hawkins-guilt: #6b0f0f;
+  --color-hawkins-apathy: #7c2d12;
+  --color-hawkins-grief: #92400e;
+  --color-hawkins-fear: #a16207;
+  --color-hawkins-desire: #ca8a04;
+  --color-hawkins-anger: #dc2626;
+  --color-hawkins-pride: #ea580c;
+  --color-hawkins-courage: #d97706;
+  --color-hawkins-neutrality: #65a30d;
+  --color-hawkins-willingness: #16a34a;
+  --color-hawkins-acceptance: #0d9488;
+  --color-hawkins-reason: #0891b2;
+  --color-hawkins-love: #ec4899;
+  --color-hawkins-joy: #f59e0b;
+  --color-hawkins-peace: #8b5cf6;
+  --color-hawkins-enlightenment: #fbbf24;
+
+  /* Slate palette */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  /* Utilities */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-focus: #6366f1;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --spacing-2xl: 2rem;
+  --spacing-3xl: 3rem;
+  --spacing-4xl: 4rem;
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-base: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-react-flow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+
+  /* Transitions */
+  --transition-fast: 150ms;
+  --transition-base: 200ms;
+  --transition-slow: 300ms;
+  --transition-slower: 500ms;
+
+  /* Opacities (used via opacity utilities or rgba) */
+  --opacity-overlay-light: 0.2;
+  --opacity-overlay-medium: 0.4;
+  --opacity-badge: 0.2;
+  --opacity-gradient: 0.4;
+}
+
+/* Custom utilities */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -15,11 +104,89 @@
   overflow: hidden;
 }
 
+/* Mind Node dynamic styles */
+.mind-node {
+  border-width: 2px;
+  border-style: solid;
+}
+
+.node-handle {
+  border-color: var(--node-color) !important;
+}
+
+.node-banner-gradient {
+  background: linear-gradient(135deg, var(--node-color-light) 0%, var(--node-color-lighter) 100%);
+}
+
+.badge-overlay {
+  background-color: rgba(255, 255, 255, var(--opacity-badge));
+}
+
+/* Category filter buttons */
+.category-btn-active {
+  color: white;
+  background-color: var(--category-color);
+}
+
+.category-btn-inactive {
+  color: var(--category-color);
+  background-color: var(--category-color-alpha);
+}
+
+/* Badge and label utilities with dynamic colors */
+.badge-vibration {
+  border-color: var(--vib-color-alpha-50);
+  color: var(--vib-color);
+  background-color: var(--vib-color-alpha-15);
+}
+
+.badge-frequency {
+  color: var(--freq-color);
+  background-color: var(--freq-bg);
+}
+
+.badge-category {
+  background-color: var(--cat-color-alpha-20);
+  color: var(--cat-color);
+}
+
+.border-vibration-light {
+  border-color: var(--vib-color-alpha-20);
+}
+
+.border-vibration-medium {
+  border-color: var(--vib-color-alpha-25);
+}
+
+.bg-vibration-subtle {
+  background-color: var(--vib-color-alpha-08);
+}
+
+.bg-vibration-light {
+  background-color: var(--vib-color-alpha-10);
+}
+
+.bg-vibration-medium {
+  background-color: var(--vib-color-alpha-25);
+}
+
+.text-vibration {
+  color: var(--vib-color);
+}
+
+.bg-vibration-solid {
+  background-color: var(--vib-color);
+}
+
+.border-category-light {
+  border-color: var(--cat-color-alpha-30);
+}
+
 /* Accessibility - Focus Indicators */
 *:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 button:focus-visible,
@@ -27,7 +194,7 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -41,27 +208,23 @@ select:focus-visible {
 }
 
 .react-flow__controls {
-  box-shadow:
-    0 4px 6px -1px rgb(0 0 0 / 0.3),
-    0 2px 4px -2px rgb(0 0 0 / 0.2) !important;
+  box-shadow: var(--shadow-react-flow) !important;
 }
 
 .react-flow__controls-button {
   border: none !important;
-  background: #1e293b !important;
-  fill: #94a3b8 !important;
+  background: var(--color-slate-800) !important;
+  fill: var(--color-slate-400) !important;
 }
 
 .react-flow__controls-button:hover {
-  background: #334155 !important;
-  fill: #e2e8f0 !important;
+  background: var(--color-slate-700) !important;
+  fill: var(--color-slate-200) !important;
 }
 
 .react-flow__minimap {
-  box-shadow:
-    0 4px 6px -1px rgb(0 0 0 / 0.3),
-    0 2px 4px -2px rgb(0 0 0 / 0.2) !important;
-  background: #1e293b !important;
+  box-shadow: var(--shadow-react-flow) !important;
+  background: var(--color-slate-800) !important;
 }
 
 .react-flow__minimap-mask {
@@ -73,7 +236,7 @@ select:focus-visible {
 }
 
 .react-flow__attribution a {
-  color: #475569 !important;
+  color: var(--color-slate-600) !important;
 }
 
 /* Login shake animation */
