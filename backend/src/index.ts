@@ -26,7 +26,7 @@ if (!FAL_KEY) {
 fal.config({ credentials: FAL_KEY });
 
 async function main() {
-  const app = Fastify({ logger: true, bodyLimit: 20 * 1024 * 1024 }); // 20MB
+  const app = Fastify({ logger: true, bodyLimit: 50 * 1024 * 1024 }); // 50MB
 
   // CORS
   await app.register(cors, {
@@ -37,7 +37,7 @@ async function main() {
   // Multipart para upload de archivos
   await app.register(multipart, {
     limits: {
-      fileSize: 20 * 1024 * 1024, // 20MB
+      fileSize: 50 * 1024 * 1024, // 50MB
     },
   });
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
+import { compressImages } from '../../utils/imageCompression';
 
 // Lazy load heavy Mermaid component
 const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
@@ -134,10 +135,19 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const incoming = Array.from(e.target.files ?? []);
     if (!incoming.length) return;
-    const combined = [...refImageFiles, ...incoming];
-    setRefImageFiles(combined);
-    const previews = await Promise.all(combined.map(readAsDataURL));
-    setRefImagePreviews(previews);
+    
+    // Comprimir imágenes antes de agregar
+    try {
+      const compressed = await compressImages(incoming, 2048, 0.85);
+      const combined = [...refImageFiles, ...compressed];
+      setRefImageFiles(combined);
+      const previews = await Promise.all(combined.map(readAsDataURL));
+      setRefImagePreviews(previews);
+    } catch (err) {
+      console.error('Error comprimiendo imágenes:', err);
+      setImageError('Error al comprimir imágenes. Intentá con archivos más pequeños.');
+    }
+    
     e.target.value = '';
   };
 
