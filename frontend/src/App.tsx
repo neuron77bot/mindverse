@@ -16,6 +16,7 @@ const StoryboardEditPage = lazy(() => import('./pages/StoryboardEditPage'));
 const StoryboardDetailPage = lazy(() => import('./pages/StoryboardDetailPage'));
 const StoryboardListPage = lazy(() => import('./pages/StoryboardListPage'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
+const SharedStoryboardPage = lazy(() => import('./pages/SharedStoryboardPage'));
 
 export default function App() {
   return (
@@ -36,8 +37,9 @@ export default function App() {
       />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Pública */}
+          {/* Públicas */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/storyboard/shared/:id" element={<SharedStoryboardPage />} />
 
           {/* Protegidas — envueltas en AppLayout (Header + NodeEditor) */}
           <Route element={<ProtectedRoute />}>

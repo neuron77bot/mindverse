@@ -13,12 +13,15 @@ export interface IFrame {
 export interface IStoryboard extends Document {
   userId: string;
   title: string;
+  description?: string;
+  genre?: string;
   originalText: string;
   inputMode: 'voice' | 'text';
   frames: IFrame[];
   comicPageUrl?: string;
   comicPagePrompt?: string;
   mermaidDiagram?: string;
+  isPublic?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,12 +43,15 @@ const StoryboardSchema = new Schema<IStoryboard>(
   {
     userId: { type: String, required: true, index: true },
     title: { type: String, required: true },
+    description: { type: String },
+    genre: { type: String },
     originalText: { type: String, required: true },
     inputMode: { type: String, enum: ['voice', 'text'], required: true },
     frames: { type: [FrameSchema], required: true },
     comicPageUrl: { type: String },
     comicPagePrompt: { type: String },
     mermaidDiagram: { type: String },
+    isPublic: { type: Boolean, default: false, index: true },
   },
   {
     timestamps: true,

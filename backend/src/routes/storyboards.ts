@@ -7,6 +7,56 @@ const errorShape = {
 };
 
 export async function storyboardRoutes(app: FastifyInstance) {
+  // GET /storyboards/shared/:id - Obtener storyboard público (sin autenticación)
+  app.get<{ Params: { id: string } }>(
+    '/shared/:id',
+    {
+      schema: {
+        tags: ['storyboards'],
+        summary: 'Obtener storyboard público',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string' } },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              _id: { type: 'string' },
+              title: { type: 'string' },
+              description: { type: 'string' },
+              genre: { type: 'string' },
+              frames: { type: 'array' },
+            },
+          },
+          404: errorShape,
+          500: errorShape,
+        },
+      },
+    },
+    async (req, reply) => {
+      try {
+        const { id } = req.params;
+        const storyboard = await Storyboard.findOne({ _id: id, isPublic: true } as any)
+          .select('_id title description genre frames')
+          .lean();
+
+        if (!storyboard) {
+          return reply.status(404).send({ 
+            success: false, 
+            error: 'Storyboard no encontrado o no es público' 
+          });
+        }
+
+        return reply.send(storyboard);
+      } catch (err: any) {
+        app.log.error(err);
+        return reply.status(500).send({ success: false, error: err.message });
+      }
+    }
+  );
+
   // GET /storyboards/debug - Endpoint temporal sin schema validation
   app.get('/debug', async (req, reply) => {
     try {
@@ -168,7 +218,15 @@ export async function storyboardRoutes(app: FastifyInstance) {
   // PATCH /storyboards/:id - Actualizar storyboard
   app.patch<{
     Params: { id: string };
-    Body: { title?: string; frames?: any[]; comicPageUrl?: string; comicPagePrompt?: string };
+    Body: { 
+      title?: string; 
+      description?: string;
+      genre?: string;
+      frames?: any[]; 
+      comicPageUrl?: string; 
+      comicPagePrompt?: string;
+      isPublic?: boolean;
+    };
   }>(
     '/:id',
     {
@@ -184,9 +242,12 @@ export async function storyboardRoutes(app: FastifyInstance) {
           type: 'object',
           properties: {
             title: { type: 'string' },
+            description: { type: 'string' },
+            genre: { type: 'string' },
             frames: { type: 'array', items: { type: 'object' } },
             comicPageUrl: { type: 'string' },
             comicPagePrompt: { type: 'string' },
+            isPublic: { type: 'boolean' },
           },
         },
         response: {
