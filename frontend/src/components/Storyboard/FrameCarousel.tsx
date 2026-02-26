@@ -16,15 +16,13 @@ interface FrameCarouselProps {
 export default function FrameCarousel({ frames, onImageClick }: FrameCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Filter frames that have images
-  const framesWithImages = frames.filter((f) => f.imageUrl);
-
-  if (framesWithImages.length === 0) {
-    return null; // Don't render carousel if no images
+  // Show all frames, not just those with images
+  if (frames.length === 0) {
+    return null; // Don't render carousel if no frames
   }
 
-  const currentFrame = framesWithImages[currentIndex];
-  const totalFrames = framesWithImages.length;
+  const currentFrame = frames[currentIndex];
+  const totalFrames = frames.length;
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? totalFrames - 1 : prev - 1));
@@ -44,7 +42,7 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
       <div className="relative bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-700/50 overflow-hidden">
         {/* Main Image Display */}
         <div className="relative aspect-video bg-slate-950/50">
-          {currentFrame.imageUrl && (
+          {currentFrame.imageUrl ? (
             <>
               <img
                 src={currentFrame.imageUrl}
@@ -52,13 +50,6 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
                 className="w-full h-full object-contain animate-fade-in"
                 style={{ animationDuration: '200ms' }}
               />
-
-              {/* Frame Number Badge */}
-              <div className="absolute top-4 left-4">
-                <span className="inline-block px-3 py-1.5 rounded-full bg-black/70 backdrop-blur text-white text-sm font-bold shadow-lg">
-                  Frame #{currentFrame.frame}
-                </span>
-              </div>
 
               {/* Expand Icon */}
               {onImageClick && (
@@ -83,7 +74,27 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
                 </button>
               )}
             </>
+          ) : (
+            // Placeholder for frames without images
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+              <svg className="w-16 h-16 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <p className="text-sm">Sin imagen generada</p>
+            </div>
           )}
+
+          {/* Frame Number Badge */}
+          <div className="absolute top-4 left-4">
+            <span className="inline-block px-3 py-1.5 rounded-full bg-black/70 backdrop-blur text-white text-sm font-bold shadow-lg">
+              Frame #{currentFrame.frame}
+            </span>
+          </div>
 
           {/* Navigation Buttons */}
           {totalFrames > 1 && (
@@ -151,7 +162,7 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
           {totalFrames > 1 && (
             <div className="pt-4 border-t border-slate-700/50">
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {framesWithImages.map((frame, index) => (
+                {frames.map((frame, index) => (
                   <button
                     key={frame.frame}
                     onClick={() => goToFrame(index)}
@@ -162,7 +173,7 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
                     }`}
                     style={{ width: '80px', height: '60px' }}
                   >
-                    {frame.imageUrl && (
+                    {frame.imageUrl ? (
                       <>
                         <img
                           src={frame.imageUrl}
@@ -174,6 +185,21 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
                           #{frame.frame}
                         </span>
                       </>
+                    ) : (
+                      // Placeholder thumbnail
+                      <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span className="absolute bottom-1 left-1 text-white text-xs font-bold">
+                          #{frame.frame}
+                        </span>
+                      </div>
                     )}
                   </button>
                 ))}
