@@ -144,18 +144,18 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
             </div>
           </div>
 
+          {/* Dialogue - now between title and description */}
+          {currentFrame.dialogue && (
+            <div className="bg-slate-800/50 rounded-lg p-3 border-l-4 border-indigo-500">
+              <p className="text-slate-200 text-sm italic">&ldquo;{currentFrame.dialogue}&rdquo;</p>
+            </div>
+          )}
+
           {/* Frame Description */}
           {currentFrame.visualDescription && (
             <p className="text-slate-300 text-sm leading-relaxed">
               {currentFrame.visualDescription}
             </p>
-          )}
-
-          {/* Dialogue */}
-          {currentFrame.dialogue && (
-            <div className="bg-slate-800/50 rounded-lg p-3 border-l-4 border-indigo-500">
-              <p className="text-slate-200 text-sm italic">&ldquo;{currentFrame.dialogue}&rdquo;</p>
-            </div>
           )}
 
           {/* Thumbnail Navigation */}
