@@ -28,7 +28,7 @@ export default function SharedStoryboardPage() {
   useEffect(() => {
     const fetchStoryboard = async () => {
       const token = searchParams.get('token');
-      
+
       if (!token) {
         setError('Token de acceso no proporcionado');
         setLoading(false);
@@ -36,7 +36,9 @@ export default function SharedStoryboardPage() {
       }
 
       try {
-        const response = await fetch(`/api/storyboards/shared/${id}?token=${encodeURIComponent(token)}`);
+        const response = await fetch(
+          `/api/storyboards/shared/${id}?token=${encodeURIComponent(token)}`
+        );
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
           throw new Error(errData.error || 'No se puede acceder a este storyboard');

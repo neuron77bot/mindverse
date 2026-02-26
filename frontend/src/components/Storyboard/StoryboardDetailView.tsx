@@ -121,7 +121,7 @@ export default function StoryboardDetailView() {
         }
 
         const data = await res.json();
-        const shareUrl = `${window.location.origin}${data.shareUrl}`;
+        const shareUrl = `${window.location.origin}/mindverse${data.shareUrl}`;
         
         await navigator.clipboard.writeText(shareUrl);
         return `Link copiado (válido por ${data.expiresIn})`;

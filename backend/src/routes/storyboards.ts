@@ -44,22 +44,18 @@ export async function storyboardRoutes(app: FastifyInstance) {
         if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
 
         const { id } = req.params;
-        
+
         // Verificar que el storyboard existe y pertenece al usuario
         const storyboard = await Storyboard.findOne({ _id: id, userId } as any);
         if (!storyboard) {
-          return reply.status(404).send({ 
-            success: false, 
-            error: 'Storyboard no encontrado' 
+          return reply.status(404).send({
+            success: false,
+            error: 'Storyboard no encontrado',
           });
         }
 
         // Generar token válido por 1 semana
-        const shareToken = jwt.sign(
-          { storyboardId: id },
-          JWT_SECRET,
-          { expiresIn: '7d' }
-        );
+        const shareToken = jwt.sign({ storyboardId: id }, JWT_SECRET, { expiresIn: '7d' });
 
         const shareUrl = `/storyboard/shared/${id}?token=${shareToken}`;
 
@@ -77,7 +73,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
   );
 
   // GET /storyboards/shared/:id - Obtener storyboard con token (sin autenticación de usuario)
-  app.get<{ 
+  app.get<{
     Params: { id: string };
     Querystring: { token: string };
   }>(
@@ -121,7 +117,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
         // Validar token
         try {
           const decoded = jwt.verify(token, JWT_SECRET) as { storyboardId: string };
-          
+
           // Verificar que el token es para este storyboard
           if (decoded.storyboardId !== id) {
             return reply.status(401).send({
@@ -142,9 +138,9 @@ export async function storyboardRoutes(app: FastifyInstance) {
           .lean();
 
         if (!storyboard) {
-          return reply.status(404).send({ 
-            success: false, 
-            error: 'Storyboard no encontrado' 
+          return reply.status(404).send({
+            success: false,
+            error: 'Storyboard no encontrado',
           });
         }
 
