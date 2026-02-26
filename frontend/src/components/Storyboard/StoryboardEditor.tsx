@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
-import MermaidDiagram from '../UI/MermaidDiagram';
+
+// Lazy load heavy Mermaid component
+const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -1363,7 +1365,15 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                   Timeline de la historia
                 </h4>
                 <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
-                  <MermaidDiagram chart={mermaidDiagram} />
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-12">
+                        <div className="icon-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+                      </div>
+                    }
+                  >
+                    <MermaidDiagram chart={mermaidDiagram} />
+                  </Suspense>
                 </div>
               </div>
             )}

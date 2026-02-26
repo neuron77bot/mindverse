@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMindverseStore } from '../../store/mindverseStore';
 import {
@@ -9,9 +9,11 @@ import {
 } from '../../data/mockData';
 import type { MindverseNode } from '../../types';
 import ExpandableText from '../UI/ExpandableText';
-import MermaidDiagram from '../UI/MermaidDiagram';
 import { getFreqLabel } from '../../utils/vibration';
 import { vibrationVars, categoryVars, frequencyVars } from '../../utils/designSystem';
+
+// Lazy load heavy Mermaid component
+const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 
 const TEMPORAL_ICONS: Record<string, string> = {
   PAST: '⏮️',
@@ -403,7 +405,15 @@ export default function DetailView({ node, onBack, onNavigateToMap }: DetailView
             ) : viewMode === 'esquema' ? (
               /* ── Vista Esquema ─────────────────────────────────────────────── */
               <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-6 overflow-x-auto">
-                <MermaidDiagram chart={mermaidCode} className="flex justify-center" />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center py-12">
+                      <div className="icon-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+                    </div>
+                  }
+                >
+                  <MermaidDiagram chart={mermaidCode} className="flex justify-center" />
+                </Suspense>
               </div>
             ) : viewMode === 'list' ? (
               /* ── Vista Lista ───────────────────────────────────────────────── */

@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import MermaidDiagram from '../UI/MermaidDiagram';
 import { authHeadersOnly } from '../../services/authHeaders';
+
+// Lazy load heavy Mermaid component
+const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -332,7 +334,15 @@ export default function StoryboardDetailView() {
                     <h2 className="text-white font-semibold text-lg">Timeline</h2>
                   </div>
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-                    <MermaidDiagram chart={storyboard.mermaidDiagram} />
+                    <Suspense
+                      fallback={
+                        <div className="flex items-center justify-center py-12">
+                          <div className="icon-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+                        </div>
+                      }
+                    >
+                      <MermaidDiagram chart={storyboard.mermaidDiagram} />
+                    </Suspense>
                   </div>
                 </section>
               )}
