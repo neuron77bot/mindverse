@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Frame {
   frame: number;
@@ -16,6 +16,7 @@ interface FrameCarouselProps {
 export default function FrameCarousel({ frames, onImageClick }: FrameCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
 
   const totalFrames = frames.length;
 
@@ -68,6 +69,18 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
       document.body.style.overflow = '';
     };
   }, [isFullscreen]);
+
+  // Auto-scroll thumbnail into view in fullscreen
+  useEffect(() => {
+    if (!isFullscreen || !thumbnailContainerRef.current) return;
+    
+    const container = thumbnailContainerRef.current;
+    const thumbnails = container.children;
+    if (thumbnails[currentIndex]) {
+      const thumbnail = thumbnails[currentIndex] as HTMLElement;
+      thumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [currentIndex, isFullscreen]);
 
   // Show all frames, not just those with images
   if (frames.length === 0) {
@@ -347,7 +360,12 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
                   className="btn-press-scale absolute left-2 sm:left-8 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all shadow-2xl"
                   aria-label="Frame anterior"
                 >
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -362,7 +380,12 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
                   className="btn-press-scale absolute right-2 sm:right-8 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all shadow-2xl"
                   aria-label="Frame siguiente"
                 >
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -378,7 +401,14 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
           {/* Thumbnail Navigation */}
           {totalFrames > 1 && (
             <div className="shrink-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide justify-center">
+              <div 
+                ref={thumbnailContainerRef}
+                className="flex gap-3 overflow-x-auto pb-2" 
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: 'rgba(255,255,255,0.3) transparent'
+                }}
+              >
                 {frames.map((frame, index) => (
                   <button
                     key={frame.frame}
@@ -427,7 +457,6 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
               </div>
             </div>
           )}
-
         </div>
       )}
     </>
