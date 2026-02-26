@@ -28,6 +28,7 @@ interface StoryboardDetail {
   mermaidDiagram?: string | null;
   comicPageUrl?: string | null;
   createdAt?: string;
+  isPublic?: boolean;
 }
 
 export default function StoryboardDetailView() {
@@ -41,6 +42,8 @@ export default function StoryboardDetailView() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
+  const [isPublic, setIsPublic] = useState<boolean>(false);
+  const [isUpdatingPublic, setIsUpdatingPublic] = useState<boolean>(false);
 
   useEffect(() => {
     const loadStoryboard = async () => {
@@ -65,6 +68,7 @@ export default function StoryboardDetailView() {
 
         const data = await res.json();
         setStoryboard(data.storyboard ?? null);
+        setIsPublic(data.storyboard?.isPublic ?? false);
       } catch (err: any) {
         setError(err.message || 'No se pudo cargar el storyboard.');
       } finally {
@@ -99,6 +103,48 @@ export default function StoryboardDetailView() {
         success: 'Storyboard eliminado exitosamente',
         error: (err) => err.message || 'No se pudo eliminar el storyboard',
         finally: () => setIsDeleting(false),
+      }
+    );
+  };
+
+  const handleTogglePublic = async () => {
+    if (!id) return;
+    setIsUpdatingPublic(true);
+
+    const newPublicState = !isPublic;
+
+    toast.promise(
+      async () => {
+        const res = await fetch(`${API_BASE}/storyboards/${id}`, {
+          method: 'PATCH',
+          headers: {
+            ...authHeadersOnly(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ isPublic: newPublicState }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Error actualizando storyboard');
+        }
+
+        setIsPublic(newPublicState);
+
+        // Si se hizo público, copiar el link
+        if (newPublicState) {
+          const shareUrl = `${window.location.origin}/storyboard/shared/${id}`;
+          await navigator.clipboard.writeText(shareUrl);
+          return 'Link copiado al portapapeles';
+        } else {
+          return 'Storyboard marcado como privado';
+        }
+      },
+      {
+        loading: newPublicState ? 'Haciendo público...' : 'Haciendo privado...',
+        success: (msg) => msg,
+        error: (err) => err.message || 'No se pudo actualizar',
+        finally: () => setIsUpdatingPublic(false),
       }
     );
   };
@@ -165,6 +211,26 @@ export default function StoryboardDetailView() {
                   />
                 </svg>
                 Editar
+              </button>
+
+              <button
+                onClick={handleTogglePublic}
+                disabled={isUpdatingPublic}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 shadow-lg ${
+                  isPublic
+                    ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-500/20'
+                    : 'bg-slate-600 hover:bg-slate-500 text-white shadow-slate-500/20'
+                } ${isUpdatingPublic ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                  />
+                </svg>
+                {isPublic ? 'Público ✓' : 'Compartir'}
               </button>
 
               <button

@@ -48,7 +48,7 @@ export default function SharedStoryboardPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!storyboard) return;
-      
+
       switch (e.key) {
         case 'ArrowLeft':
           setCurrentIndex((prev) => (prev === 0 ? storyboard.frames.length - 1 : prev - 1));

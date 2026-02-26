@@ -43,9 +43,9 @@ export async function storyboardRoutes(app: FastifyInstance) {
           .lean();
 
         if (!storyboard) {
-          return reply.status(404).send({ 
-            success: false, 
-            error: 'Storyboard no encontrado o no es público' 
+          return reply.status(404).send({
+            success: false,
+            error: 'Storyboard no encontrado o no es público',
           });
         }
 
@@ -218,12 +218,12 @@ export async function storyboardRoutes(app: FastifyInstance) {
   // PATCH /storyboards/:id - Actualizar storyboard
   app.patch<{
     Params: { id: string };
-    Body: { 
-      title?: string; 
+    Body: {
+      title?: string;
       description?: string;
       genre?: string;
-      frames?: any[]; 
-      comicPageUrl?: string; 
+      frames?: any[];
+      comicPageUrl?: string;
       comicPagePrompt?: string;
       isPublic?: boolean;
     };
