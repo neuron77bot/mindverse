@@ -15,6 +15,22 @@
   overflow: hidden;
 }
 
+/* Accessibility - Focus Indicators */
+*:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
 /* React Flow Dark Mode overrides */
 .react-flow__node {
   cursor: grab;

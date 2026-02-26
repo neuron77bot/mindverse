@@ -22,6 +22,14 @@ export default function AppLayout() {
 
   return (
     <div className="h-screen flex flex-col lg:flex-row bg-slate-900">
+      {/* Skip to main content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-lg focus:shadow-lg"
+      >
+        Saltar al contenido principal
+      </a>
+
       {/* Mobile Header - Solo visible en mobile */}
       <MobileHeader
         onMenuClick={() => setIsSidebarOpen(true)}
@@ -37,9 +45,9 @@ export default function AppLayout() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto">
+      <main id="main-content" className="flex-1 overflow-y-auto" role="main">
         <Outlet />
-      </div>
+      </main>
 
       {/* Node Editor (overlay) */}
       <NodeEditor />

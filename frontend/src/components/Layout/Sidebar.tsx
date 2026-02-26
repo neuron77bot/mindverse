@@ -30,7 +30,18 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
   return (
     <>
       {/* Overlay para mobile */}
-      {isOpen && <div className="lg:hidden fixed inset-0 bg-black/60 z-40" onClick={onClose} />}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={onClose}
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar menú"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter') onClose();
+          }}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
@@ -68,11 +79,13 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1" aria-label="Navegación principal">
           {menuItems.map((item) => (
             <button
               key={item.path}
               onClick={() => handleNavigation(item.path)}
+              aria-label={`Navegar a ${item.label}`}
+              aria-current={isActive(item.path) ? 'page' : undefined}
               className={`
                 w-full flex items-center gap-3 px-4 py-3 rounded-lg
                 text-sm font-medium transition-all
@@ -83,7 +96,9 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
                 }
               `}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl" aria-hidden="true">
+                {item.icon}
+              </span>
               <span>{item.label}</span>
             </button>
           ))}
@@ -93,9 +108,16 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
         <div className="p-4 border-t border-slate-700">
           <button
             onClick={onLogout}
+            aria-label="Cerrar sesión"
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-900/20 transition-all"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
