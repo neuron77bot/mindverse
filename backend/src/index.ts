@@ -11,6 +11,7 @@ import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { transcriptionRoutes } from './routes/transcription';
 import { storyboardRoutes } from './routes/storyboards';
+import { galleryRoutes } from './routes/gallery';
 import { connectDatabase } from './services/database';
 import { authMiddleware } from './middleware/auth';
 
@@ -54,6 +55,7 @@ async function main() {
         { name: 'users', description: 'CRUD de perfiles de usuario' },
         { name: 'thoughts', description: 'CRUD de pensamientos' },
         { name: 'images', description: 'Generación de imágenes con IA (fal.ai)' },
+        { name: 'gallery', description: 'Galería personal de imágenes de referencia' },
         { name: 'transcription', description: 'Transcripción de audio con Whisper' },
         { name: 'storyboards', description: 'CRUD de storyboards generados' },
         { name: 'health', description: 'Estado del servicio' },
@@ -77,6 +79,9 @@ async function main() {
 
   // Rutas de imágenes
   await app.register(imageRoutes, { prefix: '/images' });
+
+  // Rutas de galería
+  await app.register(galleryRoutes, { prefix: '/gallery' });
 
   // Rutas de pensamientos (CRUD)
   await app.register(thoughtRoutes, { prefix: '/thoughts' });

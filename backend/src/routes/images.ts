@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { fal } from '@fal-ai/client';
 import { GeneratedImage } from '../models/GeneratedImage';
+import { GalleryImage } from '../models/GalleryImage';
 
 const TEXT_TO_IMAGE_MODEL = 'fal-ai/nano-banana';
 const IMAGE_TO_IMAGE_MODEL = 'fal-ai/nano-banana/edit';
@@ -26,7 +27,8 @@ interface TextToImageBody {
 // ── Image-to-Image ────────────────────────────────────────────────────────────
 interface ImageToImageBody {
   prompt: string;
-  image_urls: string[]; // una o más URLs de imágenes base
+  image_urls?: string[]; // URLs manuales de imágenes base (opcional si se usa gallery_tags)
+  gallery_tags?: string[]; // Tags de galería para obtener imágenes (opcional si se usa image_urls)
   num_images?: number;
   aspect_ratio?:
     | 'auto'
@@ -190,13 +192,18 @@ export async function imageRoutes(app: FastifyInstance) {
         summary: 'Editar imagen con prompt (fal-ai/nano-banana/edit)',
         body: {
           type: 'object',
-          required: ['prompt', 'image_urls'],
+          required: ['prompt'],
           properties: {
             prompt: { type: 'string' },
             image_urls: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Una o más URLs de imágenes base',
+              description: 'URLs manuales de imágenes base (opcional si se usa gallery_tags)',
+            },
+            gallery_tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Tags de galería para obtener imágenes de referencia (opcional si se usa image_urls)',
             },
             num_images: { type: 'number', default: 1 },
             aspect_ratio: {
@@ -229,6 +236,7 @@ export async function imageRoutes(app: FastifyInstance) {
       const {
         prompt,
         image_urls,
+        gallery_tags,
         num_images = 1,
         aspect_ratio = 'auto',
         output_format = 'png',
@@ -238,15 +246,49 @@ export async function imageRoutes(app: FastifyInstance) {
       if (!prompt?.trim()) {
         return reply.status(400).send({ error: '"prompt" es requerido.' });
       }
-      if (!Array.isArray(image_urls) || image_urls.length === 0) {
-        return reply
-          .status(400)
-          .send({ error: '"image_urls" debe ser un array con al menos una URL.' });
+
+      // Resolver image_urls desde gallery_tags si es necesario
+      let finalImageUrls: string[] = [];
+
+      if (gallery_tags && Array.isArray(gallery_tags) && gallery_tags.length > 0) {
+        // Modo Gallery: obtener imágenes desde la galería del usuario
+        const userId = (request as any).userId;
+        if (!userId) {
+          return reply.status(401).send({ error: 'Usuario no autenticado.' });
+        }
+
+        try {
+          const galleryImages = await GalleryImage.find({
+            userId,
+            tag: { $in: gallery_tags },
+          }).select('imageUrl').lean();
+
+          finalImageUrls = galleryImages.map(img => img.imageUrl);
+
+          if (finalImageUrls.length === 0) {
+            return reply.status(400).send({
+              error: `No se encontraron imágenes en la galería con los tags: ${gallery_tags.join(', ')}`,
+            });
+          }
+        } catch (err: any) {
+          app.log.error(err);
+          return reply.status(500).send({
+            error: 'Error al obtener imágenes de galería.',
+            detail: err?.message,
+          });
+        }
+      } else if (image_urls && Array.isArray(image_urls) && image_urls.length > 0) {
+        // Modo Manual: usar las URLs proporcionadas directamente
+        finalImageUrls = image_urls;
+      } else {
+        return reply.status(400).send({
+          error: 'Debes proporcionar "image_urls" o "gallery_tags".',
+        });
       }
 
       try {
         const result = await fal.subscribe(IMAGE_TO_IMAGE_MODEL, {
-          input: { prompt, image_urls, num_images, aspect_ratio, output_format },
+          input: { prompt, image_urls: finalImageUrls, num_images, aspect_ratio, output_format },
         });
 
         const images = (result.data as any)?.images ?? [];
@@ -262,7 +304,7 @@ export async function imageRoutes(app: FastifyInstance) {
             mode: 'image-to-image',
             model: IMAGE_TO_IMAGE_MODEL,
             imageUrl: images[0].url,
-            sourceImages: image_urls,
+            sourceImages: finalImageUrls,
           });
         }
 
@@ -273,7 +315,7 @@ export async function imageRoutes(app: FastifyInstance) {
           images,
           description: (result.data as any)?.description ?? '',
           prompt,
-          source_images: image_urls,
+          source_images: finalImageUrls,
         });
       } catch (err: any) {
         app.log.error(err);
