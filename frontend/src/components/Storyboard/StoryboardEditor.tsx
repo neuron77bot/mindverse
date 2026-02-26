@@ -67,6 +67,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
         isEditMode={editor.isEditMode}
         id={editor.id}
         storyboardTitle={editor.storyboardTitle}
+        setStoryboardTitle={editor.setStoryboardTitle}
         storyboard={editor.storyboard}
         inputMode={editor.inputMode}
         isSaving={editor.isSaving}

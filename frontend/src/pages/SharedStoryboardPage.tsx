@@ -24,6 +24,7 @@ export default function SharedStoryboardPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
 
   useEffect(() => {
     const fetchStoryboard = async () => {
@@ -75,6 +76,11 @@ export default function SharedStoryboardPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [storyboard]);
 
+  useEffect(() => {
+    // Reset image loading state when switching frames
+    setImageLoading(true);
+  }, [currentIndex]);
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -125,12 +131,23 @@ export default function SharedStoryboardPage() {
       {/* Main Image Area */}
       <div className="flex-1 relative min-h-0 flex items-center justify-center p-4 pb-0">
         {currentFrame.imageUrl ? (
-          <img
-            src={currentFrame.imageUrl}
-            alt={`Frame ${currentFrame.frame}: ${currentFrame.scene}`}
-            className="max-w-full max-h-full object-contain animate-fade-in"
-            style={{ animationDuration: '200ms' }}
-          />
+          <>
+            {imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            <img
+              src={currentFrame.imageUrl}
+              alt={`Frame ${currentFrame.frame}: ${currentFrame.scene}`}
+              className={`max-w-full max-h-full object-contain transition-opacity duration-200 ${
+                imageLoading ? 'opacity-0' : 'opacity-100 animate-fade-in'
+              }`}
+              style={{ animationDuration: '200ms' }}
+              onLoad={() => setImageLoading(false)}
+              onError={() => setImageLoading(false)}
+            />
+          </>
         ) : (
           <div className="text-center text-slate-400">
             <svg
