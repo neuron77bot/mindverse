@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import MermaidDiagram from '../UI/MermaidDiagram';
 import { authHeadersOnly } from '../../services/authHeaders';
 
@@ -72,25 +73,29 @@ export default function StoryboardDetailView() {
   const handleDelete = async () => {
     if (!id) return;
     setIsDeleting(true);
+    setShowDeleteConfirm(false);
 
-    try {
-      const res = await fetch(`${API_BASE}/storyboards/${id}`, {
-        method: 'DELETE',
-        headers: authHeadersOnly(),
-      });
+    toast.promise(
+      async () => {
+        const res = await fetch(`${API_BASE}/storyboards/${id}`, {
+          method: 'DELETE',
+          headers: authHeadersOnly(),
+        });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Error eliminando storyboard');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Error eliminando storyboard');
+        }
+
+        navigate('/storyboards');
+      },
+      {
+        loading: 'Eliminando storyboard...',
+        success: 'Storyboard eliminado exitosamente',
+        error: (err) => err.message || 'No se pudo eliminar el storyboard',
+        finally: () => setIsDeleting(false),
       }
-
-      navigate('/storyboards');
-    } catch (err: any) {
-      alert(err.message || 'No se pudo eliminar el storyboard.');
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-    }
+    );
   };
 
   const frames = storyboard?.frames ?? [];

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { authHeadersOnly } from '../../services/authHeaders';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -64,26 +65,28 @@ export default function StoryboardListView() {
   };
 
   const deleteStoryboard = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este storyboard?')) return;
+    toast.promise(
+      async () => {
+        const res = await fetch(`${API_BASE}/storyboards/${id}`, {
+          method: 'DELETE',
+          headers: authHeadersOnly(),
+        });
 
-    try {
-      const res = await fetch(`${API_BASE}/storyboards/${id}`, {
-        method: 'DELETE',
-        headers: authHeadersOnly(),
-      });
+        if (!res.ok) {
+          throw new Error('Error eliminando storyboard');
+        }
 
-      if (!res.ok) {
-        throw new Error('Error eliminando storyboard');
+        setStoryboards(storyboards.filter((s) => s._id !== id));
+        if (selectedStoryboard?._id === id) {
+          setSelectedStoryboard(null);
+        }
+      },
+      {
+        loading: 'Eliminando storyboard...',
+        success: 'Storyboard eliminado exitosamente',
+        error: (err) => `Error: ${err.message}`,
       }
-
-      setStoryboards(storyboards.filter((s) => s._id !== id));
-      if (selectedStoryboard?._id === id) {
-        setSelectedStoryboard(null);
-      }
-      alert('✅ Storyboard eliminado');
-    } catch (err: any) {
-      alert('Error: ' + err.message);
-    }
+    );
   };
 
   // Loading state
