@@ -52,12 +52,10 @@ export default function GalleryView() {
     loadGallery();
   }, []);
 
-  const filteredImages = selectedTag === 'all'
-    ? images
-    : images.filter(img => img.tag === selectedTag);
+  const filteredImages =
+    selectedTag === 'all' ? images : images.filter((img) => img.tag === selectedTag);
 
-  const imageCountByTag = (tag: string) =>
-    images.filter(img => img.tag === tag).length;
+  const imageCountByTag = (tag: string) => images.filter((img) => img.tag === tag).length;
 
   return (
     <div className="min-h-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
@@ -70,7 +68,12 @@ export default function GalleryView() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600 transition-all duration-200"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Volver
             </button>
@@ -140,9 +143,24 @@ export default function GalleryView() {
             {isLoading && (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
-                  <svg className="animate-spin h-12 w-12 text-indigo-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <svg
+                    className="animate-spin h-12 w-12 text-indigo-500 mx-auto mb-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   <p className="text-slate-400">Cargando galería...</p>
                 </div>
@@ -160,8 +178,18 @@ export default function GalleryView() {
             {!isLoading && !error && (
               <div className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-2xl border border-slate-700 p-6">
                 <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    className="w-6 h-6 text-indigo-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                   {selectedTag === 'all' ? 'Todas las imágenes' : selectedTag}
                 </h3>

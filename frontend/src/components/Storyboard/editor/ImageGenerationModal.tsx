@@ -107,9 +107,7 @@ export default function ImageGenerationModal({
 
         {/* Mode content */}
         <div className="space-y-4 mb-6">
-          {imageMode === 'text' && (
-            <PromptField value={imagePrompt} onChange={setImagePrompt} />
-          )}
+          {imageMode === 'text' && <PromptField value={imagePrompt} onChange={setImagePrompt} />}
 
           {imageMode === 'img2img' && (
             <>

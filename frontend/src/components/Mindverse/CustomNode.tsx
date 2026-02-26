@@ -22,12 +22,14 @@ const CustomNode = memo(({ data }: NodeProps<CustomNodeData>) => {
   return (
     <div
       className="mind-node relative rounded-xl shadow-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl min-w-[160px] max-w-[240px] overflow-hidden"
-      style={{
-        '--node-color': vibColor,
-        '--node-color-light': `${vibColor}55`,
-        '--node-color-lighter': `${vibColor}22`,
-        backgroundColor: `${vibColor}cc`,
-      } as React.CSSProperties}
+      style={
+        {
+          '--node-color': vibColor,
+          '--node-color-light': `${vibColor}55`,
+          '--node-color-lighter': `${vibColor}22`,
+          backgroundColor: `${vibColor}cc`,
+        } as React.CSSProperties
+      }
       onDoubleClick={handleDoubleClick}
     >
       <Handle

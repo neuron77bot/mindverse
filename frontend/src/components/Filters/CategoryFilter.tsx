@@ -42,12 +42,16 @@ export default function CategoryFilter() {
               key={category}
               onClick={() => setCategoryFilter(category)}
               className={`btn-press-scale px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition-all duration-200 shrink-0 ${
-                isActive ? 'category-btn-active shadow-lg' : 'category-btn-inactive hover:opacity-90'
+                isActive
+                  ? 'category-btn-active shadow-lg'
+                  : 'category-btn-inactive hover:opacity-90'
               }`}
-              style={{
-                '--category-color': CATEGORY_COLORS[category],
-                '--category-color-alpha': `${CATEGORY_COLORS[category]}30`,
-              } as React.CSSProperties}
+              style={
+                {
+                  '--category-color': CATEGORY_COLORS[category],
+                  '--category-color-alpha': `${CATEGORY_COLORS[category]}30`,
+                } as React.CSSProperties
+              }
             >
               {CATEGORY_LABELS[category]}
             </button>

@@ -23,8 +23,7 @@ export default function Button({
     primary:
       'bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-500 shadow-lg shadow-indigo-500/25',
     secondary: 'bg-slate-700 text-slate-300 hover:bg-slate-600 focus:ring-slate-500',
-    danger:
-      'bg-red-600 text-white hover:bg-red-500 focus:ring-red-500 shadow-lg shadow-red-500/25',
+    danger: 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-500 shadow-lg shadow-red-500/25',
     ghost: 'bg-transparent text-slate-400 hover:text-white hover:bg-slate-700 focus:ring-slate-500',
   };
 
@@ -41,12 +40,7 @@ export default function Button({
       {...props}
     >
       {isLoading && (
-        <svg
-          className="w-4 h-4 animate-spin"
-          fill="none"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
+        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
           <circle
             className="opacity-25"
             cx="12"

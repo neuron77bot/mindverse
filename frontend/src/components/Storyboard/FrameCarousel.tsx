@@ -100,12 +100,7 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
                     className="p-2 rounded-full bg-black/70 backdrop-blur text-white hover:bg-black/90 transition-colors"
                     title="Modo pantalla completa"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -349,10 +344,10 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
               <>
                 <button
                   onClick={goToPrevious}
-                  className="btn-press-scale absolute left-8 top-1/2 -translate-y-1/2 p-4 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all shadow-2xl"
+                  className="btn-press-scale absolute left-2 sm:left-8 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all shadow-2xl"
                   aria-label="Frame anterior"
                 >
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -364,10 +359,10 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
 
                 <button
                   onClick={goToNext}
-                  className="btn-press-scale absolute right-8 top-1/2 -translate-y-1/2 p-4 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all shadow-2xl"
+                  className="btn-press-scale absolute right-2 sm:right-8 top-1/2 -translate-y-1/2 p-3 sm:p-4 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all shadow-2xl"
                   aria-label="Frame siguiente"
                 >
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -433,16 +428,6 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
             </div>
           )}
 
-          {/* Keyboard Hint */}
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-none">
-            <div className="bg-black/50 backdrop-blur px-4 py-2 rounded-full text-white text-xs flex items-center gap-3 opacity-50">
-              <span>← →</span>
-              <span>Navegar</span>
-              <span className="mx-2">|</span>
-              <span>ESC</span>
-              <span>Salir</span>
-            </div>
-          </div>
         </div>
       )}
     </>

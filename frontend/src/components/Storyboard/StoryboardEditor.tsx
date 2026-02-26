@@ -103,8 +103,8 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                   </p>
                   <p className="text-yellow-300/80 text-xs">
                     La grabación de audio requiere HTTPS. Accedé desde{' '}
-                    <code className="bg-black/30 px-1 py-0.5 rounded">https://</code> para
-                    habilitar el micrófono.
+                    <code className="bg-black/30 px-1 py-0.5 rounded">https://</code> para habilitar
+                    el micrófono.
                   </p>
                 </div>
               </div>
@@ -410,9 +410,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                   </div>
                   <div>
                     <h2 className="text-white font-bold text-2xl">Diagrama de Flujo</h2>
-                    <p className="text-slate-400 text-sm">
-                      Representación visual del storyboard
-                    </p>
+                    <p className="text-slate-400 text-sm">Representación visual del storyboard</p>
                   </div>
                 </div>
                 <div className="p-6 rounded-xl bg-white/5 border border-slate-700">
