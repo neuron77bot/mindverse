@@ -10,6 +10,7 @@ const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 type InputMode = 'voice' | 'text';
+type TabType = 'historia' | 'frames' | 'diagrama' | 'comic';
 
 interface StoryboardFrame {
   frame: number;
@@ -33,6 +34,7 @@ export default function StoryboardDetailView() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
+  const [activeTab, setActiveTab] = useState<TabType>('frames');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [storyboard, setStoryboard] = useState<StoryboardDetail | null>(null);
@@ -114,8 +116,18 @@ export default function StoryboardDetailView() {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
+
+  // Tabs configuration
+  const tabs: Array<{ id: TabType; label: string; icon: string; show: boolean }> = [
+    { id: 'historia', label: 'Historia', icon: '📖', show: true },
+    { id: 'frames', label: 'Frames', icon: '🎬', show: true },
+    { id: 'diagrama', label: 'Diagrama', icon: '📊', show: !!storyboard?.mermaidDiagram },
+    { id: 'comic', label: 'Cómic', icon: '🎨', show: !!storyboard?.comicPageUrl },
+  ];
 
   return (
     <div className="min-h-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
@@ -208,7 +220,6 @@ export default function StoryboardDetailView() {
 
               {/* Metadata Badges */}
               <div className="flex flex-wrap gap-2">
-                {/* Frames count */}
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-medium">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -221,7 +232,6 @@ export default function StoryboardDetailView() {
                   {frames.length} frames
                 </span>
 
-                {/* Input mode */}
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-medium">
                   {inputMode === 'voice' ? (
                     <>
@@ -260,7 +270,6 @@ export default function StoryboardDetailView() {
                   )}
                 </span>
 
-                {/* Created date */}
                 {createdAt && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-700/50 border border-slate-600 text-slate-300 text-sm font-medium">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,19 +289,48 @@ export default function StoryboardDetailView() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Navigation Tabs */}
+      {!isLoading && !error && storyboard && (
+        <div className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-6">
+            <nav className="flex gap-1 overflow-x-auto scrollbar-hide" aria-label="Tabs">
+              {tabs
+                .filter((tab) => tab.show)
+                .map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`
+                    flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all whitespace-nowrap
+                    ${
+                      activeTab === tab.id
+                        ? 'border-indigo-500 text-white bg-indigo-500/10'
+                        : 'border-transparent text-slate-400 hover:text-white hover:border-slate-600'
+                    }
+                  `}
+                  >
+                    <span className="text-lg">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Content */}
       {!isLoading && !error && storyboard && (
         <div className="max-w-7xl mx-auto p-6">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-6">
-            {/* Sidebar (Left) */}
-            <aside className="lg:col-span-4 space-y-6 mb-6 lg:mb-0">
-              {/* Original Story */}
+          {/* Historia Tab */}
+          {activeTab === 'historia' && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* Original Text */}
               {originalText && (
-                <section className="p-6 bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50 shadow-xl">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                       <svg
-                        className="w-4 h-4 text-white"
+                        className="w-6 h-6 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -305,112 +343,62 @@ export default function StoryboardDetailView() {
                         />
                       </svg>
                     </div>
-                    <h2 className="text-white font-semibold text-lg">Historia original</h2>
-                  </div>
-                  <p className="text-slate-300 whitespace-pre-wrap leading-relaxed text-sm">
-                    {originalText}
-                  </p>
-                </section>
-              )}
-
-              {/* Timeline */}
-              {storyboard.mermaidDiagram && (
-                <section className="p-6 bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50 shadow-xl">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                      </svg>
+                    <div>
+                      <h2 className="text-white font-bold text-2xl">Historia Original</h2>
+                      <p className="text-slate-400 text-sm">
+                        {inputMode === 'voice' ? 'Narrado por voz' : 'Escrito como texto'}
+                      </p>
                     </div>
-                    <h2 className="text-white font-semibold text-lg">Timeline</h2>
                   </div>
-                  <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-                    <Suspense
-                      fallback={
-                        <div className="flex items-center justify-center py-12">
-                          <div className="icon-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
-                        </div>
-                      }
-                    >
-                      <MermaidDiagram chart={storyboard.mermaidDiagram} />
-                    </Suspense>
+                  <div className="prose prose-invert max-w-none">
+                    <p className="text-slate-200 whitespace-pre-wrap leading-relaxed text-lg">
+                      {originalText}
+                    </p>
                   </div>
                 </section>
               )}
 
-              {/* Comic Page */}
-              {storyboard.comicPageUrl && (
-                <section className="p-6 bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50 shadow-xl">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                    <h2 className="text-white font-semibold text-lg">Página de cómic</h2>
+              {/* Metadata */}
+              <section className="p-6 bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50">
+                <h3 className="text-white font-semibold text-lg mb-4">Información</h3>
+                <dl className="space-y-3">
+                  <div className="flex justify-between">
+                    <dt className="text-slate-400">Modo de entrada:</dt>
+                    <dd className="text-white font-medium">
+                      {inputMode === 'voice' ? '🎙️ Voz' : '📝 Texto'}
+                    </dd>
                   </div>
-                  <div
-                    className="group relative rounded-lg border border-slate-700 overflow-hidden mb-3 cursor-pointer"
-                    onClick={() =>
-                      setLightboxImage({
-                        url: storyboard.comicPageUrl!,
-                        title: 'Página de cómic completa',
-                      })
-                    }
-                  >
-                    <img
-                      src={storyboard.comicPageUrl}
-                      alt="Página de cómic"
-                      className="w-full h-auto transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="text-center">
-                        <svg
-                          className="w-12 h-12 text-white drop-shadow-lg mx-auto mb-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                          />
-                        </svg>
-                        <span className="text-white font-medium text-sm drop-shadow-lg">
-                          Click para ampliar
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex justify-between">
+                    <dt className="text-slate-400">Total de frames:</dt>
+                    <dd className="text-white font-medium">{frames.length}</dd>
                   </div>
-                </section>
-              )}
-            </aside>
+                  {createdAt && (
+                    <div className="flex justify-between">
+                      <dt className="text-slate-400">Creado:</dt>
+                      <dd className="text-white font-medium">{formatDate(createdAt)}</dd>
+                    </div>
+                  )}
+                  {storyboard.mermaidDiagram && (
+                    <div className="flex justify-between">
+                      <dt className="text-slate-400">Diagrama:</dt>
+                      <dd className="text-green-400 font-medium">✓ Disponible</dd>
+                    </div>
+                  )}
+                  {storyboard.comicPageUrl && (
+                    <div className="flex justify-between">
+                      <dt className="text-slate-400">Página de cómic:</dt>
+                      <dd className="text-green-400 font-medium">✓ Generada</dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            </div>
+          )}
 
-            {/* Main Content (Right) */}
-            <main className="lg:col-span-8">
-              {/* Frame Carousel - Above frames section */}
+          {/* Frames Tab */}
+          {activeTab === 'frames' && (
+            <div className="space-y-8">
+              {/* Frame Carousel */}
               {frames.length > 0 && (
                 <FrameCarousel
                   frames={frames}
@@ -418,11 +406,12 @@ export default function StoryboardDetailView() {
                 />
               )}
 
-              <section>
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+              {/* Frames Grid */}
+              {frames.length === 0 ? (
+                <div className="p-12 text-center bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
                     <svg
-                      className="w-5 h-5 text-white"
+                      className="w-8 h-8 text-slate-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -431,18 +420,202 @@ export default function StoryboardDetailView() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                       />
                     </svg>
                   </div>
-                  <h2 className="text-white font-bold text-2xl">Frames del Storyboard</h2>
+                  <p className="text-slate-400 text-lg">No hay frames en este storyboard</p>
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {frames.map((frame) => (
+                    <article
+                      key={frame.frame}
+                      className="group bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50 overflow-hidden hover:border-indigo-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1"
+                    >
+                      {/* Frame Image */}
+                      {frame.imageUrl ? (
+                        <div
+                          className="relative aspect-square overflow-hidden cursor-pointer"
+                          onClick={() =>
+                            setLightboxImage({
+                              url: frame.imageUrl!,
+                              title: `Frame #${frame.frame}: ${frame.scene}`,
+                            })
+                          }
+                        >
+                          <img
+                            src={frame.imageUrl}
+                            alt={`Frame ${frame.frame}`}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute top-2 left-2">
+                            <span className="inline-block px-2.5 py-1 rounded-full bg-black/70 backdrop-blur text-white text-xs font-bold">
+                              #{frame.frame}
+                            </span>
+                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <svg
+                                className="w-12 h-12 text-white drop-shadow-lg"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="aspect-square rounded-t-xl border-b-2 border-dashed border-slate-700 flex items-center justify-center bg-slate-800/50">
+                          <div className="text-center p-4">
+                            <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-slate-700/50 flex items-center justify-center">
+                              <svg
+                                className="w-6 h-6 text-slate-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                            </div>
+                            <p className="text-slate-500 text-xs">Sin imagen</p>
+                            <span className="inline-block mt-2 px-2.5 py-1 rounded-full bg-slate-700/50 text-white text-xs font-bold">
+                              #{frame.frame}
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
-                {frames.length === 0 ? (
-                  <div className="p-12 text-center bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
+                      {/* Frame Content */}
+                      <div className="p-4 space-y-3">
+                        <div>
+                          <h3 className="text-white font-semibold text-lg group-hover:text-indigo-300 transition-colors">
+                            {frame.scene}
+                          </h3>
+                        </div>
+
+                        <div>
+                          <p className="text-xs uppercase tracking-wider text-slate-500 mb-1.5 font-medium">
+                            Descripción visual
+                          </p>
+                          <p className="text-slate-300 text-sm leading-relaxed">
+                            {frame.visualDescription}
+                          </p>
+                        </div>
+
+                        {frame.dialogue && (
+                          <div className="pt-2 border-t border-slate-700/50">
+                            <p className="text-xs uppercase tracking-wider text-slate-500 mb-1.5 font-medium">
+                              Diálogo
+                            </p>
+                            <p className="text-slate-200 text-sm italic leading-relaxed">
+                              "{frame.dialogue}"
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Diagrama Tab */}
+          {activeTab === 'diagrama' && storyboard.mermaidDiagram && (
+            <div className="max-w-5xl mx-auto">
+              <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-orange-600 flex items-center justify-center shadow-lg shadow-pink-500/20">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-white font-bold text-2xl">Diagrama de Flujo</h2>
+                    <p className="text-slate-400 text-sm">Representación visual del storyboard</p>
+                  </div>
+                </div>
+                <div className="p-6 rounded-xl bg-white/5 border border-slate-700">
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center py-12">
+                        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    }
+                  >
+                    <MermaidDiagram chart={storyboard.mermaidDiagram} />
+                  </Suspense>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* Cómic Tab */}
+          {activeTab === 'comic' && storyboard.comicPageUrl && (
+            <div className="max-w-5xl mx-auto">
+              <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-white font-bold text-2xl">Página de Cómic</h2>
+                    <p className="text-slate-400 text-sm">Composición visual completa</p>
+                  </div>
+                </div>
+                <div
+                  className="group relative rounded-xl border-2 border-slate-700 overflow-hidden cursor-pointer bg-slate-900/50"
+                  onClick={() =>
+                    setLightboxImage({
+                      url: storyboard.comicPageUrl!,
+                      title: 'Página de cómic completa',
+                    })
+                  }
+                >
+                  <img
+                    src={storyboard.comicPageUrl}
+                    alt="Página de cómic"
+                    className="w-full h-auto transition-transform duration-300 group-hover:scale-[1.02]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="text-center">
                       <svg
-                        className="w-8 h-8 text-slate-600"
+                        className="w-16 h-16 text-white drop-shadow-lg mx-auto mb-3"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -451,121 +624,18 @@ export default function StoryboardDetailView() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
                         />
                       </svg>
+                      <span className="text-white font-semibold text-lg drop-shadow-lg">
+                        Click para ampliar
+                      </span>
                     </div>
-                    <p className="text-slate-400 text-lg">No hay frames en este storyboard</p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {frames.map((frame) => (
-                      <article
-                        key={frame.frame}
-                        className="group bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50 overflow-hidden hover:border-indigo-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1"
-                      >
-                        {/* Frame Image */}
-                        {frame.imageUrl && (
-                          <div
-                            className="relative aspect-square overflow-hidden cursor-pointer"
-                            onClick={() =>
-                              setLightboxImage({
-                                url: frame.imageUrl!,
-                                title: `Frame #${frame.frame}: ${frame.scene}`,
-                              })
-                            }
-                          >
-                            <img
-                              src={frame.imageUrl}
-                              alt={`Frame ${frame.frame}`}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                            />
-                            <div className="absolute top-2 left-2">
-                              <span className="inline-block px-2.5 py-1 rounded-full bg-black/70 backdrop-blur text-white text-xs font-bold">
-                                #{frame.frame}
-                              </span>
-                            </div>
-                            {/* Hover overlay indicator */}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <svg
-                                  className="w-12 h-12 text-white drop-shadow-lg"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Frame Content */}
-                        <div className="p-4 space-y-3">
-                          {/* Scene Title */}
-                          <div>
-                            <h3 className="text-white font-semibold text-lg group-hover:text-indigo-300 transition-colors">
-                              {frame.scene}
-                            </h3>
-                          </div>
-
-                          {/* Visual Description */}
-                          <div>
-                            <p className="text-xs uppercase tracking-wider text-slate-500 mb-1.5 font-medium">
-                              Descripción visual
-                            </p>
-                            <p className="text-slate-300 text-sm leading-relaxed">
-                              {frame.visualDescription}
-                            </p>
-                          </div>
-
-                          {/* Dialogue */}
-                          {frame.dialogue && (
-                            <div className="pt-2 border-t border-slate-700/50">
-                              <p className="text-xs uppercase tracking-wider text-slate-500 mb-1.5 font-medium">
-                                Diálogo
-                              </p>
-                              <p className="text-slate-200 text-sm italic leading-relaxed">
-                                "{frame.dialogue}"
-                              </p>
-                            </div>
-                          )}
-
-                          {/* No Image Placeholder */}
-                          {!frame.imageUrl && (
-                            <div className="aspect-square rounded-lg border-2 border-dashed border-slate-700 flex items-center justify-center bg-slate-800/30">
-                              <div className="text-center p-4">
-                                <svg
-                                  className="w-8 h-8 mx-auto mb-2 text-slate-600"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                  />
-                                </svg>
-                                <p className="text-slate-500 text-xs">Sin imagen</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
+                </div>
               </section>
-            </main>
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -624,7 +694,6 @@ export default function StoryboardDetailView() {
           onClick={() => setLightboxImage(null)}
         >
           <div className="relative max-w-7xl w-full h-[90vh] flex flex-col">
-            {/* Header */}
             <div className="flex items-center justify-between mb-4 px-4 shrink-0">
               <h3 className="text-white font-semibold text-lg">{lightboxImage.title}</h3>
               <button
@@ -642,7 +711,6 @@ export default function StoryboardDetailView() {
               </button>
             </div>
 
-            {/* Image Container */}
             <div
               className="flex-1 flex items-center justify-center overflow-hidden min-h-0"
               onClick={(e) => e.stopPropagation()}
@@ -654,7 +722,6 @@ export default function StoryboardDetailView() {
               />
             </div>
 
-            {/* Download button */}
             <div className="flex justify-center mt-4 shrink-0">
               <a
                 href={lightboxImage.url}
