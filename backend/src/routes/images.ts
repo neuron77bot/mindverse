@@ -203,7 +203,8 @@ export async function imageRoutes(app: FastifyInstance) {
             gallery_tags: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Tags de galería para obtener imágenes de referencia (opcional si se usa image_urls)',
+              description:
+                'Tags de galería para obtener imágenes de referencia (opcional si se usa image_urls)',
             },
             num_images: { type: 'number', default: 1 },
             aspect_ratio: {
@@ -252,7 +253,7 @@ export async function imageRoutes(app: FastifyInstance) {
 
       if (gallery_tags && Array.isArray(gallery_tags) && gallery_tags.length > 0) {
         // Modo Gallery: obtener imágenes desde la galería del usuario
-        const userId = (request as any).userId;
+        const userId = request.jwtUser?.sub;
         if (!userId) {
           return reply.status(401).send({ error: 'Usuario no autenticado.' });
         }
@@ -261,9 +262,11 @@ export async function imageRoutes(app: FastifyInstance) {
           const galleryImages = await GalleryImage.find({
             userId,
             tag: { $in: gallery_tags },
-          }).select('imageUrl').lean();
+          })
+            .select('imageUrl')
+            .lean();
 
-          finalImageUrls = galleryImages.map(img => img.imageUrl);
+          finalImageUrls = galleryImages.map((img) => img.imageUrl);
 
           if (finalImageUrls.length === 0) {
             return reply.status(400).send({
