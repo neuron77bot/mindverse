@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Frame {
   frame: number;
@@ -16,7 +16,6 @@ interface FrameCarouselProps {
 export default function FrameCarousel({ frames, onImageClick }: FrameCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
 
   const totalFrames = frames.length;
 
@@ -69,18 +68,6 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
       document.body.style.overflow = '';
     };
   }, [isFullscreen]);
-
-  // Auto-scroll thumbnail into view in fullscreen
-  useEffect(() => {
-    if (!isFullscreen || !thumbnailContainerRef.current) return;
-
-    const container = thumbnailContainerRef.current;
-    const thumbnails = container.children;
-    if (thumbnails[currentIndex]) {
-      const thumbnail = thumbnails[currentIndex] as HTMLElement;
-      thumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  }, [currentIndex, isFullscreen]);
 
   // Show all frames, not just those with images
   if (frames.length === 0) {
@@ -295,34 +282,29 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
       {/* Fullscreen Mode */}
       {isFullscreen && (
         <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          {/* Header Bar */}
-          <div className="shrink-0 bg-gradient-to-b from-black/80 to-transparent p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h3 className="text-white font-semibold text-lg">{currentFrame.scene}</h3>
+          {/* Top Controls */}
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+            <div className="text-white text-sm font-medium bg-black/50 backdrop-blur px-3 py-1.5 rounded-full">
+              {currentIndex + 1} / {totalFrames}
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-white text-sm font-medium">
-                {currentIndex + 1} / {totalFrames}
-              </div>
-              <button
-                onClick={toggleFullscreen}
-                className="p-2 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-colors"
-                title="Salir de pantalla completa (ESC)"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 rounded-full bg-black/50 backdrop-blur text-white hover:bg-black/70 transition-colors"
+              title="Salir de pantalla completa (ESC)"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
           </div>
 
           {/* Main Image Area */}
-          <div className="flex-1 relative min-h-0 flex items-center justify-center p-4">
+          <div className="flex-1 relative min-h-0 flex items-center justify-center p-4 pb-0">
             {currentFrame.imageUrl ? (
               <img
                 src={currentFrame.imageUrl}
@@ -395,65 +377,17 @@ export default function FrameCarousel({ frames, onImageClick }: FrameCarouselPro
             )}
           </div>
 
-          {/* Thumbnail Navigation */}
-          {totalFrames > 1 && (
-            <div className="shrink-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <div
-                ref={thumbnailContainerRef}
-                className="flex gap-3 overflow-x-auto pb-2"
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: 'rgba(255,255,255,0.3) transparent',
-                }}
-              >
-                {frames.map((frame, index) => (
-                  <button
-                    key={frame.frame}
-                    onClick={() => goToFrame(index)}
-                    className={`interactive shrink-0 relative rounded-lg overflow-hidden transition-all ${
-                      index === currentIndex
-                        ? 'ring-2 ring-white ring-offset-2 ring-offset-black'
-                        : 'opacity-50 hover:opacity-100'
-                    }`}
-                    style={{ width: '120px', height: '90px' }}
-                  >
-                    {frame.imageUrl ? (
-                      <>
-                        <img
-                          src={frame.imageUrl}
-                          alt={`Frame ${frame.frame}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                        <span className="absolute bottom-2 left-2 text-white text-sm font-bold">
-                          #{frame.frame}
-                        </span>
-                      </>
-                    ) : (
-                      <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                        <svg
-                          className="w-8 h-8 text-slate-600"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <span className="absolute bottom-2 left-2 text-white text-sm font-bold">
-                          #{frame.frame}
-                        </span>
-                      </div>
-                    )}
-                  </button>
-                ))}
+          {/* Info Footer */}
+          <div className="shrink-0 bg-gradient-to-t from-black/80 to-transparent p-6 space-y-3">
+            <h3 className="text-white font-semibold text-xl text-center">{currentFrame.scene}</h3>
+            {currentFrame.dialogue && (
+              <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur rounded-lg p-4 border-l-4 border-white/30">
+                <p className="text-white text-sm italic text-center">
+                  &ldquo;{currentFrame.dialogue}&rdquo;
+                </p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </>
