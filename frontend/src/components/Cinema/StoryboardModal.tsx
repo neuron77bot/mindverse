@@ -87,7 +87,7 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
       </div>
 
       {/* Main Image */}
-      <div className="flex-1 flex items-center justify-center p-4 pt-20">
+      <div className="absolute inset-0 top-20 bottom-48 flex items-center justify-center px-20">
         {currentFrame.imageUrl ? (
           <>
             {imageLoading && (
@@ -98,7 +98,7 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
             <img
               src={currentFrame.imageUrl}
               alt={`Frame ${currentFrame.frame}: ${currentFrame.scene}`}
-              className={`max-w-full max-h-full object-contain transition-opacity duration-200 ${
+              className={`w-full h-full object-contain transition-opacity duration-200 ${
                 imageLoading ? 'opacity-0' : 'opacity-100'
               }`}
               onLoad={() => setImageLoading(false)}
@@ -123,47 +123,47 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
             <p>Sin imagen generada</p>
           </div>
         )}
-
-        {/* Navigation Buttons */}
-        {totalFrames > 1 && (
-          <>
-            <button
-              onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-              disabled={currentIndex === 0}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Frame anterior"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-
-            <button
-              onClick={() => setCurrentIndex((prev) => Math.min(totalFrames - 1, prev + 1))}
-              disabled={currentIndex === totalFrames - 1}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Frame siguiente"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          </>
-        )}
       </div>
 
+      {/* Navigation Buttons */}
+      {totalFrames > 1 && (
+        <>
+          <button
+            onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+            disabled={currentIndex === 0}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Frame anterior"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => setCurrentIndex((prev) => Math.min(totalFrames - 1, prev + 1))}
+            disabled={currentIndex === totalFrames - 1}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Frame siguiente"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </>
+      )}
+
       {/* Footer Info */}
-      <div className="shrink-0 bg-gradient-to-t from-black/80 to-transparent p-6 space-y-3">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 space-y-3">
         {currentFrame.dialogue && (
           <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur rounded-lg p-4 border-l-4 border-indigo-500">
             <p className="text-white text-base italic text-center">
