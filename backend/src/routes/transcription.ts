@@ -80,6 +80,7 @@ export async function transcriptionRoutes(app: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
+              title: { type: 'string' },
               frames: {
                 type: 'array',
                 items: {
@@ -117,6 +118,7 @@ export async function transcriptionRoutes(app: FastifyInstance) {
 
         return reply.send({
           success: true,
+          title: result.title,
           frames: result.frames,
           mermaid: result.mermaid,
           duration: result.duration,

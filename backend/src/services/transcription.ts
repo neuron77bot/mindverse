@@ -26,6 +26,7 @@ export interface StoryboardFrame {
 }
 
 export interface AnalysisResult {
+  title: string;
   frames: StoryboardFrame[];
   mermaid: string;
   duration: number;
@@ -133,6 +134,7 @@ Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 
 
 Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 {
+  "title": "Título atractivo y descriptivo de la historia",
   "frames": [
     {
       "frame": 1,
@@ -144,6 +146,7 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 }
 
 Características de tu storyboard:
+- Crea un título atractivo y conciso (máximo 60 caracteres) que capture la esencia de la historia
 - Genera exactamente 6 a 8 frames
 - Cada frame debe tener descripción visual muy detallada y específica
 - Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
@@ -169,6 +172,7 @@ Responde únicamente con el JSON, sin texto adicional.`;
     const duration = Date.now() - startTime;
 
     // Parsear respuesta JSON
+    let title = 'Storyboard sin título';
     let frames: StoryboardFrame[] = [];
     try {
       // Limpiar markdown code blocks si existen
@@ -188,6 +192,7 @@ Responde únicamente con el JSON, sin texto adicional.`;
       const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
+        title = parsed.title || title;
         frames = parsed.frames || [];
       } else {
         throw new Error('No se encontró JSON válido en la respuesta');
@@ -205,7 +210,7 @@ Responde únicamente con el JSON, sin texto adicional.`;
     }
 
     const mermaid = generateMermaidDiagram(frames);
-    return { frames, mermaid, duration };
+    return { title, frames, mermaid, duration };
   } catch (error: any) {
     throw new Error(`Error en análisis con Gemini: ${error.message}`);
   }
@@ -222,6 +227,7 @@ Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 
 
 Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 {
+  "title": "Título atractivo y descriptivo de la historia",
   "frames": [
     {
       "frame": 1,
@@ -233,6 +239,7 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 }
 
 Características de tu storyboard:
+- Crea un título atractivo y conciso (máximo 60 caracteres) que capture la esencia de la historia
 - Genera exactamente 6 a 8 frames
 - Cada frame debe tener descripción visual muy detallada y específica
 - Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
@@ -269,11 +276,13 @@ Responde en formato JSON.`;
 
     const duration = Date.now() - startTime;
 
+    let title = 'Storyboard sin título';
     let frames: StoryboardFrame[] = [];
     try {
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
+        title = parsed.title || title;
         frames = parsed.frames || [];
       } else {
         throw new Error('No se encontró JSON válido en la respuesta');
@@ -291,7 +300,7 @@ Responde en formato JSON.`;
     }
 
     const mermaid = generateMermaidDiagram(frames);
-    return { frames, mermaid, duration };
+    return { title, frames, mermaid, duration };
   } catch (error: any) {
     throw new Error(`Error en análisis con fal.ai: ${error.message}`);
   }

@@ -128,6 +128,7 @@ export function useStoryboardEditor(mode: EditorMode) {
       const data = await res.json();
       setStoryboard(data.frames || []);
       setMermaidDiagram(data.mermaid || null);
+      setStoryboardTitle(data.title || 'Storyboard sin título');
     } catch (err: any) {
       setError('Error al analizar: ' + err.message);
     } finally {
@@ -137,10 +138,6 @@ export function useStoryboardEditor(mode: EditorMode) {
 
   const saveStoryboard = async () => {
     if (!storyboard || storyboard.length === 0) return;
-    if (!storyboardTitle.trim()) {
-      setError('Por favor ingresá un título para el storyboard');
-      return;
-    }
 
     setIsSaving(true);
     setError(null);
@@ -168,10 +165,12 @@ export function useStoryboardEditor(mode: EditorMode) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || 'Error guardando storyboard');
       }
-      await res.json();
+      const responseData = await res.json();
 
-      if (isEditMode && id) {
-        navigate(`/storyboard/detail/${id}`);
+      // Redirigir al detalle del storyboard (tanto en modo creación como edición)
+      const storyboardId = isEditMode && id ? id : responseData.storyboard?._id;
+      if (storyboardId) {
+        navigate(`/storyboard/detail/${storyboardId}`);
       } else {
         navigate('/storyboards');
       }
