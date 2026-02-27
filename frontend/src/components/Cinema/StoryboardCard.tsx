@@ -13,7 +13,7 @@ export default function StoryboardCard({ storyboard, onClick }: StoryboardCardPr
   return (
     <div
       onClick={onClick}
-      className="group relative flex-shrink-0 w-64 cursor-pointer transition-all duration-300 hover:scale-105"
+      className="group relative flex-shrink-0 w-64 cursor-pointer transition-all duration-300 hover:scale-105 select-none"
     >
       {/* Thumbnail */}
       <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-900 border border-slate-800">
