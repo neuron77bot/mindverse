@@ -91,7 +91,7 @@ export default function StoryboardListView() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-900">
+      <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <svg
             className="w-12 h-12 text-slate-600 mx-auto mb-3 animate-spin"
@@ -121,7 +121,7 @@ export default function StoryboardListView() {
   // Vista detalle
   if (selectedStoryboard) {
     return (
-      <div className="flex-1 overflow-y-auto bg-slate-900">
+      <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto">
           {/* Header sticky */}
           <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-700 px-4 py-3 flex items-center justify-between">
@@ -269,7 +269,7 @@ export default function StoryboardListView() {
 
   // Vista lista
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-900 px-4 py-6">
+    <div className="flex-1 overflow-y-auto px-4 py-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Mis Storyboards</h1>
