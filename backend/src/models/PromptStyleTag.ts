@@ -5,6 +5,7 @@ export interface IPromptStyleTag extends Document {
   name: string;
   description?: string;
   promptText: string;
+  previewImageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,6 +16,7 @@ const PromptStyleTagSchema = new Schema<IPromptStyleTag>(
     name: { type: String, required: true },
     description: { type: String },
     promptText: { type: String, required: true },
+    previewImageUrl: { type: String },
   },
   {
     timestamps: true,
