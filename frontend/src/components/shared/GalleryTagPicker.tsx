@@ -19,11 +19,14 @@ export default function GalleryTagPicker({
           {galleryTags.map((tag) => (
             <button
               key={tag}
-              onClick={() =>
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 setSelectedGalleryTags((prev) =>
                   prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-                )
-              }
+                );
+              }}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                 selectedGalleryTags.includes(tag)
                   ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg'

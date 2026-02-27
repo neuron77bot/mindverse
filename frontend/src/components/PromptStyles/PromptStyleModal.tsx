@@ -123,8 +123,14 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="text-2xl font-bold text-white mb-6">
           {tag ? 'Editar Tag de Estilo' : 'Crear Tag de Estilo'}
         </h2>
@@ -197,7 +203,10 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
                       <button
                         type="button"
-                        onClick={handleDeletePreview}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePreview();
+                        }}
                         className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg transition-colors"
                       >
                         🗑️ Eliminar
@@ -221,7 +230,10 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                     )}
                     <button
                       type="button"
-                      onClick={handleGeneratePreview}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGeneratePreview();
+                      }}
                       disabled={isGeneratingPreview}
                       className="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg inline-flex items-center justify-center gap-2"
                     >
@@ -289,7 +301,10 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                   {/* Generate Button */}
                   <button
                     type="button"
-                    onClick={handleGeneratePreview}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGeneratePreview();
+                    }}
                     disabled={isGeneratingPreview}
                     className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg inline-flex items-center justify-center gap-2"
                   >
