@@ -20,10 +20,6 @@ export default function BatchImageGeneration({
   const [selectedStyleTagIds, setSelectedStyleTagIds] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    loadTags();
-  }, []);
-
   const loadTags = async () => {
     try {
       const [galleryRes, styleRes] = await Promise.all([
@@ -44,6 +40,11 @@ export default function BatchImageGeneration({
       console.error('Error loading tags:', err);
     }
   };
+
+  useEffect(() => {
+    loadTags();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGenerate = () => {
     if (!hasFrames) return;

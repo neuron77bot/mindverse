@@ -273,7 +273,7 @@ export async function imageRoutes(app: FastifyInstance) {
       // Procesar style tags si existen
       let finalPrompt = prompt;
       const userId = request.jwtUser?.sub;
-      
+
       if (styleTagIds && styleTagIds.length > 0 && userId) {
         const tags = await PromptStyleTag.find({
           _id: { $in: styleTagIds },
@@ -329,7 +329,13 @@ export async function imageRoutes(app: FastifyInstance) {
 
       try {
         const result = await fal.subscribe(IMAGE_TO_IMAGE_MODEL, {
-          input: { prompt: finalPrompt, image_urls: finalImageUrls, num_images, aspect_ratio, output_format },
+          input: {
+            prompt: finalPrompt,
+            image_urls: finalImageUrls,
+            num_images,
+            aspect_ratio,
+            output_format,
+          },
         });
 
         const images = (result.data as any)?.images ?? [];

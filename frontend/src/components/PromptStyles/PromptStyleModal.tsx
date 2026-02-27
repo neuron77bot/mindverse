@@ -13,11 +13,11 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
   const [promptText, setPromptText] = useState('');
 
   useEffect(() => {
-    if (tag) {
-      setName(tag.name);
-      setDescription(tag.description || '');
-      setPromptText(tag.promptText);
-    }
+    if (!tag) return;
+    setName(tag.name);
+    setDescription(tag.description || '');
+    setPromptText(tag.promptText);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [tag]);
 
   const handleSubmit = (e: React.FormEvent) => {
