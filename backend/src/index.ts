@@ -50,6 +50,12 @@ async function main() {
         description: 'Backend de Mindverse — gestión de pensamientos e imágenes IA',
         version: '1.0.0',
       },
+      servers: [
+        {
+          url: '/mindverse/main/api',
+          description: 'Main API (production)',
+        },
+      ],
       tags: [
         { name: 'auth', description: 'Autenticación con Google OAuth' },
         { name: 'users', description: 'CRUD de perfiles de usuario' },
