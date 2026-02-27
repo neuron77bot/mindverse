@@ -144,7 +144,7 @@ export default function CinemaPage() {
       />
 
       {/* Storyboard Rows */}
-      <div className="space-y-8 pb-12">
+      <div className="w-full space-y-8 pb-12 overflow-x-hidden">
         {recentStoryboards.length > 1 && (
           <StoryboardRow
             title="Proyectos Recientes"
@@ -169,10 +169,7 @@ export default function CinemaPage() {
 
       {/* Modal */}
       {selectedStoryboard && (
-        <StoryboardModal
-          storyboard={selectedStoryboard}
-          onClose={() => setSelectedStoryboard(null)}
-        />
+        <StoryboardModal storyboard={selectedStoryboard} onClose={() => setSelectedStoryboard(null)} />
       )}
     </div>
   );

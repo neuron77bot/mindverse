@@ -30,10 +30,10 @@ export default function StoryboardRow({ title, storyboards, onCardClick }: Story
   if (storyboards.length === 0) return null;
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 w-full">
       <h2 className="text-xl font-semibold text-white mb-4 px-4 sm:px-8">{title}</h2>
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-4 px-4 sm:px-8 pb-2">
+      <div className="relative w-full cinema-scroll-container scrollbar-hide">
+        <div className="flex flex-nowrap gap-4 px-4 sm:px-8 pb-4">
           {storyboards.map((sb) => (
             <StoryboardCard key={sb._id} storyboard={sb} onClick={() => onCardClick(sb)} />
           ))}
