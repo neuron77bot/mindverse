@@ -1,0 +1,193 @@
+name: Deploy to DEV
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint backend
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: Lint frontend
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Check backend formatting
+        working-directory: ./backend
+        run: npm run format:check
+
+      - name: Check frontend formatting
+        working-directory: ./frontend
+        run: npm run format:check
+
+      # Note: Tests will be enabled once test scripts are added to package.json
+      # - name: Run backend tests
+      #   working-directory: ./backend
+      #   run: npm test
+
+      # - name: Run frontend tests
+      #   working-directory: ./frontend
+      #   run: npm test
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build backend Docker image
+        working-directory: ./backend
+        run: docker build -t mindverse-backend:dev .
+
+      # Note: Frontend Docker build will be enabled when frontend Dockerfile is created
+      # - name: Build frontend Docker image
+      #   working-directory: ./frontend
+      #   run: docker build -t mindverse-frontend:dev .
+
+      - name: Verify backend image
+        run: |
+          docker images | grep mindverse-backend
+
+  deploy:
+    name: Deploy to DEV Server
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: dev.mindverse.devalliance.com.ar
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: |
+            cd /var/www/mindverse
+
+            echo "📥 Pulling latest code from dev branch..."
+            git fetch origin
+            git checkout dev
+            git pull origin dev
+
+            echo "🛑 Stopping existing containers..."
+            docker-compose down
+
+            echo "🔨 Building and starting containers..."
+            docker-compose up -d --build
+
+            echo "⏳ Waiting for services to initialize..."
+            sleep 15
+
+            echo "📊 Container status:"
+            docker-compose ps
+
+      - name: Health Check - Backend API
+        run: |
+          echo "🏥 Checking backend health..."
+          max_attempts=5
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt/$max_attempts..."
+
+            if curl -f -s http://dev.mindverse.devalliance.com.ar/api/health > /dev/null; then
+              echo "✅ Backend API is healthy!"
+              exit 0
+            fi
+
+            echo "⏳ Waiting 5 seconds before retry..."
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+
+          echo "❌ Backend health check failed after $max_attempts attempts"
+          exit 1
+
+      - name: Health Check - Frontend
+        run: |
+          echo "🏥 Checking frontend..."
+          max_attempts=5
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt/$max_attempts..."
+
+            if curl -f -s http://dev.mindverse.devalliance.com.ar > /dev/null; then
+              echo "✅ Frontend is accessible!"
+              exit 0
+            fi
+
+            echo "⏳ Waiting 5 seconds before retry..."
+            sleep 5
+            attempt=$((attempt + 1))
+          done
+
+          echo "❌ Frontend health check failed after $max_attempts attempts"
+          exit 1
+
+      - name: Deployment Success Notification
+        if: success()
+        run: |
+          echo "🎉 Deployment to DEV completed successfully!"
+          echo "🌐 Site: http://dev.mindverse.devalliance.com.ar"
+          echo "⏱️  Deploy time: $(date)"
+
+      - name: Deployment Failure Notification
+        if: failure()
+        run: |
+          echo "❌ Deployment to DEV failed!"
+          echo "⏱️  Failed at: $(date)"
+          echo "🔍 Check logs for details"
+
+  # Optional: Telegram notifications
+  # Uncomment when TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID secrets are configured
+  # notify:
+  #   name: Send Notification
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy]
+  #   if: always()
+  #
+  #   steps:
+  #     - name: Send Telegram notification
+  #       uses: appleboy/telegram-action@master
+  #       with:
+  #         to: ${{ secrets.TELEGRAM_CHAT_ID }}
+  #         token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  #         message: |
+  #           🚀 Mindverse DEV Deployment
+  #
+  #           Status: ${{ needs.deploy.result }}
+  #           Branch: ${{ github.ref_name }}
+  #           Commit: ${{ github.sha }}
+  #           Author: ${{ github.actor }}
+  #
+  #           🌐 http://dev.mindverse.devalliance.com.ar
