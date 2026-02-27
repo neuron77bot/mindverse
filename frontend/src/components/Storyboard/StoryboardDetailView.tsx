@@ -10,7 +10,7 @@ const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 type InputMode = 'voice' | 'text';
-type TabType = 'historia' | 'frames' | 'diagrama' | 'comic';
+type TabType = 'historia' | 'frames' | 'diagrama';
 
 interface StoryboardFrame {
   frame: number;
@@ -26,7 +26,6 @@ interface StoryboardDetail {
   inputMode?: InputMode;
   frames?: StoryboardFrame[];
   mermaidDiagram?: string | null;
-  comicPageUrl?: string | null;
   createdAt?: string;
 }
 
@@ -42,6 +41,7 @@ export default function StoryboardDetailView() {
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
   const [isGeneratingShare, setIsGeneratingShare] = useState<boolean>(false);
+  const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
 
   useEffect(() => {
     const loadStoryboard = async () => {
@@ -122,7 +122,7 @@ export default function StoryboardDetailView() {
 
         const data = await res.json();
         const shareUrl = `${window.location.origin}/mindverse${data.shareUrl}`;
-        
+
         await navigator.clipboard.writeText(shareUrl);
         return `Link copiado (válido por ${data.expiresIn})`;
       },
@@ -158,7 +158,6 @@ export default function StoryboardDetailView() {
     { id: 'historia', label: 'Historia', icon: '📖', show: true },
     { id: 'frames', label: 'Frames', icon: '🎬', show: true },
     { id: 'diagrama', label: 'Diagrama', icon: '📊', show: !!storyboard?.mermaidDiagram },
-    { id: 'comic', label: 'Cómic', icon: '🎨', show: !!storyboard?.comicPageUrl },
   ];
 
   return (
@@ -183,54 +182,91 @@ export default function StoryboardDetailView() {
               Volver
             </button>
 
-            <div className="flex gap-3">
+            <div className="relative">
               <button
-                onClick={() => navigate(`/storyboard/edit/${id}`)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-all duration-200 shadow-lg shadow-indigo-500/20"
+                onClick={() => setShowActionsMenu(!showActionsMenu)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600 transition-all duration-200"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
                   />
                 </svg>
-                Editar
+                Acciones
               </button>
 
-              <button
-                onClick={handleShare}
-                disabled={isGeneratingShare}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white transition-all duration-200 shadow-lg shadow-green-500/20 ${
-                  isGeneratingShare ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+              {showActionsMenu && (
+                <>
+                  {/* Overlay to close menu when clicking outside */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowActionsMenu(false)}
                   />
-                </svg>
-                Compartir
-              </button>
+                  
+                  {/* Dropdown menu */}
+                  <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-20">
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        navigate(`/storyboard/edit/${id}`);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-indigo-600/20 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      <span>Editar</span>
+                    </button>
 
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-all duration-200 shadow-lg shadow-red-500/20"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-                Eliminar
-              </button>
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        handleShare();
+                      }}
+                      disabled={isGeneratingShare}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-green-600/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                        />
+                      </svg>
+                      <span>{isGeneratingShare ? 'Generando...' : 'Compartir'}</span>
+                    </button>
+
+                    <div className="border-t border-slate-700" />
+
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-red-600/20 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      <span>Eliminar</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -434,12 +470,6 @@ export default function StoryboardDetailView() {
                       <dd className="text-green-400 font-medium">✓ Disponible</dd>
                     </div>
                   )}
-                  {storyboard.comicPageUrl && (
-                    <div className="flex justify-between">
-                      <dt className="text-slate-400">Página de cómic:</dt>
-                      <dd className="text-green-400 font-medium">✓ Generada</dd>
-                    </div>
-                  )}
                 </dl>
               </section>
             </div>
@@ -498,69 +528,6 @@ export default function StoryboardDetailView() {
             </div>
           )}
 
-          {/* Cómic Tab */}
-          {activeTab === 'comic' && storyboard.comicPageUrl && (
-            <div className="max-w-5xl mx-auto">
-              <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-white font-bold text-2xl">Página de Cómic</h2>
-                    <p className="text-slate-400 text-sm">Composición visual completa</p>
-                  </div>
-                </div>
-                <div
-                  className="group relative rounded-xl border-2 border-slate-700 overflow-hidden cursor-pointer bg-slate-900/50"
-                  onClick={() =>
-                    setLightboxImage({
-                      url: storyboard.comicPageUrl!,
-                      title: 'Página de cómic completa',
-                    })
-                  }
-                >
-                  <img
-                    src={storyboard.comicPageUrl}
-                    alt="Página de cómic"
-                    className="w-full h-auto transition-transform duration-300 group-hover:scale-[1.02]"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="text-center">
-                      <svg
-                        className="w-16 h-16 text-white drop-shadow-lg mx-auto mb-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-                        />
-                      </svg>
-                      <span className="text-white font-semibold text-lg drop-shadow-lg">
-                        Click para ampliar
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-          )}
         </div>
       )}
 

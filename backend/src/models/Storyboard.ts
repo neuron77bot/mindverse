@@ -18,8 +18,6 @@ export interface IStoryboard extends Document {
   originalText: string;
   inputMode: 'voice' | 'text';
   frames: IFrame[];
-  comicPageUrl?: string;
-  comicPagePrompt?: string;
   mermaidDiagram?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -47,8 +45,6 @@ const StoryboardSchema = new Schema<IStoryboard>(
     originalText: { type: String, required: true },
     inputMode: { type: String, enum: ['voice', 'text'], required: true },
     frames: { type: [FrameSchema], required: true },
-    comicPageUrl: { type: String },
-    comicPagePrompt: { type: String },
     mermaidDiagram: { type: String },
   },
   {

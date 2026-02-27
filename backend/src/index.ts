@@ -12,6 +12,7 @@ import { userRoutes } from './routes/users';
 import { transcriptionRoutes } from './routes/transcription';
 import { storyboardRoutes } from './routes/storyboards';
 import { galleryRoutes } from './routes/gallery';
+import { promptStyleRoutes } from './routes/promptStyles';
 import { connectDatabase } from './services/database';
 import { authMiddleware } from './middleware/auth';
 
@@ -58,6 +59,7 @@ async function main() {
         { name: 'gallery', description: 'Galería personal de imágenes de referencia' },
         { name: 'transcription', description: 'Transcripción de audio con Whisper' },
         { name: 'storyboards', description: 'CRUD de storyboards generados' },
+        { name: 'prompt-styles', description: 'Tags de estilo para prompts de IA' },
         { name: 'health', description: 'Estado del servicio' },
       ],
     },
@@ -91,6 +93,9 @@ async function main() {
 
   // Rutas de storyboards
   await app.register(storyboardRoutes, { prefix: '/storyboards' });
+
+  // Rutas de tags de estilo de prompt
+  await app.register(promptStyleRoutes, { prefix: '/prompt-styles' });
 
   // Health check
   app.get(

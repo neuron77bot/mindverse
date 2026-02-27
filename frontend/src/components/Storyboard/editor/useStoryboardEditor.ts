@@ -34,10 +34,9 @@ export function useStoryboardEditor(mode: EditorMode) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [storyboard, setStoryboard] = useState<StoryboardFrame[] | null>(null);
   const [mermaidDiagram, setMermaidDiagram] = useState<string | null>(null);
-  const [isGeneratingComic, setIsGeneratingComic] = useState(false);
-  const [comicPageUrl, setComicPageUrl] = useState<string | null>(null);
   const [frameImages, setFrameImages] = useState<Map<number, string>>(new Map());
   const [generatingFrame, setGeneratingFrame] = useState<number | null>(null);
+  const [isBatchGenerating, setIsBatchGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [storyboardTitle, setStoryboardTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -56,6 +55,10 @@ export function useStoryboardEditor(mode: EditorMode) {
   // Gallery state
   const [galleryTags, setGalleryTags] = useState<string[]>([]);
   const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
+
+  // Style tags state
+  const [availableStyleTags, setAvailableStyleTags] = useState<any[]>([]);
+  const [selectedStyleTagIds, setSelectedStyleTagIds] = useState<string[]>([]);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -91,7 +94,6 @@ export function useStoryboardEditor(mode: EditorMode) {
       setTextInput(sb.inputMode === 'text' ? sb.originalText : '');
       setStoryboard(sb.frames || []);
       setMermaidDiagram(sb.mermaidDiagram || null);
-      setComicPageUrl(sb.comicPageUrl || null);
 
       if (sb.frames) {
         const newFrameImages = new Map<number, string>();
@@ -133,29 +135,6 @@ export function useStoryboardEditor(mode: EditorMode) {
     }
   };
 
-  const generateComicPage = async () => {
-    if (!storyboard || storyboard.length === 0) return;
-    setIsGeneratingComic(true);
-    setError(null);
-    try {
-      const res = await fetch(`${API_BASE}/transcription/generate-comic-page`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ frames: storyboard }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Error generando página de cómic');
-      }
-      const data = await res.json();
-      setComicPageUrl(data.imageUrl);
-    } catch (err: any) {
-      setError('Error al generar página de cómic: ' + err.message);
-    } finally {
-      setIsGeneratingComic(false);
-    }
-  };
-
   const saveStoryboard = async () => {
     if (!storyboard || storyboard.length === 0) return;
     if (!storyboardTitle.trim()) {
@@ -183,7 +162,6 @@ export function useStoryboardEditor(mode: EditorMode) {
           inputMode,
           frames: framesWithImages,
           mermaidDiagram,
-          comicPageUrl,
         }),
       });
       if (!res.ok) {
@@ -305,7 +283,6 @@ export function useStoryboardEditor(mode: EditorMode) {
     setError(null);
     setStoryboard(null);
     setMermaidDiagram(null);
-    setComicPageUrl(null);
     setFrameImages(new Map());
     chunksRef.current = [];
     timerRef.current = 0;
@@ -343,6 +320,7 @@ export function useStoryboardEditor(mode: EditorMode) {
     setRefImageFiles([]);
     setRefImagePreviews([]);
     setSelectedGalleryTags([]);
+    setSelectedStyleTagIds([]);
     setImageError(null);
 
     try {
@@ -353,6 +331,16 @@ export function useStoryboardEditor(mode: EditorMode) {
       }
     } catch {
       // gallery tags are optional
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/prompt-styles`, { headers: authHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableStyleTags(data.tags || []);
+      }
+    } catch {
+      // style tags are optional
     }
   };
 
@@ -365,6 +353,7 @@ export function useStoryboardEditor(mode: EditorMode) {
     setRefImageFiles([]);
     setRefImagePreviews([]);
     setSelectedGalleryTags([]);
+    setSelectedStyleTagIds([]);
     setImageError(null);
   };
 
@@ -389,6 +378,7 @@ export function useStoryboardEditor(mode: EditorMode) {
           body: JSON.stringify({
             prompt: imagePrompt,
             gallery_tags: selectedGalleryTags,
+            styleTagIds: selectedStyleTagIds,
             aspect_ratio: '1:1',
           }),
         });
@@ -424,6 +414,7 @@ export function useStoryboardEditor(mode: EditorMode) {
           body: JSON.stringify({
             prompt: imagePrompt,
             image_urls: uploadedUrls,
+            styleTagIds: selectedStyleTagIds,
             aspect_ratio: '1:1',
           }),
         });
@@ -436,7 +427,11 @@ export function useStoryboardEditor(mode: EditorMode) {
         const res = await fetch(`${API_BASE}/images/text-to-image`, {
           method: 'POST',
           headers: authHeaders(),
-          body: JSON.stringify({ prompt: imagePrompt, aspect_ratio: '1:1' }),
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            styleTagIds: selectedStyleTagIds,
+            aspect_ratio: '1:1',
+          }),
         });
         if (!res.ok) throw new Error('Error generando imagen');
         const data = await res.json();
@@ -455,6 +450,67 @@ export function useStoryboardEditor(mode: EditorMode) {
     }
   };
 
+  const handleBatchGenerate = async (galleryTags: string[], styleTagIds: string[]) => {
+    if (!storyboard || storyboard.length === 0) return;
+    if (galleryTags.length === 0 && styleTagIds.length === 0) return;
+
+    setIsBatchGenerating(true);
+    setError(null);
+
+    try {
+      for (const frame of storyboard) {
+        setGeneratingFrame(frame.frame);
+
+        let imageUrl: string;
+        const prompt = frame.visualDescription || `Frame ${frame.frame}: ${frame.scene}`;
+
+        if (galleryTags.length > 0) {
+          // Image-to-image con gallery tags
+          const res = await fetch(`${API_BASE}/images/image-to-image`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+              prompt,
+              gallery_tags: galleryTags,
+              styleTagIds,
+              aspect_ratio: '1:1',
+            }),
+          });
+          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
+          const data = await res.json();
+          imageUrl = data.images?.[0]?.url ?? null;
+        } else {
+          // Text-to-image solo con style tags
+          const res = await fetch(`${API_BASE}/images/text-to-image`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+              prompt,
+              styleTagIds,
+              aspect_ratio: '1:1',
+            }),
+          });
+          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
+          const data = await res.json();
+          imageUrl = data.images?.[0]?.url ?? null;
+        }
+
+        if (!imageUrl) throw new Error(`No se recibió URL para frame ${frame.frame}`);
+
+        setFrameImages((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(frame.frame, imageUrl);
+          return newMap;
+        });
+      }
+    } catch (err: any) {
+      setError(`Error en generación masiva: ${err.message}`);
+    } finally {
+      setIsBatchGenerating(false);
+      setGeneratingFrame(null);
+    }
+  };
+
   // ── Misc ───────────────────────────────────────────────────────────────
 
   const handleModeChange = (newMode: InputMode) => {
@@ -463,7 +519,6 @@ export function useStoryboardEditor(mode: EditorMode) {
     setError(null);
     setStoryboard(null);
     setMermaidDiagram(null);
-    setComicPageUrl(null);
     setFrameImages(new Map());
     setStoryboardTitle('');
   };
@@ -495,11 +550,9 @@ export function useStoryboardEditor(mode: EditorMode) {
     setStoryboard,
     mermaidDiagram,
     setMermaidDiagram,
-    isGeneratingComic,
-    comicPageUrl,
-    setComicPageUrl,
     frameImages,
     generatingFrame,
+    isBatchGenerating,
     isSaving,
     storyboardTitle,
     setStoryboardTitle,
@@ -526,6 +579,10 @@ export function useStoryboardEditor(mode: EditorMode) {
     selectedGalleryTags,
     setSelectedGalleryTags,
 
+    availableStyleTags,
+    selectedStyleTagIds,
+    setSelectedStyleTagIds,
+
     fileInputRef,
 
     isSecureContext,
@@ -540,12 +597,12 @@ export function useStoryboardEditor(mode: EditorMode) {
     resumeRecording,
     newRecording,
     analyzeWithAI,
-    generateComicPage,
     saveStoryboard,
 
     openImageModal,
     closeImageModal,
     handleGenerateFrameImage,
+    handleBatchGenerate,
     handleFileChange,
     removeRefImage,
   };

@@ -19,7 +19,6 @@ interface Storyboard {
   originalText: string;
   inputMode: 'voice' | 'text';
   frames: StoryboardFrame[];
-  comicPageUrl?: string;
   createdAt: string;
 }
 
@@ -205,33 +204,6 @@ export default function StoryboardListView() {
               </p>
             </div>
 
-            {/* Página de cómic completa */}
-            {selectedStoryboard.comicPageUrl && (
-              <div className="mb-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl border-2 border-slate-700 overflow-hidden">
-                <div className="p-4 border-b border-slate-700">
-                  <h3 className="text-white font-semibold text-sm uppercase tracking-wide">
-                    Página de Cómic Completa
-                  </h3>
-                </div>
-                <div className="p-4">
-                  <img
-                    src={selectedStoryboard.comicPageUrl}
-                    alt="Página de cómic"
-                    className="w-full rounded-lg"
-                  />
-                </div>
-                <div className="p-4 border-t border-slate-700">
-                  <a
-                    href={selectedStoryboard.comicPageUrl}
-                    download="comic-page.png"
-                    className="block w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium text-center transition-colors"
-                  >
-                    Descargar Página Completa
-                  </a>
-                </div>
-              </div>
-            )}
-
             {/* Viñetas individuales */}
             <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wide">
               Viñetas ({selectedStoryboard.frames.length})
@@ -349,10 +321,10 @@ export default function StoryboardListView() {
                 className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer active:scale-[0.98]"
               >
                 {/* Thumbnail */}
-                {storyboard.comicPageUrl && (
+                {storyboard.frames[0]?.imageUrl && (
                   <div className="aspect-video bg-slate-900 overflow-hidden">
                     <img
-                      src={storyboard.comicPageUrl}
+                      src={storyboard.frames[0].imageUrl}
                       alt={storyboard.title}
                       className="w-full h-full object-cover"
                     />

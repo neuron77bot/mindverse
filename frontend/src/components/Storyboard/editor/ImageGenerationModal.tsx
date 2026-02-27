@@ -18,6 +18,9 @@ interface ImageGenerationModalProps {
   galleryTags: string[];
   selectedGalleryTags: string[];
   setSelectedGalleryTags: React.Dispatch<React.SetStateAction<string[]>>;
+  availableStyleTags: any[];
+  selectedStyleTagIds: string[];
+  setSelectedStyleTagIds: React.Dispatch<React.SetStateAction<string[]>>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onClose: () => void;
   onGenerate: () => void;
@@ -50,6 +53,9 @@ export default function ImageGenerationModal({
   galleryTags,
   selectedGalleryTags,
   setSelectedGalleryTags,
+  availableStyleTags,
+  selectedStyleTagIds,
+  setSelectedStyleTagIds,
   fileInputRef,
   onClose,
   onGenerate,
@@ -157,6 +163,13 @@ export default function ImageGenerationModal({
               />
             </>
           )}
+
+          {/* Style Tags - Available in all modes */}
+          <StyleTagPicker
+            availableStyleTags={availableStyleTags}
+            selectedStyleTagIds={selectedStyleTagIds}
+            setSelectedStyleTagIds={setSelectedStyleTagIds}
+          />
 
           {imageError && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
@@ -385,6 +398,51 @@ function GalleryTagPicker({
       {selectedGalleryTags.length > 0 && (
         <p className="text-xs text-slate-500 mt-2">
           {selectedGalleryTags.length} tag(s) seleccionado(s)
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StyleTagPicker({
+  availableStyleTags,
+  selectedStyleTagIds,
+  setSelectedStyleTagIds,
+}: {
+  availableStyleTags: any[];
+  selectedStyleTagIds: string[];
+  setSelectedStyleTagIds: React.Dispatch<React.SetStateAction<string[]>>;
+}) {
+  if (availableStyleTags.length === 0) return null;
+
+  return (
+    <div>
+      <label className="block text-sm text-slate-400 mb-2">
+        Estilos de Prompt (opcional)
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {availableStyleTags.map((tag) => (
+          <button
+            key={tag._id}
+            onClick={() =>
+              setSelectedStyleTagIds((prev) =>
+                prev.includes(tag._id) ? prev.filter((id) => id !== tag._id) : [...prev, tag._id]
+              )
+            }
+            className={`px-3 py-1.5 rounded-lg font-medium text-sm transition-all ${
+              selectedStyleTagIds.includes(tag._id)
+                ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
+                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
+            }`}
+            title={tag.description || tag.promptText}
+          >
+            🎨 {tag.name}
+          </button>
+        ))}
+      </div>
+      {selectedStyleTagIds.length > 0 && (
+        <p className="text-xs text-slate-500 mt-2">
+          {selectedStyleTagIds.length} estilo(s) seleccionado(s)
         </p>
       )}
     </div>

@@ -6,7 +6,7 @@ import InputModeSelector from './editor/InputModeSelector';
 import VoiceRecorder from './editor/VoiceRecorder';
 import TextInputPanel from './editor/TextInputPanel';
 import StoryboardFrameGrid from './editor/StoryboardFrameGrid';
-import ComicPageSection from './editor/ComicPageSection';
+import BatchImageGeneration from './editor/BatchImageGeneration';
 import ImageGenerationModal from './editor/ImageGenerationModal';
 import LightboxModal from './editor/LightboxModal';
 
@@ -26,7 +26,6 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
     { id: 'historia', label: 'Historia', icon: '📖', show: true },
     { id: 'frames', label: 'Frames', icon: '🎬', show: true },
     { id: 'diagrama', label: 'Diagrama', icon: '📊', show: !!editor.mermaidDiagram },
-    { id: 'comic', label: 'Cómic', icon: '🎨', show: true },
   ];
 
   if (editor.isLoading) {
@@ -288,12 +287,6 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                       <dd className="text-green-400 font-medium">✓ Disponible</dd>
                     </div>
                   )}
-                  {editor.comicPageUrl && (
-                    <div className="flex justify-between">
-                      <dt className="text-slate-400">Página de cómic:</dt>
-                      <dd className="text-green-400 font-medium">✓ Generada</dd>
-                    </div>
-                  )}
                 </dl>
               </section>
 
@@ -378,6 +371,12 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
           {/* ── Frames Tab ── */}
           {activeTab === 'frames' && (
             <div className="space-y-6">
+              <BatchImageGeneration
+                onGenerate={editor.handleBatchGenerate}
+                isGenerating={editor.isBatchGenerating}
+                hasFrames={editor.storyboard !== null && editor.storyboard.length > 0}
+              />
+              
               <StoryboardFrameGrid
                 storyboard={editor.storyboard!}
                 frameImages={editor.frameImages}
@@ -428,19 +427,6 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
               </section>
             </div>
           )}
-
-          {/* ── Cómic Tab ── */}
-          {activeTab === 'comic' && (
-            <div className="max-w-5xl mx-auto">
-              <ComicPageSection
-                storyboard={editor.storyboard!}
-                comicPageUrl={editor.comicPageUrl}
-                isGeneratingComic={editor.isGeneratingComic}
-                generateComicPage={editor.generateComicPage}
-                setComicPageUrl={editor.setComicPageUrl}
-              />
-            </div>
-          )}
         </div>
       )}
 
@@ -464,6 +450,9 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
           galleryTags={editor.galleryTags}
           selectedGalleryTags={editor.selectedGalleryTags}
           setSelectedGalleryTags={editor.setSelectedGalleryTags}
+          availableStyleTags={editor.availableStyleTags}
+          selectedStyleTagIds={editor.selectedStyleTagIds}
+          setSelectedStyleTagIds={editor.setSelectedStyleTagIds}
           fileInputRef={editor.fileInputRef}
           onClose={editor.closeImageModal}
           onGenerate={editor.handleGenerateFrameImage}

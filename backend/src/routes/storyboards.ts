@@ -318,8 +318,6 @@ export async function storyboardRoutes(app: FastifyInstance) {
       description?: string;
       genre?: string;
       frames?: any[];
-      comicPageUrl?: string;
-      comicPagePrompt?: string;
     };
   }>(
     '/:id',
@@ -339,8 +337,6 @@ export async function storyboardRoutes(app: FastifyInstance) {
             description: { type: 'string' },
             genre: { type: 'string' },
             frames: { type: 'array', items: { type: 'object' } },
-            comicPageUrl: { type: 'string' },
-            comicPagePrompt: { type: 'string' },
           },
         },
         response: {

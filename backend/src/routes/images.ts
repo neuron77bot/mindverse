@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { fal } from '@fal-ai/client';
 import { GeneratedImage } from '../models/GeneratedImage';
 import { GalleryImage } from '../models/GalleryImage';
+import { PromptStyleTag } from '../models/PromptStyleTag';
 
 const TEXT_TO_IMAGE_MODEL = 'fal-ai/nano-banana';
 const IMAGE_TO_IMAGE_MODEL = 'fal-ai/nano-banana/edit';
@@ -18,6 +19,7 @@ interface NodeInfo {
 // ── Text-to-Image ─────────────────────────────────────────────────────────────
 interface TextToImageBody {
   prompt: string;
+  styleTagIds?: string[]; // IDs de tags de estilo para concatenar al prompt
   num_images?: number;
   aspect_ratio?: '21:9' | '16:9' | '3:2' | '4:3' | '5:4' | '1:1' | '4:5' | '3:4' | '2:3' | '9:16';
   output_format?: 'jpeg' | 'png' | 'webp';
@@ -27,6 +29,7 @@ interface TextToImageBody {
 // ── Image-to-Image ────────────────────────────────────────────────────────────
 interface ImageToImageBody {
   prompt: string;
+  styleTagIds?: string[]; // IDs de tags de estilo para concatenar al prompt
   image_urls?: string[]; // URLs manuales de imágenes base (opcional si se usa gallery_tags)
   gallery_tags?: string[]; // Tags de galería para obtener imágenes (opcional si se usa image_urls)
   num_images?: number;
@@ -125,6 +128,7 @@ export async function imageRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const {
         prompt,
+        styleTagIds,
         num_images = 1,
         aspect_ratio = '1:1',
         output_format = 'png',
@@ -136,8 +140,25 @@ export async function imageRoutes(app: FastifyInstance) {
       }
 
       try {
+        // Procesar style tags si existen
+        let finalPrompt = prompt;
+        if (styleTagIds && styleTagIds.length > 0) {
+          const userId = request.jwtUser?.sub;
+          if (userId) {
+            const tags = await PromptStyleTag.find({
+              _id: { $in: styleTagIds },
+              userId,
+            }).lean();
+
+            if (tags.length > 0) {
+              const styleTexts = tags.map((t) => t.promptText).join(', ');
+              finalPrompt = `${prompt}\n\nStyle: ${styleTexts}`;
+            }
+          }
+        }
+
         const result = await fal.subscribe(TEXT_TO_IMAGE_MODEL, {
-          input: { prompt, num_images, aspect_ratio, output_format },
+          input: { prompt: finalPrompt, num_images, aspect_ratio, output_format },
         });
 
         const images = (result.data as any)?.images ?? [];
@@ -149,7 +170,7 @@ export async function imageRoutes(app: FastifyInstance) {
             nodeCategory: node.nodeCategory,
             nodeTemporalState: node.nodeTemporalState,
             nodeEmotionalLevel: node.nodeEmotionalLevel,
-            prompt,
+            prompt: finalPrompt,
             mode: 'text-to-image',
             model: TEXT_TO_IMAGE_MODEL,
             imageUrl: images[0].url,
@@ -161,7 +182,7 @@ export async function imageRoutes(app: FastifyInstance) {
           mode: 'text-to-image',
           model: TEXT_TO_IMAGE_MODEL,
           images,
-          prompt,
+          prompt: finalPrompt,
         });
       } catch (err: any) {
         app.log.error(err);
@@ -236,6 +257,7 @@ export async function imageRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const {
         prompt,
+        styleTagIds,
         image_urls,
         gallery_tags,
         num_images = 1,
@@ -246,6 +268,22 @@ export async function imageRoutes(app: FastifyInstance) {
 
       if (!prompt?.trim()) {
         return reply.status(400).send({ error: '"prompt" es requerido.' });
+      }
+
+      // Procesar style tags si existen
+      let finalPrompt = prompt;
+      const userId = request.jwtUser?.sub;
+      
+      if (styleTagIds && styleTagIds.length > 0 && userId) {
+        const tags = await PromptStyleTag.find({
+          _id: { $in: styleTagIds },
+          userId,
+        }).lean();
+
+        if (tags.length > 0) {
+          const styleTexts = tags.map((t) => t.promptText).join(', ');
+          finalPrompt = `${prompt}\n\nStyle: ${styleTexts}`;
+        }
       }
 
       // Resolver image_urls desde gallery_tags si es necesario
@@ -291,7 +329,7 @@ export async function imageRoutes(app: FastifyInstance) {
 
       try {
         const result = await fal.subscribe(IMAGE_TO_IMAGE_MODEL, {
-          input: { prompt, image_urls: finalImageUrls, num_images, aspect_ratio, output_format },
+          input: { prompt: finalPrompt, image_urls: finalImageUrls, num_images, aspect_ratio, output_format },
         });
 
         const images = (result.data as any)?.images ?? [];
@@ -303,7 +341,7 @@ export async function imageRoutes(app: FastifyInstance) {
             nodeCategory: node.nodeCategory,
             nodeTemporalState: node.nodeTemporalState,
             nodeEmotionalLevel: node.nodeEmotionalLevel,
-            prompt,
+            prompt: finalPrompt,
             mode: 'image-to-image',
             model: IMAGE_TO_IMAGE_MODEL,
             imageUrl: images[0].url,
@@ -317,7 +355,7 @@ export async function imageRoutes(app: FastifyInstance) {
           model: IMAGE_TO_IMAGE_MODEL,
           images,
           description: (result.data as any)?.description ?? '',
-          prompt,
+          prompt: finalPrompt,
           source_images: finalImageUrls,
         });
       } catch (err: any) {

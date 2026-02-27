@@ -16,6 +16,7 @@ const StoryboardEditPage = lazy(() => import('./pages/StoryboardEditPage'));
 const StoryboardDetailPage = lazy(() => import('./pages/StoryboardDetailPage'));
 const StoryboardListPage = lazy(() => import('./pages/StoryboardListPage'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
+const PromptStylesPage = lazy(() => import('./pages/PromptStylesPage'));
 const SharedStoryboardPage = lazy(() => import('./pages/SharedStoryboardPage'));
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
               <Route path="/storyboard/edit/:id" element={<StoryboardEditPage />} />
               <Route path="/storyboards" element={<StoryboardListPage />} />
               <Route path="/gallery" element={<GalleryPage />} />
+              <Route path="/prompt-styles" element={<PromptStylesPage />} />
               <Route path="/perfil" element={<ProfilePage />} />
             </Route>
           </Route>
