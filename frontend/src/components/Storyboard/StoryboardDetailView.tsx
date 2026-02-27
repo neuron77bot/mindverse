@@ -1,7 +1,8 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { authHeadersOnly } from '../../services/authHeaders';
+import Breadcrumb from '../UI/Breadcrumb';
 import FrameCarousel from './FrameCarousel';
 
 // Lazy load heavy Mermaid component
@@ -29,9 +30,12 @@ interface StoryboardDetail {
   createdAt?: string;
 }
 
-export default function StoryboardDetailView() {
+interface StoryboardDetailViewProps {
+  id?: string;
+}
+
+export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
 
   const [activeTab, setActiveTab] = useState<TabType>('frames');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -166,6 +170,17 @@ export default function StoryboardDetailView() {
 
   return (
     <div className="min-h-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* Breadcrumb */}
+      {!isLoading && !error && storyboard && (
+        <Breadcrumb
+          items={[
+            { label: 'Storyboards', path: '/storyboards' },
+            { label: storyboard.title || 'Storyboard' },
+          ]}
+          onBack={() => navigate('/storyboards')}
+        />
+      )}
+
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-indigo-900/20 via-purple-900/20 to-pink-900/20 border-b border-slate-700/50">
         <div className="max-w-7xl mx-auto p-6">
