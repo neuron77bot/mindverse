@@ -172,9 +172,6 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
           </div>
         )}
         <h3 className="text-white font-semibold text-lg text-center">{currentFrame.scene}</h3>
-        <p className="text-slate-300 text-sm text-center max-w-3xl mx-auto">
-          {currentFrame.visualDescription}
-        </p>
       </div>
     </div>
   );
