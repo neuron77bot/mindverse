@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { PromptStyleTag } from '../../types/promptStyle';
 import { authHeadersOnly } from '../../services/authHeaders';
-import GalleryTagSelector from './GalleryTagSelector';
+import GalleryTagPicker from '../shared/GalleryTagPicker';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -18,7 +18,11 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
   const [promptText, setPromptText] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>(undefined);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
-  const [isTagSelectorOpen, setIsTagSelectorOpen] = useState(false);
+  
+  // Gallery tags state
+  const [galleryTags, setGalleryTags] = useState<string[]>([]);
+  const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
+  const [loadingGalleryTags, setLoadingGalleryTags] = useState(false);
 
   useEffect(() => {
     if (!tag) return;
@@ -29,7 +33,56 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
     setPreviewImageUrl(tag.previewImageUrl);
   }, [tag]);
 
-  const handleGeneratePreview = async (galleryTags?: string[]) => {
+  // Load gallery tags when modal opens in edit mode
+  useEffect(() => {
+    if (!tag) return;
+    
+    const fetchGalleryTags = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/gallery/tags`, {
+          headers: authHeadersOnly(),
+        });
+
+        if (!res.ok) throw new Error('Error cargando tags');
+
+        const data = await res.json();
+        setGalleryTags(data.tags || []);
+      } catch (err: any) {
+        console.error('Error loading gallery tags:', err);
+        // Don't show error toast, just fail silently - preview is optional
+      }
+    };
+
+    fetchGalleryTags();
+  }, [tag]);
+
+  // Cargar gallery tags cuando se abre el modal en modo edición
+  useEffect(() => {
+    if (tag) {
+      fetchGalleryTags();
+    }
+  }, [tag]);
+
+  const fetchGalleryTags = async () => {
+    setLoadingGalleryTags(true);
+    try {
+      const res = await fetch(`${API_BASE}/gallery/tags`, {
+        headers: authHeadersOnly(),
+      });
+
+      if (!res.ok) throw new Error('Error cargando tags de galería');
+
+      const data = await res.json();
+      setGalleryTags(data.tags || []);
+    } catch (err: any) {
+      console.error('Error fetching gallery tags:', err);
+      // No mostrar error toast para no molestar al usuario
+    } finally {
+      setLoadingGalleryTags(false);
+    }
+  };
+
+  const handleGeneratePreview = async () => {
     if (!tag) {
       toast.error('Guarda el estilo primero antes de generar un preview');
       return;
@@ -44,7 +97,9 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
           ...authHeadersOnly(),
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ galleryTags }),
+        body: JSON.stringify({ 
+          galleryTags: selectedGalleryTags.length > 0 ? selectedGalleryTags : undefined 
+        }),
       });
 
       if (!res.ok) throw new Error('Error generando preview');
@@ -79,18 +134,6 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
     }
   };
 
-  const openTagSelector = () => {
-    setIsTagSelectorOpen(true);
-  };
-
-  const handleTagsSelected = (tags: string[]) => {
-    handleGeneratePreview(tags);
-  };
-
-  const handleSkipTags = () => {
-    handleGeneratePreview();
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !promptText.trim()) return;
@@ -104,7 +147,7 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl">
+      <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-white mb-6">
           {tag ? 'Editar Tag de Estilo' : 'Crear Tag de Estilo'}
         </h2>
@@ -177,14 +220,6 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 rounded-lg">
                       <button
                         type="button"
-                        onClick={openTagSelector}
-                        disabled={isGeneratingPreview}
-                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        🔄 Regenerar
-                      </button>
-                      <button
-                        type="button"
                         onClick={handleDeletePreview}
                         className="px-3 py-2 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg transition-colors"
                       >
@@ -192,29 +227,26 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                       </button>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-6 text-center">
-                    <svg
-                      className="w-16 h-16 text-slate-600 mx-auto mb-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  
+                  {/* Regenerar con nuevos tags */}
+                  <div className="space-y-2">
+                    <p className="text-slate-400 text-sm">Regenerar con diferentes referencias:</p>
+                    {loadingGalleryTags ? (
+                      <div className="flex justify-center py-4">
+                        <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : (
+                      <GalleryTagPicker
+                        galleryTags={galleryTags}
+                        selectedGalleryTags={selectedGalleryTags}
+                        setSelectedGalleryTags={setSelectedGalleryTags}
                       />
-                    </svg>
-                    <p className="text-slate-400 mb-4">No hay preview generado</p>
+                    )}
                     <button
                       type="button"
-                      onClick={openTagSelector}
+                      onClick={handleGeneratePreview}
                       disabled={isGeneratingPreview}
-                      className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg inline-flex items-center gap-2"
+                      className="w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg inline-flex items-center justify-center gap-2"
                     >
                       {isGeneratingPreview ? (
                         <>
@@ -233,17 +265,81 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                             />
                           </svg>
-                          Generar Preview
+                          {selectedGalleryTags.length > 0 ? 'Regenerar con Referencias' : 'Regenerar Preview'}
                         </>
                       )}
                     </button>
                   </div>
-                  <p className="text-slate-500 text-xs text-center">
-                    Genera una imagen de preview para visualizar este estilo
-                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-6 text-center">
+                    <svg
+                      className="w-16 h-16 text-slate-600 mx-auto mb-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <p className="text-slate-400 mb-2">No hay preview generado</p>
+                    <p className="text-slate-500 text-sm">
+                      Seleccioná tags de tu galería para generar con referencias, o dejá vacío para usar solo el prompt
+                    </p>
+                  </div>
+
+                  {/* Gallery Tag Picker */}
+                  {loadingGalleryTags ? (
+                    <div className="flex justify-center py-4">
+                      <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : (
+                    <GalleryTagPicker
+                      galleryTags={galleryTags}
+                      selectedGalleryTags={selectedGalleryTags}
+                      setSelectedGalleryTags={setSelectedGalleryTags}
+                    />
+                  )}
+
+                  {/* Generate Button */}
+                  <button
+                    type="button"
+                    onClick={handleGeneratePreview}
+                    disabled={isGeneratingPreview}
+                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg inline-flex items-center justify-center gap-2"
+                  >
+                    {isGeneratingPreview ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                          />
+                        </svg>
+                        {selectedGalleryTags.length > 0 ? 'Generar con Referencias' : 'Generar Preview'}
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
             </div>
@@ -268,14 +364,6 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
           </div>
         </form>
       </div>
-
-      {/* Gallery Tag Selector */}
-      <GalleryTagSelector
-        isOpen={isTagSelectorOpen}
-        onClose={() => setIsTagSelectorOpen(false)}
-        onSelect={handleTagsSelected}
-        onSkip={handleSkipTags}
-      />
     </div>
   );
 }
