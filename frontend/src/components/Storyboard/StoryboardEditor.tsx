@@ -376,7 +376,7 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
                 isGenerating={editor.isBatchGenerating}
                 hasFrames={editor.storyboard !== null && editor.storyboard.length > 0}
               />
-              
+
               <StoryboardFrameGrid
                 storyboard={editor.storyboard!}
                 frameImages={editor.frameImages}

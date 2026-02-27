@@ -168,9 +168,7 @@ export default function PromptStylesPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="text-white font-semibold text-lg mb-1">{tag.name}</h3>
-                    {tag.description && (
-                      <p className="text-slate-400 text-sm">{tag.description}</p>
-                    )}
+                    {tag.description && <p className="text-slate-400 text-sm">{tag.description}</p>}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -178,7 +176,12 @@ export default function PromptStylesPage() {
                       className="p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded transition-colors"
                       title="Editar"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -192,7 +195,12 @@ export default function PromptStylesPage() {
                       className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors"
                       title="Eliminar"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"

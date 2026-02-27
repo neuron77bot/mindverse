@@ -201,11 +201,8 @@ export default function StoryboardDetailView() {
               {showActionsMenu && (
                 <>
                   {/* Overlay to close menu when clicking outside */}
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowActionsMenu(false)}
-                  />
-                  
+                  <div className="fixed inset-0 z-10" onClick={() => setShowActionsMenu(false)} />
+
                   {/* Dropdown menu */}
                   <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-20">
                     <button
@@ -215,7 +212,12 @@ export default function StoryboardDetailView() {
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-indigo-600/20 transition-colors"
                     >
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-5 h-5 text-indigo-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -234,7 +236,12 @@ export default function StoryboardDetailView() {
                       disabled={isGeneratingShare}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-green-600/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-5 h-5 text-green-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -254,7 +261,12 @@ export default function StoryboardDetailView() {
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-red-600/20 transition-colors"
                     >
-                      <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-5 h-5 text-red-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -527,7 +539,6 @@ export default function StoryboardDetailView() {
               </section>
             </div>
           )}
-
         </div>
       )}
 

@@ -1,19 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
-import { useMindverseStore } from '../../store/mindverseStore';
 import Sidebar from './Sidebar';
 import MobileHeader from './MobileHeader';
-import NodeEditor from '../Mindverse/NodeEditor';
 import { logout } from '../../services/auth';
 
 export default function AppLayout() {
   const navigate = useNavigate();
-  const initFromBackend = useMindverseStore((s) => s.initFromBackend);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    initFromBackend();
-  }, [initFromBackend]);
 
   const handleLogout = () => {
     logout();
@@ -48,9 +41,6 @@ export default function AppLayout() {
       <main id="main-content" className="flex-1 overflow-y-auto" role="main">
         <Outlet />
       </main>
-
-      {/* Node Editor (overlay) */}
-      <NodeEditor />
     </div>
   );
 }

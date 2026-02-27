@@ -7,9 +7,6 @@ import PageLoader from './components/UI/PageLoader';
 
 // Lazy load pages for better code splitting
 const LoginPage = lazy(() => import('./pages/LoginPage'));
-const HomePage = lazy(() => import('./pages/HomePage'));
-const MapaPage = lazy(() => import('./pages/MapaPage'));
-const DetailPage = lazy(() => import('./pages/DetailPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const StoryboardCreatePage = lazy(() => import('./pages/StoryboardCreatePage'));
 const StoryboardEditPage = lazy(() => import('./pages/StoryboardEditPage'));
@@ -45,9 +42,7 @@ export default function App() {
           {/* Protegidas — envueltas en AppLayout (Header + NodeEditor) */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route index element={<HomePage />} />
-              <Route path="/mapa" element={<MapaPage />} />
-              <Route path="/detail/:id" element={<DetailPage />} />
+              <Route index element={<StoryboardListPage />} />
               <Route path="/storyboard/create" element={<StoryboardCreatePage />} />
               <Route path="/storyboard/detail/:id" element={<StoryboardDetailPage />} />
               <Route path="/storyboard/edit/:id" element={<StoryboardEditPage />} />

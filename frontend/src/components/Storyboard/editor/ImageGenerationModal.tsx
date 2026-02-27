@@ -417,9 +417,7 @@ function StyleTagPicker({
 
   return (
     <div>
-      <label className="block text-sm text-slate-400 mb-2">
-        Estilos de Prompt (opcional)
-      </label>
+      <label className="block text-sm text-slate-400 mb-2">Estilos de Prompt (opcional)</label>
       <div className="flex flex-wrap gap-2">
         {availableStyleTags.map((tag) => (
           <button

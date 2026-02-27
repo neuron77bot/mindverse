@@ -6,7 +6,6 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { fal } from '@fal-ai/client';
 import { imageRoutes } from './routes/images';
-import { thoughtRoutes } from './routes/thoughts';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { transcriptionRoutes } from './routes/transcription';
@@ -54,7 +53,6 @@ async function main() {
       tags: [
         { name: 'auth', description: 'Autenticación con Google OAuth' },
         { name: 'users', description: 'CRUD de perfiles de usuario' },
-        { name: 'thoughts', description: 'CRUD de pensamientos' },
         { name: 'images', description: 'Generación de imágenes con IA (fal.ai)' },
         { name: 'gallery', description: 'Galería personal de imágenes de referencia' },
         { name: 'transcription', description: 'Transcripción de audio con Whisper' },
@@ -84,9 +82,6 @@ async function main() {
 
   // Rutas de galería
   await app.register(galleryRoutes, { prefix: '/gallery' });
-
-  // Rutas de pensamientos (CRUD)
-  await app.register(thoughtRoutes, { prefix: '/thoughts' });
 
   // Rutas de transcripción (audio → texto)
   await app.register(transcriptionRoutes, { prefix: '/transcription' });

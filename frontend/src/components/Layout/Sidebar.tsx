@@ -11,8 +11,6 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/', label: 'Home', icon: '🏠' },
-    { path: '/mapa', label: 'Mapa', icon: '🗺️' },
     { path: '/storyboards', label: 'Storyboards', icon: '📚' },
     { path: '/gallery', label: 'Galería', icon: '🖼️' },
     { path: '/prompt-styles', label: 'Estilos', icon: '🎨' },
