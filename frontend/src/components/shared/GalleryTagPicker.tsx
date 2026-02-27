@@ -19,7 +19,9 @@ export default function GalleryTagPicker({
           {galleryTags.map((tag) => (
             <button
               key={tag}
+              type="button"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 setSelectedGalleryTags((prev) =>
                   prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
