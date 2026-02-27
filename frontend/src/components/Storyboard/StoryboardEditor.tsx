@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import type { EditorMode, EditorTabType } from './editor/types';
 import { useStoryboardEditor } from './editor/useStoryboardEditor';
+import Breadcrumb from '../UI/Breadcrumb';
 import EditorHeader from './editor/EditorHeader';
 import InputModeSelector from './editor/InputModeSelector';
 import VoiceRecorder from './editor/VoiceRecorder';
@@ -61,6 +62,18 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
 
   return (
     <div className="min-h-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* Breadcrumb */}
+      {editor.isEditMode && editor.storyboardTitle && (
+        <Breadcrumb
+          items={[
+            { label: 'Storyboards', path: '/storyboards' },
+            { label: editor.storyboardTitle, path: `/storyboard/detail/${editor.id}` },
+            { label: 'Editar' },
+          ]}
+          onBack={() => editor.navigate(`/storyboard/detail/${editor.id}`)}
+        />
+      )}
+
       <EditorHeader
         navigate={editor.navigate}
         isEditMode={editor.isEditMode}
@@ -71,6 +84,8 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
         inputMode={editor.inputMode}
         isSaving={editor.isSaving}
         saveStoryboard={editor.saveStoryboard}
+        allowCinema={editor.allowCinema}
+        onCinemaToggle={editor.setAllowCinema}
       />
 
       {/* ── Pre-storyboard: input area (create mode only) ── */}

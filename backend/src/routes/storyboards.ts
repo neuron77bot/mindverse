@@ -422,4 +422,70 @@ export async function storyboardRoutes(app: FastifyInstance) {
       }
     }
   );
+
+  // PATCH /storyboards/:id/cinema-visibility - Toggle visibilidad en Cinema Mode
+  app.patch<{
+    Params: { id: string };
+    Body: { allowCinema: boolean };
+  }>(
+    '/:id/cinema-visibility',
+    {
+      schema: {
+        tags: ['storyboards'],
+        summary: 'Toggle visibilidad del storyboard en Cinema Mode',
+        params: {
+          type: 'object',
+          required: ['id'],
+          properties: { id: { type: 'string' } },
+        },
+        body: {
+          type: 'object',
+          required: ['allowCinema'],
+          properties: {
+            allowCinema: { type: 'boolean' },
+          },
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              storyboard: { type: 'object' },
+            },
+          },
+          401: errorShape,
+          404: errorShape,
+          500: errorShape,
+        },
+      },
+    },
+    async (req, reply) => {
+      try {
+        const userId = req.jwtUser?.sub;
+        if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
+
+        const { id } = req.params;
+        const { allowCinema } = req.body;
+
+        // Solo el propietario puede modificar la visibilidad
+        const storyboard = await Storyboard.findOneAndUpdate(
+          { _id: id, userId } as any,
+          { $set: { allowCinema } },
+          { new: true }
+        ).lean();
+
+        if (!storyboard) {
+          return reply.status(404).send({
+            success: false,
+            error: 'Storyboard no encontrado',
+          });
+        }
+
+        return reply.send({ success: true, storyboard });
+      } catch (err: any) {
+        app.log.error(err);
+        return reply.status(500).send({ success: false, error: err.message });
+      }
+    }
+  );
 }
