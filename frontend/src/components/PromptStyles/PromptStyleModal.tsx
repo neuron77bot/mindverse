@@ -18,7 +18,7 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
   const [promptText, setPromptText] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>(undefined);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
-  
+
   // Gallery tags state (same as ImageGenerationModal)
   const [galleryTags, setGalleryTags] = useState<string[]>([]);
   const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
@@ -26,7 +26,7 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
 
   useEffect(() => {
     if (!tag) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setName(tag.name);
     setDescription(tag.description || '');
     setPromptText(tag.promptText);
@@ -36,7 +36,7 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
   // Load gallery tags when modal opens in edit mode
   useEffect(() => {
     if (!tag) return;
-    
+
     const fetchGalleryTags = async () => {
       setLoadingGalleryTags(true);
       try {
@@ -74,8 +74,8 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
           ...authHeadersOnly(),
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          galleryTags: selectedGalleryTags.length > 0 ? selectedGalleryTags : undefined 
+        body: JSON.stringify({
+          galleryTags: selectedGalleryTags.length > 0 ? selectedGalleryTags : undefined,
         }),
       });
 
@@ -123,11 +123,11 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -213,7 +213,7 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                       </button>
                     </div>
                   </div>
-                  
+
                   {/* Regenerar con nuevos tags */}
                   <div className="space-y-2">
                     <p className="text-slate-400 text-sm">Regenerar con diferentes referencias:</p>
@@ -257,7 +257,9 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                             />
                           </svg>
-                          {selectedGalleryTags.length > 0 ? 'Regenerar con Referencias' : 'Regenerar Preview'}
+                          {selectedGalleryTags.length > 0
+                            ? 'Regenerar con Referencias'
+                            : 'Regenerar Preview'}
                         </>
                       )}
                     </button>
@@ -281,7 +283,8 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                     </svg>
                     <p className="text-slate-400 mb-2">No hay preview generado</p>
                     <p className="text-slate-500 text-sm">
-                      Seleccioná tags de tu galería para generar con referencias, o dejá vacío para usar solo el prompt
+                      Seleccioná tags de tu galería para generar con referencias, o dejá vacío para
+                      usar solo el prompt
                     </p>
                   </div>
 
@@ -328,7 +331,9 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                             d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                           />
                         </svg>
-                        {selectedGalleryTags.length > 0 ? 'Generar con Referencias' : 'Generar Preview'}
+                        {selectedGalleryTags.length > 0
+                          ? 'Generar con Referencias'
+                          : 'Generar Preview'}
                       </>
                     )}
                   </button>

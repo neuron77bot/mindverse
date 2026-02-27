@@ -149,4 +149,118 @@ export async function userRoutes(app: FastifyInstance) {
       }
     }
   );
+
+  // ── GET /users/me/cinema-token — obtener cinema token ─────────────────────
+  app.get(
+    '/me/cinema-token',
+    {
+      schema: {
+        tags: ['users'],
+        summary: 'Obtener cinema token del usuario autenticado',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  cinemaToken: { type: 'string' },
+                  cinemaUrl: { type: 'string' },
+                },
+              },
+            },
+          },
+          401: errorShape,
+          404: errorShape,
+        },
+      },
+    },
+    async (req, reply) => {
+      try {
+        if (!req.jwtUser) {
+          return reply.status(401).send({ success: false, error: 'No autorizado' });
+        }
+
+        const user = await User.findOne({ googleId: req.jwtUser.sub });
+        if (!user) {
+          return reply.status(404).send({ success: false, error: 'Usuario no encontrado' });
+        }
+
+        const baseUrl = process.env.FRONTEND_URL || 'https://devalliance.com.ar/mindverse';
+        const cinemaUrl = `${baseUrl}/cinema?token=${user.cinemaToken}`;
+
+        return reply.send({
+          success: true,
+          data: {
+            cinemaToken: user.cinemaToken,
+            cinemaUrl,
+          },
+        });
+      } catch (err: any) {
+        return (reply as any).code(500).send({ success: false, error: err.message });
+      }
+    }
+  );
+
+  // ── POST /users/me/cinema-token/regenerate — regenerar token ──────────────
+  app.post(
+    '/me/cinema-token/regenerate',
+    {
+      schema: {
+        tags: ['users'],
+        summary: 'Regenerar cinema token del usuario autenticado',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  cinemaToken: { type: 'string' },
+                  cinemaUrl: { type: 'string' },
+                },
+              },
+            },
+          },
+          401: errorShape,
+          404: errorShape,
+        },
+      },
+    },
+    async (req, reply) => {
+      try {
+        if (!req.jwtUser) {
+          return reply.status(401).send({ success: false, error: 'No autorizado' });
+        }
+
+        const { randomUUID } = await import('crypto');
+        const newToken = randomUUID();
+
+        const user = await User.findOneAndUpdate(
+          { googleId: req.jwtUser.sub },
+          { $set: { cinemaToken: newToken } },
+          { new: true }
+        );
+
+        if (!user) {
+          return reply.status(404).send({ success: false, error: 'Usuario no encontrado' });
+        }
+
+        const baseUrl = process.env.FRONTEND_URL || 'https://devalliance.com.ar/mindverse';
+        const cinemaUrl = `${baseUrl}/cinema?token=${user.cinemaToken}`;
+
+        return reply.send({
+          success: true,
+          data: {
+            cinemaToken: user.cinemaToken,
+            cinemaUrl,
+          },
+        });
+      } catch (err: any) {
+        return (reply as any).code(500).send({ success: false, error: err.message });
+      }
+    }
+  );
 }

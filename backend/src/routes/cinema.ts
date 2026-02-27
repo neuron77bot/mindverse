@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { Storyboard } from '../models/Storyboard';
 import { User } from '../models/User';
+import { Storyboard } from '../models/Storyboard';
 
 const errorShape = {
   type: 'object',
@@ -8,30 +8,50 @@ const errorShape = {
 };
 
 export async function cinemaRoutes(app: FastifyInstance) {
-  // GET /cinema/:token - Obtener storyboards públicos de un usuario (Cinema Mode)
+  // GET /cinema/:token - Vista pública de storyboards (Cinema Mode)
   app.get<{ Params: { token: string } }>(
     '/:token',
     {
       schema: {
         tags: ['cinema'],
-        summary: 'Obtener storyboards públicos en Cinema Mode',
+        summary: 'Vista pública de storyboards del usuario (Cinema Mode)',
         params: {
           type: 'object',
-          required: ['token'],
-          properties: { token: { type: 'string' } },
+          properties: { token: { type: 'string', description: 'Cinema token único del usuario' } },
         },
         response: {
           200: {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              storyboards: { type: 'array' },
-              user: {
+              data: {
                 type: 'object',
                 properties: {
-                  name: { type: 'string' },
-                  picture: { type: 'string' },
-                  bio: { type: 'string' },
+                  user: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      picture: { type: 'string', nullable: true },
+                      bio: { type: 'string', nullable: true },
+                    },
+                  },
+                  storyboards: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        _id: { type: 'string' },
+                        title: { type: 'string' },
+                        description: { type: 'string', nullable: true },
+                        genre: { type: 'string', nullable: true },
+                        thumbnailUrl: { type: 'string', nullable: true },
+                        frameCount: { type: 'number' },
+                        duration: { type: 'string' },
+                        createdAt: { type: 'string' },
+                        frames: { type: 'array' },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -45,32 +65,56 @@ export async function cinemaRoutes(app: FastifyInstance) {
       try {
         const { token } = req.params;
 
-        // Buscar usuario por googleId (el token es el googleId)
-        const user = await User.findOne({ googleId: token }).lean();
-
+        // Buscar usuario por cinemaToken
+        const user = await User.findOne({ cinemaToken: token });
         if (!user) {
           return reply.status(404).send({
             success: false,
-            error: 'Usuario no encontrado',
+            error: 'Token inválido o expirado',
           });
         }
 
-        // Obtener solo storyboards con allowCinema = true
+        // Buscar storyboards del usuario que tengan allowCinema = true
         const storyboards = await Storyboard.find({
-          userId: token,
+          userId: user.googleId,
           allowCinema: true,
         })
-          .select('_id title description genre frames createdAt updatedAt')
           .sort({ createdAt: -1 })
+          .limit(50)
           .lean();
+
+        // Mapear storyboards al formato esperado (incluir frames completos)
+        const mappedStoryboards = storyboards.map((sb) => {
+          const thumbnailUrl = sb.frames[0]?.imageUrl || null;
+          const frameCount = sb.frames.length;
+          // Estimar duración: ~30 segundos por frame
+          const totalSeconds = frameCount * 30;
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          const duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+          return {
+            _id: sb._id.toString(),
+            title: sb.title,
+            description: sb.description || null,
+            genre: sb.genre || null,
+            thumbnailUrl,
+            frameCount,
+            duration,
+            createdAt: sb.createdAt,
+            frames: sb.frames, // Incluir frames completos para modal
+          };
+        });
 
         return reply.send({
           success: true,
-          storyboards,
-          user: {
-            name: user.name,
-            picture: user.picture,
-            bio: user.bio,
+          data: {
+            user: {
+              name: user.name,
+              picture: user.picture || null,
+              bio: user.bio || null,
+            },
+            storyboards: mappedStoryboards,
           },
         });
       } catch (err: any) {

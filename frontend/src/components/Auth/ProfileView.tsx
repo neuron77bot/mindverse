@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { getStoredUser, type GoogleUser } from '../../services/auth';
 import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 
@@ -18,6 +19,8 @@ export default function ProfileView({}: ProfileViewProps) {
   const [location, setLocation] = useState('');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [loadedExtra, setLoadedExtra] = useState(false);
+  const [cinemaUrl, setCinemaUrl] = useState<string | null>(null);
+  const [loadingToken, setLoadingToken] = useState(false);
 
   if (!loadedExtra && user?.sub) {
     setLoadedExtra(true);
@@ -31,7 +34,43 @@ export default function ProfileView({}: ProfileViewProps) {
         }
       })
       .catch(() => {});
+
+    // Fetch cinema token
+    fetch(`${API_BASE}/users/me/cinema-token`, { headers: authHeadersOnly() })
+      .then((r) => r.json())
+      .then(({ data }) => {
+        if (data) {
+          setCinemaUrl(data.cinemaUrl);
+        }
+      })
+      .catch(() => {});
   }
+
+  const handleCopyLink = () => {
+    if (!cinemaUrl) return;
+    navigator.clipboard.writeText(cinemaUrl);
+    toast.success('Link copiado al portapapeles');
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!confirm('¿Estás seguro? El link anterior dejará de funcionar.')) return;
+
+    setLoadingToken(true);
+    try {
+      const res = await fetch(`${API_BASE}/users/me/cinema-token/regenerate`, {
+        method: 'POST',
+        headers: authHeadersOnly(),
+      });
+      if (!res.ok) throw new Error();
+      const { data } = await res.json();
+      setCinemaUrl(data.cinemaUrl);
+      toast.success('Token regenerado exitosamente');
+    } catch {
+      toast.error('Error al regenerar token');
+    } finally {
+      setLoadingToken(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user?.sub) return;
@@ -303,6 +342,105 @@ export default function ProfileView({}: ProfileViewProps) {
                     {saveStatus === 'saving' && 'Guardando…'}
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* ── Sección Cinema Link (fullwidth debajo) ──────────────────── */}
+            <div className="lg:col-span-2 bg-gradient-to-br from-indigo-900/20 via-purple-900/20 to-pink-900/20 border border-indigo-700/30 rounded-2xl overflow-hidden mt-8">
+              <div className="px-6 py-5 border-b border-indigo-700/30 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-lg">🎬 Mi Cinema</h3>
+                  <p className="text-indigo-300 text-sm mt-0.5">
+                    Comparte tu colección estilo Netflix
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <p className="text-slate-300 text-sm">
+                  Compartí un link público donde cualquiera puede ver todos tus storyboards en un
+                  layout moderno tipo Netflix.
+                </p>
+
+                {cinemaUrl ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={cinemaUrl}
+                        readOnly
+                        className="flex-1 px-4 py-2.5 bg-slate-900/80 border border-slate-600 rounded-xl text-white text-sm font-mono"
+                      />
+                      <button
+                        onClick={handleCopyLink}
+                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors flex items-center gap-2 text-sm font-medium"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Copiar
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleRegenerateToken}
+                        disabled={loadingToken}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                      >
+                        {loadingToken ? 'Regenerando...' : 'Regenerar Token'}
+                      </button>
+                      <a
+                        href={cinemaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
+                        Ver Mi Cinema
+                      </a>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-slate-400 text-sm">Cargando...</div>
+                )}
               </div>
             </div>
           </div>
