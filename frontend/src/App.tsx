@@ -15,6 +15,7 @@ const StoryboardListPage = lazy(() => import('./pages/StoryboardListPage'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 const PromptStylesPage = lazy(() => import('./pages/PromptStylesPage'));
 const SharedStoryboardPage = lazy(() => import('./pages/SharedStoryboardPage'));
+const CinemaPage = lazy(() => import('./pages/CinemaPage'));
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
           {/* Públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/storyboard/shared/:id" element={<SharedStoryboardPage />} />
+          <Route path="/cinema" element={<CinemaPage />} />
 
           {/* Protegidas — envueltas en AppLayout (Header + NodeEditor) */}
           <Route element={<ProtectedRoute />}>
