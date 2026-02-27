@@ -3,6 +3,7 @@ export interface PromptStyleTag {
   name: string;
   description?: string;
   promptText: string;
+  previewImageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
