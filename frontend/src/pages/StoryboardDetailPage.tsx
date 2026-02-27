@@ -1,5 +1,8 @@
+import { useParams } from 'react-router-dom';
 import StoryboardDetailView from '../components/Storyboard/StoryboardDetailView';
 
 export default function StoryboardDetailPage() {
-  return <StoryboardDetailView />;
+  const { id } = useParams<{ id: string }>();
+
+  return <StoryboardDetailView id={id} />;
 }

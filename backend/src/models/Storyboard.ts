@@ -19,6 +19,7 @@ export interface IStoryboard extends Document {
   inputMode: 'voice' | 'text';
   frames: IFrame[];
   mermaidDiagram?: string;
+  allowCinema: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +47,7 @@ const StoryboardSchema = new Schema<IStoryboard>(
     inputMode: { type: String, enum: ['voice', 'text'], required: true },
     frames: { type: [FrameSchema], required: true },
     mermaidDiagram: { type: String },
+    allowCinema: { type: Boolean, default: false },
   },
   {
     timestamps: true,

@@ -6,12 +6,12 @@ import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 interface ProfileViewProps {
-  onBack: () => void;
+  // breadcrumb moved to ProfilePage
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
-export default function ProfileView({ onBack }: ProfileViewProps) {
+export default function ProfileView({}: ProfileViewProps) {
   const user = getStoredUser();
 
   const [name, setName] = useState(user?.name ?? '');
@@ -102,26 +102,6 @@ export default function ProfileView({ onBack }: ProfileViewProps) {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-900">
-      {/* Breadcrumb */}
-      <div className="px-4 py-3 lg:px-8 flex items-center gap-3 border-b border-slate-700/60 bg-slate-800/40 flex-shrink-0">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-sm font-medium"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Volver
-        </button>
-        <span className="text-slate-700">/</span>
-        <span className="text-slate-400 text-sm">Mi perfil</span>
-      </div>
-
       {/* Layout - Con scroll contenido */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto">

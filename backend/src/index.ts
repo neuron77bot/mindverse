@@ -51,6 +51,12 @@ async function main() {
         description: 'Backend de Mindverse — gestión de pensamientos e imágenes IA',
         version: '1.0.0',
       },
+      servers: [
+        {
+          url: '/mindverse/dev/api',
+          description: 'Dev API (testing)',
+        },
+      ],
       tags: [
         { name: 'auth', description: 'Autenticación con Google OAuth' },
         { name: 'users', description: 'CRUD de perfiles de usuario' },
@@ -59,7 +65,7 @@ async function main() {
         { name: 'transcription', description: 'Transcripción de audio con Whisper' },
         { name: 'storyboards', description: 'CRUD de storyboards generados' },
         { name: 'prompt-styles', description: 'Tags de estilo para prompts de IA' },
-        { name: 'cinema', description: 'Vista pública de storyboards estilo Netflix' },
+        { name: 'cinema', description: 'Cinema Mode - Vista pública de storyboards' },
         { name: 'health', description: 'Estado del servicio' },
       ],
     },
@@ -94,7 +100,7 @@ async function main() {
   // Rutas de tags de estilo de prompt
   await app.register(promptStyleRoutes, { prefix: '/prompt-styles' });
 
-  // Rutas de cinema (vista pública estilo Netflix)
+  // Rutas de Cinema Mode (pública)
   await app.register(cinemaRoutes, { prefix: '/cinema' });
 
   // Health check

@@ -8,13 +8,13 @@ const errorShape = {
 };
 
 export async function cinemaRoutes(app: FastifyInstance) {
-  // ── GET /cinema/:token — vista pública de storyboards ─────────────────────
+  // GET /cinema/:token - Vista pública de storyboards (Cinema Mode)
   app.get<{ Params: { token: string } }>(
     '/:token',
     {
       schema: {
         tags: ['cinema'],
-        summary: 'Vista pública de storyboards del usuario (Netflix-style)',
+        summary: 'Vista pública de storyboards del usuario (Cinema Mode)',
         params: {
           type: 'object',
           properties: { token: { type: 'string', description: 'Cinema token único del usuario' } },
@@ -32,6 +32,7 @@ export async function cinemaRoutes(app: FastifyInstance) {
                     properties: {
                       name: { type: 'string' },
                       picture: { type: 'string', nullable: true },
+                      bio: { type: 'string', nullable: true },
                     },
                   },
                   storyboards: {
@@ -56,6 +57,7 @@ export async function cinemaRoutes(app: FastifyInstance) {
             },
           },
           404: errorShape,
+          500: errorShape,
         },
       },
     },
@@ -72,8 +74,11 @@ export async function cinemaRoutes(app: FastifyInstance) {
           });
         }
 
-        // Buscar storyboards del usuario (máximo 50 por performance)
-        const storyboards = await Storyboard.find({ userId: user.googleId })
+        // Buscar storyboards del usuario que tengan allowCinema = true
+        const storyboards = await Storyboard.find({
+          userId: user.googleId,
+          allowCinema: true,
+        })
           .sort({ createdAt: -1 })
           .limit(50)
           .lean();
@@ -107,13 +112,14 @@ export async function cinemaRoutes(app: FastifyInstance) {
             user: {
               name: user.name,
               picture: user.picture || null,
+              bio: user.bio || null,
             },
             storyboards: mappedStoryboards,
           },
         });
       } catch (err: any) {
         app.log.error(err);
-        return (reply as any).code(500).send({ success: false, error: err.message });
+        return reply.status(500).send({ success: false, error: err.message });
       }
     }
   );

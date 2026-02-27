@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { authHeadersOnly } from '../services/authHeaders';
 import type { PromptStyleTag } from '../types/promptStyle';
+import Breadcrumb from '../components/UI/Breadcrumb';
 import PromptStyleModal from '../components/PromptStyles/PromptStyleModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
@@ -98,8 +99,10 @@ export default function PromptStylesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-slate-900">
+      <Breadcrumb items={[{ label: 'Estilos de Prompt' }]} />
+      <div className="p-6">
+        <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -257,6 +260,7 @@ export default function PromptStylesPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* Modal */}

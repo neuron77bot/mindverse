@@ -1,6 +1,10 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import type { NavigateFunction } from 'react-router-dom';
 import type { StoryboardFrame, InputMode } from './types';
+import { authHeadersOnly } from '../../../services/authHeaders';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 interface EditorHeaderProps {
   navigate: NavigateFunction;
@@ -12,6 +16,8 @@ interface EditorHeaderProps {
   inputMode: InputMode;
   isSaving: boolean;
   saveStoryboard: () => void;
+  allowCinema?: boolean;
+  onCinemaToggle?: (newValue: boolean) => void;
 }
 
 export default function EditorHeader({
@@ -24,8 +30,47 @@ export default function EditorHeader({
   inputMode,
   isSaving,
   saveStoryboard,
+  allowCinema,
+  onCinemaToggle,
 }: EditorHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isTogglingCinema, setIsTogglingCinema] = useState(false);
+
+  const handleToggleCinema = async () => {
+    if (!id || !onCinemaToggle) return;
+    const newValue = !allowCinema;
+    setIsTogglingCinema(true);
+
+    toast.promise(
+      async () => {
+        const res = await fetch(`${API_BASE}/storyboards/${id}/cinema-visibility`, {
+          method: 'PATCH',
+          headers: {
+            ...authHeadersOnly(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ allowCinema: newValue }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Error actualizando visibilidad en Cinema');
+        }
+
+        onCinemaToggle(newValue);
+
+        return newValue
+          ? 'Storyboard visible en Cinema Mode'
+          : 'Storyboard oculto de Cinema Mode';
+      },
+      {
+        loading: 'Actualizando visibilidad...',
+        success: (msg) => msg,
+        error: (err) => err.message || 'No se pudo actualizar la visibilidad',
+        finally: () => setIsTogglingCinema(false),
+      }
+    );
+  };
 
   return (
     <div className="bg-gradient-to-r from-indigo-900/20 via-purple-900/20 to-pink-900/20 border-b border-slate-700/50">
@@ -48,13 +93,14 @@ export default function EditorHeader({
           </button>
 
           {isEditMode && storyboard && (
-            <button
-              onClick={saveStoryboard}
-              disabled={isSaving || !storyboardTitle.trim()}
-              className="flex items-center gap-2 px-6 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white transition-all duration-200 shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-            >
-              {isSaving ? (
-                <>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleToggleCinema}
+                disabled={isTogglingCinema}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 hover:text-purple-200 border border-purple-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={allowCinema ? 'Ocultar de Cinema Mode' : 'Mostrar en Cinema Mode'}
+              >
+                {isTogglingCinema ? (
                   <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
@@ -70,22 +116,53 @@ export default function EditorHeader({
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Guardar Cambios
-                </>
-              )}
-            </button>
+                ) : (
+                  <span>{allowCinema ? '🎬' : '🎬'}</span>
+                )}
+                <span className="hidden sm:inline">
+                  {allowCinema ? 'En Cinema' : 'Cinema'}
+                </span>
+              </button>
+
+              <button
+                onClick={saveStoryboard}
+                disabled={isSaving || !storyboardTitle.trim()}
+                className="flex items-center gap-2 px-6 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white transition-all duration-200 shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Guardar Cambios
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
 
