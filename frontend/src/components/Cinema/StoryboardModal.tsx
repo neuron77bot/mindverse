@@ -48,6 +48,7 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
 
   // Reset image loading on frame change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setImageLoading(true);
   }, [currentIndex]);
 

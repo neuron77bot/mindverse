@@ -1,12 +1,23 @@
 import { useEffect } from 'react';
 
+interface Frame {
+  frame: number;
+  scene: string;
+  visualDescription: string;
+  dialogue?: string;
+  imageUrl?: string;
+}
+
 interface Storyboard {
   _id: string;
   title: string;
   description?: string;
+  genre?: string;
   thumbnailUrl: string | null;
   frameCount: number;
   duration: string;
+  createdAt: string;
+  frames: Frame[];
 }
 
 interface HeroSectionProps {
