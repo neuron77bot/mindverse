@@ -67,7 +67,7 @@ export async function transcriptionRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['transcription'],
-        summary: 'Generar storyboard de 6-8 frames estilo cómic blanco y negro',
+        summary: 'Generar storyboard de 6-8 frames para producción audiovisual',
         body: {
           type: 'object',
           required: ['text'],

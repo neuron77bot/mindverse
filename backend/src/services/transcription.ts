@@ -128,8 +128,8 @@ async function analyzeWithGemini(thoughtText: string): Promise<AnalysisResult> {
 
   const startTime = Date.now();
 
-  const systemPrompt = `Eres un guionista experto en crear storyboards para cómics en blanco y negro.
-Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 6 a 8 escenas/viñetas.
+  const systemPrompt = `Eres un guionista experto en crear storyboards para producciones audiovisuales.
+Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 6 a 8 escenas/frames.
 
 Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 {
@@ -137,22 +137,21 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
     {
       "frame": 1,
       "scene": "Descripción breve de la escena",
-      "visualDescription": "Descripción detallada de lo que se ve en la viñeta (composición, ángulos, elementos visuales). Estilo cómic blanco y negro.",
-      "dialogue": "Diálogo o texto opcional de la viñeta"
+      "visualDescription": "Descripción detallada de lo que se ve en el frame (composición, ángulos, elementos visuales, iluminación, atmósfera).",
+      "dialogue": "Diálogo o texto opcional del frame"
     }
   ]
 }
 
 Características de tu storyboard:
-- Genera exactamente 6 a 8 frames/viñetas
-- Estilo cómic en blanco y negro (sin color, alto contraste)
+- Genera exactamente 6 a 8 frames
 - Cada frame debe tener descripción visual muy detallada y específica
-- Piensa en composición, planos (close-up, wide shot, etc.), iluminación, sombras
+- Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
 - Crea una narrativa visual coherente y fluida
 - El diálogo es opcional, solo cuando enriquece la escena
 - Responde en español`;
 
-  const userPrompt = `Crea un storyboard en blanco y negro basado en la siguiente historia o idea:
+  const userPrompt = `Crea un storyboard basado en la siguiente historia o idea:
 
 "${thoughtText}"
 
@@ -218,8 +217,8 @@ Responde únicamente con el JSON, sin texto adicional.`;
 async function analyzeWithFal(thoughtText: string): Promise<AnalysisResult> {
   const startTime = Date.now();
 
-  const systemPrompt = `Eres un guionista experto en crear storyboards para cómics en blanco y negro.
-Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 6 a 8 escenas/viñetas.
+  const systemPrompt = `Eres un guionista experto en crear storyboards para producciones audiovisuales.
+Tu tarea es transformar ideas, historias o conceptos en un storyboard visual de 6 a 8 escenas/frames.
 
 Responde SIEMPRE en formato JSON válido con la siguiente estructura:
 {
@@ -227,22 +226,21 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
     {
       "frame": 1,
       "scene": "Descripción breve de la escena",
-      "visualDescription": "Descripción detallada de lo que se ve en la viñeta (composición, ángulos, elementos visuales). Estilo cómic blanco y negro.",
-      "dialogue": "Diálogo o texto opcional de la viñeta"
+      "visualDescription": "Descripción detallada de lo que se ve en el frame (composición, ángulos, elementos visuales, iluminación, atmósfera).",
+      "dialogue": "Diálogo o texto opcional del frame"
     }
   ]
 }
 
 Características de tu storyboard:
-- Genera exactamente 6 a 8 frames/viñetas
-- Estilo cómic en blanco y negro (sin color, alto contraste)
+- Genera exactamente 6 a 8 frames
 - Cada frame debe tener descripción visual muy detallada y específica
-- Piensa en composición, planos (close-up, wide shot, etc.), iluminación, sombras
+- Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
 - Crea una narrativa visual coherente y fluida
 - El diálogo es opcional, solo cuando enriquece la escena
 - Responde en español`;
 
-  const userPrompt = `Crea un storyboard en blanco y negro basado en la siguiente historia o idea:
+  const userPrompt = `Crea un storyboard basado en la siguiente historia o idea:
 
 "${thoughtText}"
 
