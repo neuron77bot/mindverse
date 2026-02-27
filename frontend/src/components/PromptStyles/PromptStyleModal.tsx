@@ -19,7 +19,7 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
   const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>(undefined);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
   
-  // Gallery tags state
+  // Gallery tags state (same as ImageGenerationModal)
   const [galleryTags, setGalleryTags] = useState<string[]>([]);
   const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
   const [loadingGalleryTags, setLoadingGalleryTags] = useState(false);
@@ -38,49 +38,26 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
     if (!tag) return;
     
     const fetchGalleryTags = async () => {
+      setLoadingGalleryTags(true);
       try {
         const res = await fetch(`${API_BASE}/gallery/tags`, {
           headers: authHeadersOnly(),
         });
 
-        if (!res.ok) throw new Error('Error cargando tags');
+        if (!res.ok) throw new Error('Error cargando tags de galería');
 
         const data = await res.json();
         setGalleryTags(data.tags || []);
       } catch (err: any) {
-        console.error('Error loading gallery tags:', err);
-        // Don't show error toast, just fail silently - preview is optional
+        console.error('Error fetching gallery tags:', err);
+        // No mostrar error toast para no molestar al usuario - preview es opcional
+      } finally {
+        setLoadingGalleryTags(false);
       }
     };
 
     fetchGalleryTags();
   }, [tag]);
-
-  // Cargar gallery tags cuando se abre el modal en modo edición
-  useEffect(() => {
-    if (tag) {
-      fetchGalleryTags();
-    }
-  }, [tag]);
-
-  const fetchGalleryTags = async () => {
-    setLoadingGalleryTags(true);
-    try {
-      const res = await fetch(`${API_BASE}/gallery/tags`, {
-        headers: authHeadersOnly(),
-      });
-
-      if (!res.ok) throw new Error('Error cargando tags de galería');
-
-      const data = await res.json();
-      setGalleryTags(data.tags || []);
-    } catch (err: any) {
-      console.error('Error fetching gallery tags:', err);
-      // No mostrar error toast para no molestar al usuario
-    } finally {
-      setLoadingGalleryTags(false);
-    }
-  };
 
   const handleGeneratePreview = async () => {
     if (!tag) {
@@ -296,7 +273,7 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
                     </p>
                   </div>
 
-                  {/* Gallery Tag Picker */}
+                  {/* Gallery Tag Picker - Inline selector (same as ImageGenerationModal) */}
                   {loadingGalleryTags ? (
                     <div className="flex justify-center py-4">
                       <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
