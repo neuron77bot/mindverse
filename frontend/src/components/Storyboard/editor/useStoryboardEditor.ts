@@ -40,6 +40,7 @@ export function useStoryboardEditor(mode: EditorMode) {
   const [isSaving, setIsSaving] = useState(false);
   const [storyboardTitle, setStoryboardTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [allowCinema, setAllowCinema] = useState(false);
 
   // Image modal state
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -94,6 +95,7 @@ export function useStoryboardEditor(mode: EditorMode) {
       setTextInput(sb.inputMode === 'text' ? sb.originalText : '');
       setStoryboard(sb.frames || []);
       setMermaidDiagram(sb.mermaidDiagram || null);
+      setAllowCinema(sb.allowCinema || false);
 
       if (sb.frames) {
         const newFrameImages = new Map<number, string>();
@@ -556,6 +558,8 @@ export function useStoryboardEditor(mode: EditorMode) {
     storyboardTitle,
     setStoryboardTitle,
     isLoading,
+    allowCinema,
+    setAllowCinema,
 
     isImageModalOpen,
     selectedFrameForImage,

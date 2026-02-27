@@ -28,6 +28,7 @@ interface StoryboardDetail {
   frames?: StoryboardFrame[];
   mermaidDiagram?: string | null;
   createdAt?: string;
+  allowCinema?: boolean;
 }
 
 interface StoryboardDetailViewProps {
@@ -46,6 +47,7 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
   const [isGeneratingShare, setIsGeneratingShare] = useState<boolean>(false);
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
+  const [isTogglingCinema, setIsTogglingCinema] = useState<boolean>(false);
 
   useEffect(() => {
     const loadStoryboard = async () => {
@@ -128,10 +130,10 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
         const shareUrl = `${window.location.origin}/mindverse${data.shareUrl}`;
 
         await navigator.clipboard.writeText(shareUrl);
-        
+
         // Abrir en nueva ventana
         window.open(shareUrl, '_blank');
-        
+
         return `Link copiado y abierto (válido por ${data.expiresIn})`;
       },
       {
@@ -139,6 +141,43 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
         success: (msg) => msg,
         error: (err) => err.message || 'No se pudo generar el link',
         finally: () => setIsGeneratingShare(false),
+      }
+    );
+  };
+
+  const handleToggleCinema = async () => {
+    if (!id) return;
+    const newValue = !storyboard?.allowCinema;
+    setIsTogglingCinema(true);
+
+    toast.promise(
+      async () => {
+        const res = await fetch(`${API_BASE}/storyboards/${id}/cinema-visibility`, {
+          method: 'PATCH',
+          headers: {
+            ...authHeadersOnly(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ allowCinema: newValue }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Error actualizando visibilidad en Cinema');
+        }
+
+        const data = await res.json();
+        setStoryboard(data.storyboard);
+
+        return newValue
+          ? 'Storyboard visible en Cinema Mode'
+          : 'Storyboard oculto de Cinema Mode';
+      },
+      {
+        loading: 'Actualizando visibilidad...',
+        success: (msg) => msg,
+        error: (err) => err.message || 'No se pudo actualizar la visibilidad',
+        finally: () => setIsTogglingCinema(false),
       }
     );
   };
@@ -271,6 +310,36 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                       <span>{isGeneratingShare ? 'Generando...' : 'Compartir'}</span>
                     </button>
 
+                    <button
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        handleToggleCinema();
+                      }}
+                      disabled={isTogglingCinema}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-purple-600/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg
+                        className="w-5 h-5 text-purple-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
+                        />
+                      </svg>
+                      <span>
+                        {isTogglingCinema
+                          ? 'Actualizando...'
+                          : storyboard?.allowCinema
+                          ? '🎬 Ocultar de Cinema'
+                          : '🎬 Mostrar en Cinema'}
+                      </span>
+                    </button>
+
                     <div className="border-t border-slate-700" />
 
                     <button
@@ -337,6 +406,12 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
 
               {/* Metadata Badges */}
               <div className="flex flex-wrap gap-2">
+                {storyboard.allowCinema && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-medium">
+                    🎬 Visible en Cinema
+                  </span>
+                )}
+
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-sm font-medium">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path

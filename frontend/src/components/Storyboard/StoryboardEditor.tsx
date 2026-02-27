@@ -84,6 +84,8 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
         inputMode={editor.inputMode}
         isSaving={editor.isSaving}
         saveStoryboard={editor.saveStoryboard}
+        allowCinema={editor.allowCinema}
+        onCinemaToggle={editor.setAllowCinema}
       />
 
       {/* ── Pre-storyboard: input area (create mode only) ── */}
