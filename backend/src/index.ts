@@ -12,6 +12,7 @@ import { transcriptionRoutes } from './routes/transcription';
 import { storyboardRoutes } from './routes/storyboards';
 import { galleryRoutes } from './routes/gallery';
 import { promptStyleRoutes } from './routes/promptStyles';
+import { cinemaRoutes } from './routes/cinema';
 import { connectDatabase } from './services/database';
 import { authMiddleware } from './middleware/auth';
 
@@ -58,6 +59,7 @@ async function main() {
         { name: 'transcription', description: 'Transcripción de audio con Whisper' },
         { name: 'storyboards', description: 'CRUD de storyboards generados' },
         { name: 'prompt-styles', description: 'Tags de estilo para prompts de IA' },
+        { name: 'cinema', description: 'Vista pública de storyboards estilo Netflix' },
         { name: 'health', description: 'Estado del servicio' },
       ],
     },
@@ -91,6 +93,9 @@ async function main() {
 
   // Rutas de tags de estilo de prompt
   await app.register(promptStyleRoutes, { prefix: '/prompt-styles' });
+
+  // Rutas de cinema (vista pública estilo Netflix)
+  await app.register(cinemaRoutes, { prefix: '/cinema' });
 
   // Health check
   app.get(

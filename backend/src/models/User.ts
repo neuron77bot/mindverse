@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { randomUUID } from 'crypto';
 
 const userSchema = new Schema(
   {
@@ -10,6 +11,14 @@ const userSchema = new Schema(
     bio: { type: String, default: '' },
     location: { type: String, default: '' },
     lastLogin: { type: Date, default: Date.now },
+    // Cinema token único para compartir vista pública
+    cinemaToken: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+      default: () => randomUUID(),
+    },
   },
   {
     timestamps: true,
