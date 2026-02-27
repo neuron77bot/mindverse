@@ -53,8 +53,8 @@ async function main() {
       },
       servers: [
         {
-          url: '/mindverse/main/api',
-          description: 'Main API (production)',
+          url: '/mindverse/dev/api',
+          description: 'Dev API (testing)',
         },
       ],
       tags: [
