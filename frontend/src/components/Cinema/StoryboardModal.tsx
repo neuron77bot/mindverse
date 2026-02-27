@@ -65,10 +65,10 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
       {/* Close Button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all"
+        className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-black/50 backdrop-blur text-white/70 hover:text-white hover:bg-black/70 transition-all"
         aria-label="Cerrar"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -78,16 +78,18 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
         </svg>
       </button>
 
-      {/* Header */}
-      <div className="absolute top-4 left-4 right-16 z-10">
-        <h2 className="text-white font-bold text-xl sm:text-2xl">{storyboard.title}</h2>
-        <div className="text-white text-sm mt-1 bg-black/50 backdrop-blur px-3 py-1 rounded-full inline-block">
+      {/* Header - Compact */}
+      <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
+        <div className="text-white text-sm bg-black/70 backdrop-blur px-3 py-1.5 rounded-full">
           {currentIndex + 1} / {totalFrames}
         </div>
+        <h2 className="text-white font-semibold text-base sm:text-lg bg-black/50 backdrop-blur px-3 py-1.5 rounded-full max-w-xs truncate">
+          {storyboard.title}
+        </h2>
       </div>
 
-      {/* Main Image */}
-      <div className="absolute inset-0 top-20 bottom-48 flex items-center justify-center px-20">
+      {/* Main Image - Maximized */}
+      <div className="absolute inset-0 top-16 bottom-24 flex items-center justify-center px-12 sm:px-16">
         {currentFrame.imageUrl ? (
           <>
             {imageLoading && (
@@ -125,16 +127,16 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
         )}
       </div>
 
-      {/* Navigation Buttons */}
+      {/* Navigation Buttons - Compact */}
       {totalFrames > 1 && (
         <>
           <button
             onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
             disabled={currentIndex === 0}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/50 backdrop-blur text-white/70 hover:text-white hover:bg-black/70 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
             aria-label="Frame anterior"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -147,31 +149,28 @@ export default function StoryboardModal({ storyboard, onClose }: StoryboardModal
           <button
             onClick={() => setCurrentIndex((prev) => Math.min(totalFrames - 1, prev + 1))}
             disabled={currentIndex === totalFrames - 1}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/50 backdrop-blur text-white/70 hover:text-white hover:bg-black/70 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
             aria-label="Frame siguiente"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </>
       )}
 
-      {/* Footer Info */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6 space-y-3">
+      {/* Footer Info - Compact */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent p-4 space-y-2">
         {currentFrame.dialogue && (
-          <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur rounded-lg p-4 border-l-4 border-indigo-500">
-            <p className="text-white text-base italic text-center">
+          <div className="max-w-xl mx-auto bg-white/10 backdrop-blur rounded-lg px-4 py-2 border-l-2 border-indigo-500">
+            <p className="text-white text-sm italic text-center line-clamp-2">
               &ldquo;{currentFrame.dialogue}&rdquo;
             </p>
           </div>
         )}
-        <h3 className="text-white font-semibold text-lg text-center">{currentFrame.scene}</h3>
+        <h3 className="text-white font-medium text-base text-center line-clamp-1 px-4">
+          {currentFrame.scene}
+        </h3>
       </div>
     </div>
   );
