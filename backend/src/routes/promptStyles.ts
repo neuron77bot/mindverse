@@ -400,7 +400,7 @@ export async function promptStyleRoutes(app: FastifyInstance) {
         if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
 
         const { id } = req.params;
-        
+
         const style = await PromptStyleTag.findOne({ _id: id, userId } as any);
         if (!style) {
           return reply.status(404).send({ success: false, error: 'Estilo no encontrado' });

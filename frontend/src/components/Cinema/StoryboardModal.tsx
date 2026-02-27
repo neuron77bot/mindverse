@@ -16,35 +16,13 @@ interface Storyboard {
 }
 
 interface StoryboardModalProps {
-  storyboardId: string;
+  storyboard: Storyboard;
   onClose: () => void;
 }
 
-export default function StoryboardModal({ storyboardId, onClose }: StoryboardModalProps) {
-  const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
+export default function StoryboardModal({ storyboard, onClose }: StoryboardModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchStoryboard = async () => {
-      try {
-        const response = await fetch(`/api/storyboards/${storyboardId}`);
-        if (!response.ok) {
-          throw new Error('No se pudo cargar el storyboard');
-        }
-        const data = await response.json();
-        setStoryboard(data.data || data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error desconocido');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStoryboard();
-  }, [storyboardId]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -73,30 +51,6 @@ export default function StoryboardModal({ storyboardId, onClose }: StoryboardMod
     setImageLoading(true);
   }, [currentIndex]);
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !storyboard) {
-    return (
-      <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white text-xl mb-4">⚠️ {error || 'Storyboard no encontrado'}</p>
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const currentFrame = storyboard.frames[currentIndex];
   const totalFrames = storyboard.frames.length;
 
@@ -114,7 +68,12 @@ export default function StoryboardModal({ storyboardId, onClose }: StoryboardMod
         aria-label="Cerrar"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
 
@@ -147,7 +106,12 @@ export default function StoryboardModal({ storyboardId, onClose }: StoryboardMod
           </>
         ) : (
           <div className="text-center text-slate-400">
-            <svg className="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-24 h-24 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -169,7 +133,12 @@ export default function StoryboardModal({ storyboardId, onClose }: StoryboardMod
               aria-label="Frame anterior"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
 
@@ -180,7 +149,12 @@ export default function StoryboardModal({ storyboardId, onClose }: StoryboardMod
               aria-label="Frame siguiente"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </>

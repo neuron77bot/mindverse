@@ -4,6 +4,14 @@ import HeroSection from '../components/Cinema/HeroSection';
 import StoryboardRow from '../components/Cinema/StoryboardRow';
 import StoryboardModal from '../components/Cinema/StoryboardModal';
 
+interface Frame {
+  frame: number;
+  scene: string;
+  visualDescription: string;
+  dialogue?: string;
+  imageUrl?: string;
+}
+
 interface Storyboard {
   _id: string;
   title: string;
@@ -13,6 +21,7 @@ interface Storyboard {
   frameCount: number;
   duration: string;
   createdAt: string;
+  frames: Frame[];
 }
 
 interface CinemaData {
@@ -28,7 +37,7 @@ export default function CinemaPage() {
   const [data, setData] = useState<CinemaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStoryboardId, setSelectedStoryboardId] = useState<string | null>(null);
+  const [selectedStoryboard, setSelectedStoryboard] = useState<Storyboard | null>(null);
 
   useEffect(() => {
     const fetchCinema = async () => {
@@ -94,12 +103,8 @@ export default function CinemaPage() {
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <div className="text-center px-4">
           <div className="text-6xl mb-4">📽️</div>
-          <h1 className="text-white text-2xl font-bold mb-2">
-            Cinema de {data.user.name}
-          </h1>
-          <p className="text-slate-400 mb-6">
-            Aún no hay storyboards publicados. ¡Vuelve pronto!
-          </p>
+          <h1 className="text-white text-2xl font-bold mb-2">Cinema de {data.user.name}</h1>
+          <p className="text-slate-400 mb-6">Aún no hay storyboards publicados. ¡Vuelve pronto!</p>
         </div>
       </div>
     );
@@ -122,11 +127,10 @@ export default function CinemaPage() {
             />
           )}
           <div>
-            <h1 className="text-white font-bold text-lg sm:text-xl">
-              Cinema de {data.user.name}
-            </h1>
+            <h1 className="text-white font-bold text-lg sm:text-xl">Cinema de {data.user.name}</h1>
             <p className="text-slate-400 text-xs sm:text-sm">
-              {data.storyboards.length} {data.storyboards.length === 1 ? 'storyboard' : 'storyboards'}
+              {data.storyboards.length}{' '}
+              {data.storyboards.length === 1 ? 'storyboard' : 'storyboards'}
             </p>
           </div>
         </div>
@@ -136,7 +140,7 @@ export default function CinemaPage() {
       {/* Hero Section */}
       <HeroSection
         storyboard={data.storyboards[0]}
-        onViewClick={() => setSelectedStoryboardId(data.storyboards[0]._id)}
+        onViewClick={() => setSelectedStoryboard(data.storyboards[0])}
       />
 
       {/* Storyboard Rows */}
@@ -145,7 +149,7 @@ export default function CinemaPage() {
           <StoryboardRow
             title="Proyectos Recientes"
             storyboards={recentStoryboards.slice(1)}
-            onCardClick={(sb) => setSelectedStoryboardId(sb._id)}
+            onCardClick={(sb) => setSelectedStoryboard(sb)}
           />
         )}
 
@@ -153,7 +157,7 @@ export default function CinemaPage() {
           <StoryboardRow
             title="Todos los Storyboards"
             storyboards={allStoryboards}
-            onCardClick={(sb) => setSelectedStoryboardId(sb._id)}
+            onCardClick={(sb) => setSelectedStoryboard(sb)}
           />
         )}
       </div>
@@ -164,10 +168,10 @@ export default function CinemaPage() {
       </footer>
 
       {/* Modal */}
-      {selectedStoryboardId && (
+      {selectedStoryboard && (
         <StoryboardModal
-          storyboardId={selectedStoryboardId}
-          onClose={() => setSelectedStoryboardId(null)}
+          storyboard={selectedStoryboard}
+          onClose={() => setSelectedStoryboard(null)}
         />
       )}
     </div>

@@ -124,10 +124,10 @@ export default function StoryboardDetailView() {
         const shareUrl = `${window.location.origin}/mindverse${data.shareUrl}`;
 
         await navigator.clipboard.writeText(shareUrl);
-        
+
         // Abrir en nueva ventana
         window.open(shareUrl, '_blank');
-        
+
         return `Link copiado y abierto (válido por ${data.expiresIn})`;
       },
       {

@@ -47,6 +47,7 @@ export async function cinemaRoutes(app: FastifyInstance) {
                         frameCount: { type: 'number' },
                         duration: { type: 'string' },
                         createdAt: { type: 'string' },
+                        frames: { type: 'array' },
                       },
                     },
                   },
@@ -77,7 +78,7 @@ export async function cinemaRoutes(app: FastifyInstance) {
           .limit(50)
           .lean();
 
-        // Mapear storyboards al formato esperado
+        // Mapear storyboards al formato esperado (incluir frames completos)
         const mappedStoryboards = storyboards.map((sb) => {
           const thumbnailUrl = sb.frames[0]?.imageUrl || null;
           const frameCount = sb.frames.length;
@@ -96,6 +97,7 @@ export async function cinemaRoutes(app: FastifyInstance) {
             frameCount,
             duration,
             createdAt: sb.createdAt,
+            frames: sb.frames, // Incluir frames completos para modal
           };
         });
 
