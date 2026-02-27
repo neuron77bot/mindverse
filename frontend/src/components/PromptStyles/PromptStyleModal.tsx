@@ -14,10 +14,10 @@ export default function PromptStyleModal({ tag, onClose, onSave }: PromptStyleMo
 
   useEffect(() => {
     if (!tag) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setName(tag.name);
     setDescription(tag.description || '');
     setPromptText(tag.promptText);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [tag]);
 
   const handleSubmit = (e: React.FormEvent) => {
