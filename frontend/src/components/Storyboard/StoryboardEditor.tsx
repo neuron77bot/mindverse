@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, useRef, useEffect } from 'react';
 import type { EditorTabType } from './editor/types';
 import { useStoryboardEditor } from './editor/useStoryboardEditor';
 import Breadcrumb from '../UI/Breadcrumb';
@@ -13,6 +13,15 @@ const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 export default function StoryboardEditor() {
   const editor = useStoryboardEditor();
   const [activeTab, setActiveTab] = useState<EditorTabType>('frames');
+  const [isEditingOriginalText, setIsEditingOriginalText] = useState(false);
+  const originalTextRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isEditingOriginalText && originalTextRef.current) {
+      originalTextRef.current.focus();
+      originalTextRef.current.setSelectionRange(0, 0);
+    }
+  }, [isEditingOriginalText]);
 
   const hasStoryboard = editor.storyboard && editor.storyboard.length > 0;
 
@@ -149,9 +158,33 @@ export default function StoryboardEditor() {
                   </div>
                 </div>
                 <div className="prose prose-invert max-w-none">
-                  <p className="text-slate-200 whitespace-pre-wrap leading-relaxed text-lg">
-                    {editor.originalText}
-                  </p>
+                  {isEditingOriginalText ? (
+                    <textarea
+                      ref={originalTextRef}
+                      value={editor.originalText}
+                      onChange={(e) => editor.setOriginalText(e.target.value)}
+                      onBlur={() => setIsEditingOriginalText(false)}
+                      onKeyDown={(e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                          setIsEditingOriginalText(false);
+                        }
+                        if (e.key === 'Escape') {
+                          setIsEditingOriginalText(false);
+                        }
+                      }}
+                      className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border-2 border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 text-lg leading-relaxed resize"
+                      style={{ resize: 'vertical', minHeight: '200px' }}
+                      placeholder="Escribe la historia original..."
+                    />
+                  ) : (
+                    <p
+                      onDoubleClick={() => setIsEditingOriginalText(true)}
+                      className="text-slate-200 whitespace-pre-wrap leading-relaxed text-lg cursor-text hover:bg-slate-800/30 rounded-lg p-3 -mx-3 transition-colors min-h-[200px]"
+                      title="Doble clic para editar"
+                    >
+                      {editor.originalText || 'Sin historia'}
+                    </p>
+                  )}
                 </div>
               </section>
 

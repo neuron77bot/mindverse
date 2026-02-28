@@ -404,6 +404,7 @@ export function useStoryboardEditor() {
 
     inputMode,
     originalText,
+    setOriginalText,
     error,
     storyboard,
     setStoryboard,
