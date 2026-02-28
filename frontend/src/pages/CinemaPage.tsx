@@ -4,6 +4,8 @@ import HeroSection from '../components/Cinema/HeroSection';
 import StoryboardRow from '../components/Cinema/StoryboardRow';
 import StoryboardModal from '../components/Cinema/StoryboardModal';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
+
 interface Frame {
   frame: number;
   scene: string;
@@ -50,7 +52,7 @@ export default function CinemaPage() {
       }
 
       try {
-        const response = await fetch(`/api/cinema/${token}`);
+        const response = await fetch(`${API_BASE}/cinema/${token}`);
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
           throw new Error(errData.error || 'Token inválido o expirado');
