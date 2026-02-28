@@ -45,7 +45,6 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
-  const [isGeneratingShare, setIsGeneratingShare] = useState<boolean>(false);
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
   const [isTogglingCinema, setIsTogglingCinema] = useState<boolean>(false);
 
@@ -106,42 +105,6 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
         success: 'Storyboard eliminado exitosamente',
         error: (err) => err.message || 'No se pudo eliminar el storyboard',
         finally: () => setIsDeleting(false),
-      }
-    );
-  };
-
-  const handleShare = async () => {
-    if (!id) return;
-    setIsGeneratingShare(true);
-
-    toast.promise(
-      async () => {
-        const res = await fetch(`${API_BASE}/storyboards/${id}/share`, {
-          method: 'POST',
-          headers: authHeadersOnly(),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || 'Error generando link de compartir');
-        }
-
-        const data = await res.json();
-        const basePath = import.meta.env.VITE_BASE || '/';
-        const shareUrl = `${window.location.origin}${basePath}storyboard/shared/${id}?token=${data.shareToken}`;
-
-        await navigator.clipboard.writeText(shareUrl);
-
-        // Abrir en nueva ventana
-        window.open(shareUrl, '_blank');
-
-        return `Link copiado y abierto (válido por ${data.expiresIn})`;
-      },
-      {
-        loading: 'Generando link de compartir...',
-        success: (msg) => msg,
-        error: (err) => err.message || 'No se pudo generar el link',
-        finally: () => setIsGeneratingShare(false),
       }
     );
   };
@@ -285,30 +248,6 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                         />
                       </svg>
                       <span>Editar</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setShowActionsMenu(false);
-                        handleShare();
-                      }}
-                      disabled={isGeneratingShare}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-green-600/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <svg
-                        className="w-5 h-5 text-green-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                        />
-                      </svg>
-                      <span>{isGeneratingShare ? 'Generando...' : 'Compartir'}</span>
                     </button>
 
                     <button

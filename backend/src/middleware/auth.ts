@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 // Rutas públicas — no requieren token
-const PUBLIC_PREFIXES = ['/auth/', '/health', '/docs', '/storyboards/shared/', '/cinema/'];
+const PUBLIC_PREFIXES = ['/auth/', '/health', '/docs', '/cinema/'];
 
 export interface JwtPayload {
   sub: string;
