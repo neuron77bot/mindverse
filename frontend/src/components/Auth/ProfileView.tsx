@@ -19,8 +19,14 @@ export default function ProfileView({}: ProfileViewProps) {
   const [location, setLocation] = useState('');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [loadedExtra, setLoadedExtra] = useState(false);
-  const [cinemaUrl, setCinemaUrl] = useState<string | null>(null);
+  const [cinemaToken, setCinemaToken] = useState<string | null>(null);
   const [loadingToken, setLoadingToken] = useState(false);
+
+  // Construir URL de Cinema usando VITE_BASE
+  const basePath = import.meta.env.VITE_BASE || '/';
+  const cinemaUrl = cinemaToken 
+    ? `${window.location.origin}${basePath}cinema?token=${cinemaToken}`
+    : null;
 
   if (!loadedExtra && user?.sub) {
     setLoadedExtra(true);
@@ -39,8 +45,8 @@ export default function ProfileView({}: ProfileViewProps) {
     fetch(`${API_BASE}/users/me/cinema-token`, { headers: authHeadersOnly() })
       .then((r) => r.json())
       .then(({ data }) => {
-        if (data) {
-          setCinemaUrl(data.cinemaUrl);
+        if (data?.cinemaToken) {
+          setCinemaToken(data.cinemaToken);
         }
       })
       .catch(() => {});
@@ -63,7 +69,7 @@ export default function ProfileView({}: ProfileViewProps) {
       });
       if (!res.ok) throw new Error();
       const { data } = await res.json();
-      setCinemaUrl(data.cinemaUrl);
+      setCinemaToken(data.cinemaToken);
       toast.success('Token regenerado exitosamente');
     } catch {
       toast.error('Error al regenerar token');
