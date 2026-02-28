@@ -15,6 +15,9 @@ RUN npm prune --omit=dev
 
 FROM node:20-slim
 
+# Instalar ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copiar node_modules ya podados (sin devDeps) desde el build stage
