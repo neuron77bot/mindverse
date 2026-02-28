@@ -20,15 +20,17 @@ interface Storyboard {
   duration: string;
   createdAt: string;
   frames: Frame[];
+  compiledVideoUrl?: string;
 }
 
 interface StoryboardRowProps {
   title: string;
   storyboards: Storyboard[];
   onCardClick: (storyboard: Storyboard) => void;
+  onPlayVideo?: (videoUrl: string) => void;
 }
 
-export default function StoryboardRow({ title, storyboards, onCardClick }: StoryboardRowProps) {
+export default function StoryboardRow({ title, storyboards, onCardClick, onPlayVideo }: StoryboardRowProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -92,7 +94,12 @@ export default function StoryboardRow({ title, storyboards, onCardClick }: Story
       >
         <div className="flex flex-nowrap gap-4 px-4 sm:px-8 pb-4">
           {storyboards.map((sb) => (
-            <StoryboardCard key={sb._id} storyboard={sb} onClick={() => onCardClick(sb)} />
+            <StoryboardCard 
+              key={sb._id} 
+              storyboard={sb} 
+              onClick={() => onCardClick(sb)}
+              onPlayVideo={onPlayVideo}
+            />
           ))}
         </div>
       </div>

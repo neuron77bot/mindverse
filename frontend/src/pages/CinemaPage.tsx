@@ -24,6 +24,7 @@ interface Storyboard {
   duration: string;
   createdAt: string;
   frames: Frame[];
+  compiledVideoUrl?: string;
 }
 
 interface CinemaData {
@@ -40,6 +41,23 @@ export default function CinemaPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStoryboard, setSelectedStoryboard] = useState<Storyboard | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
+
+  const playCompiledVideo = (videoUrl: string) => {
+    setPlayingVideo(videoUrl);
+  };
+
+  // Cerrar modal de video con ESC
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && playingVideo) {
+        setPlayingVideo(null);
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [playingVideo]);
 
   useEffect(() => {
     const fetchCinema = async () => {
@@ -143,6 +161,7 @@ export default function CinemaPage() {
       <HeroSection
         storyboard={data.storyboards[0]}
         onViewClick={() => setSelectedStoryboard(data.storyboards[0])}
+        onPlayVideo={playCompiledVideo}
       />
 
       {/* Storyboard Rows */}
@@ -152,6 +171,7 @@ export default function CinemaPage() {
             title="Proyectos Recientes"
             storyboards={recentStoryboards.slice(1)}
             onCardClick={(sb) => setSelectedStoryboard(sb)}
+            onPlayVideo={playCompiledVideo}
           />
         )}
 
@@ -160,6 +180,7 @@ export default function CinemaPage() {
             title="Todos los Storyboards"
             storyboards={allStoryboards}
             onCardClick={(sb) => setSelectedStoryboard(sb)}
+            onPlayVideo={playCompiledVideo}
           />
         )}
       </div>
@@ -172,6 +193,42 @@ export default function CinemaPage() {
       {/* Modal */}
       {selectedStoryboard && (
         <StoryboardModal storyboard={selectedStoryboard} onClose={() => setSelectedStoryboard(null)} />
+      )}
+
+      {/* Modal de reproducción de video compilado */}
+      {playingVideo && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-8"
+          onClick={(e) => {
+            // Cerrar al hacer click en el fondo
+            if (e.target === e.currentTarget) {
+              setPlayingVideo(null);
+            }
+          }}
+        >
+          <div className="max-w-6xl w-full space-y-4">
+            {/* Video player */}
+            <video
+              src={playingVideo}
+              controls
+              autoPlay
+              className="w-full rounded-lg shadow-2xl"
+              onEnded={() => {
+                // Opcional: cerrar al terminar
+                // setPlayingVideo(null);
+              }}
+            />
+            
+            {/* Botón cerrar */}
+            <button
+              onClick={() => setPlayingVideo(null)}
+              className="w-full px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition-all text-lg flex items-center justify-center gap-2"
+            >
+              <span>✕</span>
+              <span>Cerrar</span>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
