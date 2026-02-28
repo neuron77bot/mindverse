@@ -10,6 +10,7 @@ export interface StoryboardFrame {
   imageUrl?: string;
   imagePrompt?: string;
   videoUrl?: string;
+  movementPrompt?: string;
 }
 
 export interface LightboxImage {

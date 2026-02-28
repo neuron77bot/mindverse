@@ -23,6 +23,7 @@ export interface StoryboardFrame {
   scene: string;
   visualDescription: string;
   dialogue?: string;
+  movementPrompt?: string;
 }
 
 export interface AnalysisResult {
@@ -140,7 +141,8 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
       "frame": 1,
       "scene": "Descripción breve de la escena",
       "visualDescription": "Descripción detallada de lo que se ve en el frame (composición, ángulos, elementos visuales, iluminación, atmósfera).",
-      "dialogue": "Diálogo o texto opcional del frame"
+      "dialogue": "Diálogo o texto opcional del frame",
+      "movementPrompt": "Prompt de movimiento optimizado para Kling 2.5"
     }
   ]
 }
@@ -152,7 +154,16 @@ Características de tu storyboard:
 - Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
 - Crea una narrativa visual coherente y fluida
 - El diálogo es opcional, solo cuando enriquece la escena
-- Responde en español`;
+- Responde en español
+
+IMPORTANTE sobre movementPrompt:
+- Para cada frame, genera un prompt de movimiento optimizado para Kling 2.5
+- Describe movimientos sutiles y naturales (Kling 2.5 funciona mejor con estos)
+- Enfócate en: movimientos de cámara (zoom, pan, orbit), movimientos de personajes (looks, walks), elementos ambientales (wind, water)
+- Ejemplos buenos: "Camera slowly zooms in", "Gentle pan left, character turns head", "Wind moves trees, camera orbits subject"
+- EVITA movimientos bruscos: "fast zoom", "rapid pan", "shaky camera"
+- Mantén el prompt conciso (50-100 caracteres)
+- Escribe en inglés (Kling 2.5 funciona mejor con prompts en inglés)`;
 
   const userPrompt = `Crea un storyboard basado en la siguiente historia o idea:
 
@@ -194,6 +205,14 @@ Responde únicamente con el JSON, sin texto adicional.`;
         const parsed = JSON.parse(jsonMatch[0]);
         title = parsed.title || title;
         frames = parsed.frames || [];
+        
+        // ── Fallback: Generar movementPrompt si no viene del LLM ──
+        frames = frames.map(frame => {
+          if (!frame.movementPrompt && frame.visualDescription) {
+            frame.movementPrompt = generateFallbackMovementPrompt(frame.visualDescription);
+          }
+          return frame;
+        });
       } else {
         throw new Error('No se encontró JSON válido en la respuesta');
       }
@@ -233,7 +252,8 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
       "frame": 1,
       "scene": "Descripción breve de la escena",
       "visualDescription": "Descripción detallada de lo que se ve en el frame (composición, ángulos, elementos visuales, iluminación, atmósfera).",
-      "dialogue": "Diálogo o texto opcional del frame"
+      "dialogue": "Diálogo o texto opcional del frame",
+      "movementPrompt": "Prompt de movimiento optimizado para Kling 2.5"
     }
   ]
 }
@@ -245,7 +265,16 @@ Características de tu storyboard:
 - Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
 - Crea una narrativa visual coherente y fluida
 - El diálogo es opcional, solo cuando enriquece la escena
-- Responde en español`;
+- Responde en español
+
+IMPORTANTE sobre movementPrompt:
+- Para cada frame, genera un prompt de movimiento optimizado para Kling 2.5
+- Describe movimientos sutiles y naturales (Kling 2.5 funciona mejor con estos)
+- Enfócate en: movimientos de cámara (zoom, pan, orbit), movimientos de personajes (looks, walks), elementos ambientales (wind, water)
+- Ejemplos buenos: "Camera slowly zooms in", "Gentle pan left, character turns head", "Wind moves trees, camera orbits subject"
+- EVITA movimientos bruscos: "fast zoom", "rapid pan", "shaky camera"
+- Mantén el prompt conciso (50-100 caracteres)
+- Escribe en inglés (Kling 2.5 funciona mejor con prompts en inglés)`;
 
   const userPrompt = `Crea un storyboard basado en la siguiente historia o idea:
 
@@ -284,6 +313,14 @@ Responde en formato JSON.`;
         const parsed = JSON.parse(jsonMatch[0]);
         title = parsed.title || title;
         frames = parsed.frames || [];
+        
+        // ── Fallback: Generar movementPrompt si no viene del LLM ──
+        frames = frames.map(frame => {
+          if (!frame.movementPrompt && frame.visualDescription) {
+            frame.movementPrompt = generateFallbackMovementPrompt(frame.visualDescription);
+          }
+          return frame;
+        });
       } else {
         throw new Error('No se encontró JSON válido en la respuesta');
       }
@@ -304,6 +341,55 @@ Responde en formato JSON.`;
   } catch (error: any) {
     throw new Error(`Error en análisis con fal.ai: ${error.message}`);
   }
+}
+
+/**
+ * Genera un prompt de movimiento básico basado en la descripción visual
+ * Se usa como fallback si el LLM no genera el movementPrompt
+ */
+function generateFallbackMovementPrompt(visualDescription: string): string {
+  const desc = visualDescription.toLowerCase();
+  
+  // Detectar tipo de plano
+  if (desc.includes('close-up') || desc.includes('close up')) {
+    return 'Camera slowly pushes in, subtle expressions';
+  }
+  if (desc.includes('wide shot') || desc.includes('long shot')) {
+    return 'Slow pan across scene, gentle camera movement';
+  }
+  if (desc.includes('medium shot')) {
+    return 'Camera gently zooms in, character moves naturally';
+  }
+  
+  // Detectar elementos ambientales
+  if (desc.includes('wind') || desc.includes('breeze')) {
+    return 'Gentle breeze moves elements, camera steady';
+  }
+  if (desc.includes('water') || desc.includes('ocean') || desc.includes('sea')) {
+    return 'Waves flow naturally, slow pan across water';
+  }
+  if (desc.includes('smoke') || desc.includes('fog')) {
+    return 'Smoke drifts upward, camera tracks slowly';
+  }
+  
+  // Detectar escenas de acción/movimiento
+  if (desc.includes('walk') || desc.includes('run')) {
+    return 'Character moves forward, camera follows smoothly';
+  }
+  if (desc.includes('turn') || desc.includes('look')) {
+    return 'Character shifts gaze, camera holds steady';
+  }
+  
+  // Default genérico basado en atmósfera
+  if (desc.includes('dark') || desc.includes('night') || desc.includes('shadow')) {
+    return 'Slow dolly forward, shadows shift subtly';
+  }
+  if (desc.includes('bright') || desc.includes('sun') || desc.includes('light')) {
+    return 'Gentle camera orbit, light plays naturally';
+  }
+  
+  // Default universal
+  return 'Camera slowly zooms in';
 }
 
 /**

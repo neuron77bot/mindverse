@@ -55,7 +55,7 @@ export default function StoryboardFrameGrid({
           }
           updateFrame={updateFrame}
           activeTab={activeFrameTabs.get(frame.frame) || 'image'}
-          videoPrompt={videoPrompts.get(frame.frame) || frame.visualDescription || ''}
+          videoPrompt={videoPrompts.get(frame.frame) || frame.movementPrompt || frame.visualDescription || ''}
           setFrameTab={setFrameTab}
           setVideoPrompt={setVideoPrompt}
         />

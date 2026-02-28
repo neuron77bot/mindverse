@@ -18,7 +18,7 @@ export default function VideoGenerationModal({
   onClose,
   onGenerate,
 }: VideoGenerationModalProps) {
-  const [prompt, setPrompt] = useState(videoPrompt || selectedFrame.visualDescription || '');
+  const [prompt, setPrompt] = useState(videoPrompt || selectedFrame.movementPrompt || selectedFrame.visualDescription || '');
   const [duration, setDuration] = useState<number>(5);
 
   const isGenerating = generatingVideoFrame === selectedFrame.frame;
