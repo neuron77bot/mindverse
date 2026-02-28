@@ -23,6 +23,7 @@ export interface StoryboardFrame {
   scene: string;
   visualDescription: string;
   dialogue?: string;
+  movementPrompt?: string;
 }
 
 export interface AnalysisResult {
@@ -140,7 +141,8 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
       "frame": 1,
       "scene": "Descripción breve de la escena",
       "visualDescription": "Descripción detallada de lo que se ve en el frame (composición, ángulos, elementos visuales, iluminación, atmósfera).",
-      "dialogue": "Diálogo o texto opcional del frame"
+      "dialogue": "Diálogo o texto opcional del frame",
+      "movementPrompt": "Prompt de movimiento optimizado para Kling 2.5"
     }
   ]
 }
@@ -152,7 +154,16 @@ Características de tu storyboard:
 - Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
 - Crea una narrativa visual coherente y fluida
 - El diálogo es opcional, solo cuando enriquece la escena
-- Responde en español`;
+- Responde en español
+
+IMPORTANTE sobre movementPrompt:
+- Para cada frame, genera un prompt de movimiento optimizado para Kling 2.5
+- Describe movimientos sutiles y naturales (Kling 2.5 funciona mejor con estos)
+- Enfócate en: movimientos de cámara (zoom, pan, orbit), movimientos de personajes (looks, walks), elementos ambientales (wind, water)
+- Ejemplos buenos: "Camera slowly zooms in", "Gentle pan left, character turns head", "Wind moves trees, camera orbits subject"
+- EVITA movimientos bruscos: "fast zoom", "rapid pan", "shaky camera"
+- Mantén el prompt conciso (50-100 caracteres)
+- Escribe en inglés (Kling 2.5 funciona mejor con prompts en inglés)`;
 
   const userPrompt = `Crea un storyboard basado en la siguiente historia o idea:
 
@@ -233,7 +244,8 @@ Responde SIEMPRE en formato JSON válido con la siguiente estructura:
       "frame": 1,
       "scene": "Descripción breve de la escena",
       "visualDescription": "Descripción detallada de lo que se ve en el frame (composición, ángulos, elementos visuales, iluminación, atmósfera).",
-      "dialogue": "Diálogo o texto opcional del frame"
+      "dialogue": "Diálogo o texto opcional del frame",
+      "movementPrompt": "Prompt de movimiento optimizado para Kling 2.5"
     }
   ]
 }
@@ -245,7 +257,16 @@ Características de tu storyboard:
 - Piensa en composición, planos (close-up, wide shot, etc.), iluminación, atmósfera
 - Crea una narrativa visual coherente y fluida
 - El diálogo es opcional, solo cuando enriquece la escena
-- Responde en español`;
+- Responde en español
+
+IMPORTANTE sobre movementPrompt:
+- Para cada frame, genera un prompt de movimiento optimizado para Kling 2.5
+- Describe movimientos sutiles y naturales (Kling 2.5 funciona mejor con estos)
+- Enfócate en: movimientos de cámara (zoom, pan, orbit), movimientos de personajes (looks, walks), elementos ambientales (wind, water)
+- Ejemplos buenos: "Camera slowly zooms in", "Gentle pan left, character turns head", "Wind moves trees, camera orbits subject"
+- EVITA movimientos bruscos: "fast zoom", "rapid pan", "shaky camera"
+- Mantén el prompt conciso (50-100 caracteres)
+- Escribe en inglés (Kling 2.5 funciona mejor con prompts en inglés)`;
 
   const userPrompt = `Crea un storyboard basado en la siguiente historia o idea:
 
