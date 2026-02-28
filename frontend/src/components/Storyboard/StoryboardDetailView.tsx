@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { authHeadersOnly } from '../../services/authHeaders';
@@ -11,7 +11,7 @@ const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 type InputMode = 'voice' | 'text';
-type TabType = 'historia' | 'frames' | 'diagrama';
+type TabType = 'historia' | 'frames' | 'video' | 'diagrama';
 
 interface StoryboardFrame {
   frame: number;
@@ -19,6 +19,7 @@ interface StoryboardFrame {
   visualDescription: string;
   dialogue?: string;
   imageUrl?: string;
+  videoUrl?: string;
 }
 
 interface StoryboardDetail {
@@ -47,6 +48,8 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
   const [lightboxImage, setLightboxImage] = useState<{ url: string; title: string } | null>(null);
   const [showActionsMenu, setShowActionsMenu] = useState<boolean>(false);
   const [isTogglingCinema, setIsTogglingCinema] = useState<boolean>(false);
+  const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const loadStoryboard = async () => {
@@ -151,6 +154,9 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
   const inputMode = storyboard?.inputMode ?? 'text';
   const createdAt = storyboard?.createdAt;
 
+  // Filter frames with video
+  const framesWithVideo = frames.filter((f) => f.videoUrl);
+
   // Format date
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return null;
@@ -164,10 +170,31 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
     });
   };
 
+  // Video playback handlers
+  const handleVideoEnded = () => {
+    if (currentFrameIndex < framesWithVideo.length - 1) {
+      setCurrentFrameIndex((prev) => prev + 1);
+    } else {
+      // Loop back to the beginning
+      setCurrentFrameIndex(0);
+    }
+  };
+
+  // Load and play video when index changes
+  useEffect(() => {
+    if (videoRef.current && framesWithVideo[currentFrameIndex]) {
+      videoRef.current.load();
+      videoRef.current.play().catch(() => {
+        // Si autoplay falla (browser policy), el usuario da play manualmente
+      });
+    }
+  }, [currentFrameIndex, framesWithVideo]);
+
   // Tabs configuration
   const tabs: Array<{ id: TabType; label: string; icon: string; show: boolean }> = [
     { id: 'historia', label: 'Historia', icon: '📖', show: true },
     { id: 'frames', label: 'Frames', icon: '🎬', show: true },
+    { id: 'video', label: 'Video', icon: '🎞️', show: true },
     { id: 'diagrama', label: 'Diagrama', icon: '📊', show: !!storyboard?.mermaidDiagram },
   ];
 
@@ -530,6 +557,95 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                   frames={frames}
                   onImageClick={(url, title) => setLightboxImage({ url, title })}
                 />
+              )}
+            </div>
+          )}
+
+          {/* Video Tab */}
+          {activeTab === 'video' && (
+            <div className="max-w-4xl mx-auto">
+              {framesWithVideo.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
+                    <svg
+                      className="w-10 h-10 text-slate-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-slate-400 text-lg mb-2">No hay videos generados.</p>
+                  <p className="text-slate-500 text-sm">
+                    Ve al editor y genera videos para los frames.
+                  </p>
+                </div>
+              ) : (
+                <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+                  {/* Frame info */}
+                  <div className="mb-6 text-center">
+                    <h3 className="text-white font-semibold text-xl mb-1">
+                      Frame {framesWithVideo[currentFrameIndex]?.frame}:{' '}
+                      {framesWithVideo[currentFrameIndex]?.scene}
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {currentFrameIndex + 1} de {framesWithVideo.length} videos
+                    </p>
+                  </div>
+
+                  {/* Video player */}
+                  <video
+                    ref={videoRef}
+                    src={framesWithVideo[currentFrameIndex]?.videoUrl}
+                    onEnded={handleVideoEnded}
+                    controls
+                    className="w-full rounded-lg border-2 border-slate-700 shadow-lg"
+                  />
+
+                  {/* Controles de navegación */}
+                  <div className="flex items-center justify-center gap-4 mt-6">
+                    <button
+                      onClick={() => setCurrentFrameIndex((prev) => Math.max(0, prev - 1))}
+                      disabled={currentFrameIndex === 0}
+                      className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all shadow-lg"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      Anterior
+                    </button>
+                    <button
+                      onClick={() =>
+                        setCurrentFrameIndex((prev) =>
+                          Math.min(framesWithVideo.length - 1, prev + 1)
+                        )
+                      }
+                      disabled={currentFrameIndex === framesWithVideo.length - 1}
+                      className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all shadow-lg"
+                    >
+                      Siguiente
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </section>
               )}
             </div>
           )}
