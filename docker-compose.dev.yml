@@ -1,0 +1,28 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3002:3001"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - /root/.openclaw/whisper-models:/app/whisper-models:ro
+    depends_on:
+      mongo:
+        condition: service_started
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mindverse
+      MONGO_INITDB_ROOT_PASSWORD: mindverse
+      MONGO_INITDB_DATABASE: mindverse
+    volumes:
+      - mongo_data_dev:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data_dev:
