@@ -3,9 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { authHeaders, authHeadersOnly } from '../../../services/authHeaders';
 import { compressImages } from '../../../utils/imageCompression';
 import type {
-  RecordingState,
   InputMode,
-  EditorMode,
   StoryboardFrame,
   ImageMode,
   LightboxImage,
@@ -20,18 +18,13 @@ const readAsDataURL = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-export function useStoryboardEditor(mode: EditorMode) {
+export function useStoryboardEditor() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const isEditMode = mode === 'edit';
 
-  const [inputMode, setInputMode] = useState<InputMode>('voice');
-  const [recordingState, setRecordingState] = useState<RecordingState>('idle');
-  const [transcription, setTranscription] = useState('');
-  const [textInput, setTextInput] = useState('');
-  const [duration, setDuration] = useState(0);
+  const [inputMode, setInputMode] = useState<InputMode>('text');
+  const [originalText, setOriginalText] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [storyboard, setStoryboard] = useState<StoryboardFrame[] | null>(null);
   const [mermaidDiagram, setMermaidDiagram] = useState<string | null>(null);
   const [frameImages, setFrameImages] = useState<Map<number, string>>(new Map());
@@ -61,17 +54,13 @@ export function useStoryboardEditor(mode: EditorMode) {
   const [availableStyleTags, setAvailableStyleTags] = useState<any[]>([]);
   const [selectedStyleTagIds, setSelectedStyleTagIds] = useState<string[]>([]);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<number>(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (isEditMode && id) {
+    if (id) {
       loadStoryboard(id);
     }
-  }, [id, isEditMode]);
+  }, [id]);
 
   // ── API calls ──────────────────────────────────────────────────────────
 
@@ -91,8 +80,7 @@ export function useStoryboardEditor(mode: EditorMode) {
 
       setStoryboardTitle(sb.title || '');
       setInputMode(sb.inputMode || 'text');
-      setTranscription(sb.inputMode === 'voice' ? sb.originalText : '');
-      setTextInput(sb.inputMode === 'text' ? sb.originalText : '');
+      setOriginalText(sb.originalText || '');
       setStoryboard(sb.frames || []);
       setMermaidDiagram(sb.mermaidDiagram || null);
       setAllowCinema(sb.allowCinema || false);
@@ -111,35 +99,8 @@ export function useStoryboardEditor(mode: EditorMode) {
     }
   };
 
-  const analyzeWithAI = async () => {
-    const textToAnalyze = inputMode === 'voice' ? transcription : textInput;
-    if (!textToAnalyze.trim()) return;
-
-    setIsAnalyzing(true);
-    setError(null);
-    try {
-      const res = await fetch(`${API_BASE}/transcription/analyze`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ text: textToAnalyze }),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Error en análisis');
-      }
-      const data = await res.json();
-      setStoryboard(data.frames || []);
-      setMermaidDiagram(data.mermaid || null);
-      setStoryboardTitle(data.title || 'Storyboard sin título');
-    } catch (err: any) {
-      setError('Error al analizar: ' + err.message);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
   const saveStoryboard = async () => {
-    if (!storyboard || storyboard.length === 0) return;
+    if (!storyboard || storyboard.length === 0 || !id) return;
 
     setIsSaving(true);
     setError(null);
@@ -149,144 +110,30 @@ export function useStoryboardEditor(mode: EditorMode) {
         imageUrl: frameImages.get(frame.frame) || frame.imageUrl || undefined,
       }));
 
-      const url = isEditMode && id ? `${API_BASE}/storyboards/${id}` : `${API_BASE}/storyboards`;
-      const method = isEditMode && id ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(`${API_BASE}/storyboards/${id}`, {
+        method: 'PATCH',
         headers: authHeaders(),
         body: JSON.stringify({
           title: storyboardTitle,
-          originalText: inputMode === 'voice' ? transcription : textInput,
+          originalText,
           inputMode,
           frames: framesWithImages,
           mermaidDiagram,
+          allowCinema,
         }),
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || 'Error guardando storyboard');
       }
-      const responseData = await res.json();
 
-      // Redirigir al detalle del storyboard (tanto en modo creación como edición)
-      const storyboardId = isEditMode && id ? id : responseData.storyboard?._id;
-      if (storyboardId) {
-        navigate(`/storyboard/detail/${storyboardId}`);
-      } else {
-        navigate('/storyboards');
-      }
+      // Redirigir al detalle del storyboard
+      navigate(`/storyboard/detail/${id}`);
     } catch (err: any) {
       setError('Error al guardar storyboard: ' + err.message);
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // ── Recording ──────────────────────────────────────────────────────────
-
-  const processRecording = async () => {
-    try {
-      const blob = new Blob(chunksRef.current, { type: 'audio/webm;codecs=opus' });
-      const formData = new FormData();
-      formData.append('file', blob, 'recording.webm');
-
-      const res = await fetch(`${API_BASE}/transcription`, {
-        method: 'POST',
-        headers: authHeadersOnly(),
-        body: formData,
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Error en transcripción');
-      }
-      const data = await res.json();
-      setTranscription(data.text || '');
-      setRecordingState('idle');
-    } catch (err: any) {
-      setError('Error al transcribir: ' + err.message);
-      setRecordingState('idle');
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      setError(null);
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error(
-          'Tu navegador no soporta grabación de audio. Necesitas usar HTTPS o un navegador compatible.'
-        );
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-      timerRef.current = 0;
-      setDuration(0);
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
-      };
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach((track) => track.stop());
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        await processRecording();
-      };
-
-      mediaRecorder.start();
-      setRecordingState('recording');
-      intervalRef.current = setInterval(() => {
-        timerRef.current += 1;
-        setDuration(timerRef.current);
-      }, 1000);
-    } catch (err: any) {
-      setError('Error al acceder al micrófono: ' + err.message);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      setRecordingState('processing');
-    }
-  };
-
-  const pauseRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.pause();
-      setRecordingState('paused');
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-  };
-
-  const resumeRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
-      mediaRecorderRef.current.resume();
-      setRecordingState('recording');
-      intervalRef.current = setInterval(() => {
-        timerRef.current += 1;
-        setDuration(timerRef.current);
-      }, 1000);
-    }
-  };
-
-  const newRecording = () => {
-    setTranscription('');
-    setTextInput('');
-    setDuration(0);
-    setError(null);
-    setStoryboard(null);
-    setMermaidDiagram(null);
-    setFrameImages(new Map());
-    chunksRef.current = [];
-    timerRef.current = 0;
   };
 
   // ── Image modal ────────────────────────────────────────────────────────
@@ -512,41 +359,13 @@ export function useStoryboardEditor(mode: EditorMode) {
     }
   };
 
-  // ── Misc ───────────────────────────────────────────────────────────────
-
-  const handleModeChange = (newMode: InputMode) => {
-    if (recordingState !== 'idle') return;
-    setInputMode(newMode);
-    setError(null);
-    setStoryboard(null);
-    setMermaidDiagram(null);
-    setFrameImages(new Map());
-    setStoryboardTitle('');
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const isSecureContext = window.isSecureContext;
-  const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  const hasContent = inputMode === 'voice' ? transcription : textInput;
-
   return {
     navigate,
     id,
-    isEditMode,
 
     inputMode,
-    recordingState,
-    transcription,
-    textInput,
-    setTextInput,
-    duration,
+    originalText,
     error,
-    isAnalyzing,
     storyboard,
     setStoryboard,
     mermaidDiagram,
@@ -588,18 +407,6 @@ export function useStoryboardEditor(mode: EditorMode) {
 
     fileInputRef,
 
-    isSecureContext,
-    hasMediaDevices,
-    hasContent,
-    formatDuration,
-
-    handleModeChange,
-    startRecording,
-    stopRecording,
-    pauseRecording,
-    resumeRecording,
-    newRecording,
-    analyzeWithAI,
     saveStoryboard,
 
     openImageModal,
