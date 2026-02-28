@@ -63,6 +63,10 @@ export function useStoryboardEditor() {
   const [availableStyleTags, setAvailableStyleTags] = useState<any[]>([]);
   const [selectedStyleTagIds, setSelectedStyleTagIds] = useState<string[]>([]);
 
+  // Frame tabs state (Imagen/Video tabs per frame)
+  const [activeFrameTabs, setActiveFrameTabs] = useState<Map<number, 'image' | 'video'>>(new Map());
+  const [videoPrompts, setVideoPrompts] = useState<Map<number, string>>(new Map());
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -408,6 +412,18 @@ export function useStoryboardEditor() {
     );
   };
 
+  const setFrameTab = (frameNumber: number, tab: 'image' | 'video') => {
+    const newTabs = new Map(activeFrameTabs);
+    newTabs.set(frameNumber, tab);
+    setActiveFrameTabs(newTabs);
+  };
+
+  const setVideoPrompt = (frameNumber: number, prompt: string) => {
+    const newPrompts = new Map(videoPrompts);
+    newPrompts.set(frameNumber, prompt);
+    setVideoPrompts(newPrompts);
+  };
+
   // ── Video generation ────────────────────────────────────────────────────
 
   const openVideoModal = (frame: StoryboardFrame) => {
@@ -526,10 +542,15 @@ export function useStoryboardEditor() {
     isVideoModalOpen,
     selectedFrameForVideo,
 
+    activeFrameTabs,
+    videoPrompts,
+
     fileInputRef,
 
     saveStoryboard,
     updateFrame,
+    setFrameTab,
+    setVideoPrompt,
 
     openImageModal,
     closeImageModal,

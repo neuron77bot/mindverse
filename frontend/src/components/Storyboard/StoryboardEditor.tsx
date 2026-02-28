@@ -234,6 +234,10 @@ export default function StoryboardEditor() {
                 openVideoModal={editor.openVideoModal}
                 setLightboxImage={editor.setLightboxImage}
                 updateFrame={editor.updateFrame}
+                activeFrameTabs={editor.activeFrameTabs}
+                videoPrompts={editor.videoPrompts}
+                setFrameTab={editor.setFrameTab}
+                setVideoPrompt={editor.setVideoPrompt}
               />
             </div>
           )}
@@ -320,6 +324,7 @@ export default function StoryboardEditor() {
           selectedFrame={editor.selectedFrameForVideo}
           imageUrl={editor.frameImages.get(editor.selectedFrameForVideo.frame) || ''}
           generatingVideoFrame={editor.generatingVideoFrame}
+          videoPrompt={editor.videoPrompts.get(editor.selectedFrameForVideo.frame)}
           onClose={editor.closeVideoModal}
           onGenerate={editor.generateFrameVideo}
         />
