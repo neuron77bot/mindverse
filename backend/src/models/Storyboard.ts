@@ -7,6 +7,7 @@ export interface IFrame {
   dialogue?: string;
   imageUrl?: string;
   imagePrompt?: string;
+  videoUrl?: string;
   generatedAt?: Date;
 }
 
@@ -32,6 +33,7 @@ const FrameSchema = new Schema<IFrame>(
     dialogue: { type: String },
     imageUrl: { type: String },
     imagePrompt: { type: String },
+    videoUrl: { type: String },
     generatedAt: { type: Date },
   },
   { _id: false }

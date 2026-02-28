@@ -6,6 +6,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { fal } from '@fal-ai/client';
 import { imageRoutes } from './routes/images';
+import { videoRoutes } from './routes/videos';
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { transcriptionRoutes } from './routes/transcription';
@@ -61,6 +62,7 @@ async function main() {
         { name: 'auth', description: 'Autenticación con Google OAuth' },
         { name: 'users', description: 'CRUD de perfiles de usuario' },
         { name: 'images', description: 'Generación de imágenes con IA (fal.ai)' },
+        { name: 'videos', description: 'Generación de videos con Kling AI (fal.ai)' },
         { name: 'gallery', description: 'Galería personal de imágenes de referencia' },
         { name: 'transcription', description: 'Transcripción de audio con Whisper' },
         { name: 'storyboards', description: 'CRUD de storyboards generados' },
@@ -87,6 +89,9 @@ async function main() {
 
   // Rutas de imágenes
   await app.register(imageRoutes, { prefix: '/images' });
+
+  // Rutas de videos
+  await app.register(videoRoutes, { prefix: '/videos' });
 
   // Rutas de galería
   await app.register(galleryRoutes, { prefix: '/gallery' });

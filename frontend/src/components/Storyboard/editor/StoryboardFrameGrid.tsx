@@ -4,9 +4,12 @@ import type { StoryboardFrame, LightboxImage } from './types';
 interface StoryboardFrameGridProps {
   storyboard: StoryboardFrame[];
   frameImages: Map<number, string>;
+  frameVideos: Map<number, string>;
   generatingFrame: number | null;
+  generatingVideoFrame: number | null;
   isEditMode: boolean;
   openImageModal: (frame: StoryboardFrame) => void;
+  openVideoModal: (frame: StoryboardFrame) => void;
   setLightboxImage: (img: LightboxImage | null) => void;
   updateFrame: (frameNumber: number, updates: Partial<StoryboardFrame>) => void;
 }
@@ -14,9 +17,12 @@ interface StoryboardFrameGridProps {
 export default function StoryboardFrameGrid({
   storyboard,
   frameImages,
+  frameVideos,
   generatingFrame,
+  generatingVideoFrame,
   isEditMode,
   openImageModal,
+  openVideoModal,
   setLightboxImage,
   updateFrame,
 }: StoryboardFrameGridProps) {
@@ -27,9 +33,12 @@ export default function StoryboardFrameGrid({
           key={frame.frame}
           frame={frame}
           imageUrl={frameImages.get(frame.frame)}
+          videoUrl={frameVideos.get(frame.frame)}
           isGenerating={generatingFrame === frame.frame}
+          isGeneratingVideo={generatingVideoFrame === frame.frame}
           isEditMode={isEditMode}
           onGenerateImage={() => openImageModal(frame)}
+          onGenerateVideo={() => openVideoModal(frame)}
           onViewImage={() =>
             setLightboxImage({
               url: frameImages.get(frame.frame)!,
@@ -46,9 +55,12 @@ export default function StoryboardFrameGrid({
 interface FrameCardProps {
   frame: StoryboardFrame;
   imageUrl: string | undefined;
+  videoUrl: string | undefined;
   isGenerating: boolean;
+  isGeneratingVideo: boolean;
   isEditMode: boolean;
   onGenerateImage: () => void;
+  onGenerateVideo: () => void;
   onViewImage: () => void;
   updateFrame: (frameNumber: number, updates: Partial<StoryboardFrame>) => void;
 }
@@ -56,9 +68,12 @@ interface FrameCardProps {
 function FrameCard({
   frame,
   imageUrl,
+  videoUrl,
   isGenerating,
+  isGeneratingVideo,
   isEditMode,
   onGenerateImage,
+  onGenerateVideo,
   onViewImage,
   updateFrame,
 }: FrameCardProps) {
@@ -209,24 +224,88 @@ function FrameCard({
               </div>
             </div>
             {isEditMode && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGenerateImage();
-                }}
-                disabled={isGenerating}
-                className="mt-3 w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Regenerar Imagen
-              </button>
+              <div className="mt-3 space-y-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onGenerateImage();
+                  }}
+                  disabled={isGenerating}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Regenerar Imagen
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onGenerateVideo();
+                  }}
+                  disabled={isGeneratingVideo}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-lg font-semibold text-sm transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isGeneratingVideo ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      🎬 Generar Video
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+            {videoUrl && (
+              <div className="mt-3">
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full rounded-lg border-2 border-slate-700"
+                />
+                <a
+                  href={videoUrl}
+                  download={`frame-${frame.frame}-video.mp4`}
+                  className="mt-2 w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
+                  </svg>
+                  Descargar Video
+                </a>
+              </div>
             )}
           </>
         ) : (
