@@ -1,5 +1,5 @@
-import StoryboardEditor from '../components/Storyboard/StoryboardEditor';
+import StoryboardCreator from '../components/Storyboard/StoryboardCreator';
 
 export default function StoryboardCreatePage() {
-  return <StoryboardEditor mode="create" />;
+  return <StoryboardCreator />;
 }
