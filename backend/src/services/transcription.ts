@@ -207,9 +207,14 @@ Responde únicamente con el JSON, sin texto adicional.`;
         frames = parsed.frames || [];
         
         // ── Fallback: Generar movementPrompt si no viene del LLM ──
+        console.log('[GEMINI] Frames recibidos:', frames.length);
         frames = frames.map(frame => {
           if (!frame.movementPrompt && frame.visualDescription) {
-            frame.movementPrompt = generateFallbackMovementPrompt(frame.visualDescription);
+            const generated = generateFallbackMovementPrompt(frame.visualDescription);
+            console.log(`[GEMINI] Generando fallback para frame ${frame.frame}: "${generated}"`);
+            frame.movementPrompt = generated;
+          } else if (frame.movementPrompt) {
+            console.log(`[GEMINI] Frame ${frame.frame} ya tiene movementPrompt del LLM: "${frame.movementPrompt}"`);
           }
           return frame;
         });
@@ -315,9 +320,14 @@ Responde en formato JSON.`;
         frames = parsed.frames || [];
         
         // ── Fallback: Generar movementPrompt si no viene del LLM ──
+        console.log('[FAL] Frames recibidos:', frames.length);
         frames = frames.map(frame => {
           if (!frame.movementPrompt && frame.visualDescription) {
-            frame.movementPrompt = generateFallbackMovementPrompt(frame.visualDescription);
+            const generated = generateFallbackMovementPrompt(frame.visualDescription);
+            console.log(`[FAL] Generando fallback para frame ${frame.frame}: "${generated}"`);
+            frame.movementPrompt = generated;
+          } else if (frame.movementPrompt) {
+            console.log(`[FAL] Frame ${frame.frame} ya tiene movementPrompt del LLM: "${frame.movementPrompt}"`);
           }
           return frame;
         });
