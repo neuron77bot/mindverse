@@ -30,6 +30,7 @@ interface StoryboardDetail {
   mermaidDiagram?: string | null;
   createdAt?: string;
   allowCinema?: boolean;
+  compiledVideoUrl?: string;
 }
 
 interface StoryboardDetailViewProps {
@@ -563,7 +564,44 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
 
           {/* Video Tab */}
           {activeTab === 'video' && (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* Video Compilado Preview */}
+              {storyboard.compiledVideoUrl && (
+                <section className="p-8 bg-gradient-to-br from-green-900/20 to-emerald-900/20 backdrop-blur rounded-2xl border border-green-700/50 shadow-2xl">
+                  <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-white font-bold text-xl">Video Compilado</h3>
+                        <p className="text-green-400 text-sm">Todos los frames en un solo video</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <video
+                    src={storyboard.compiledVideoUrl}
+                    controls
+                    className="w-full rounded-lg border-2 border-green-700 shadow-2xl mb-4"
+                  />
+                  
+                  <a
+                    href={storyboard.compiledVideoUrl}
+                    download={`${storyboard.title || 'storyboard'}-compilado.mp4`}
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold transition-all shadow-lg"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Descargar Video Compilado
+                  </a>
+                </section>
+              )}
+
+              {/* Videos por Frame */}
               {framesWithVideo.length === 0 ? (
                 <div className="text-center py-20">
                   <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
@@ -588,6 +626,21 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                 </div>
               ) : (
                 <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+                  {/* Header */}
+                  {storyboard.compiledVideoUrl && (
+                    <div className="mb-6 pb-6 border-b border-slate-700">
+                      <h3 className="text-white font-semibold text-lg flex items-center gap-2">
+                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Videos por Frame
+                      </h3>
+                      <p className="text-slate-400 text-sm mt-1">
+                        Explora los videos individuales de cada frame
+                      </p>
+                    </div>
+                  )}
+
                   {/* Frame info */}
                   <div className="mb-6 text-center">
                     <h3 className="text-white font-semibold text-xl mb-1">

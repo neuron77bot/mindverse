@@ -5,14 +5,26 @@ interface StoryboardCardProps {
     thumbnailUrl: string | null;
     frameCount: number;
     duration: string;
+    compiledVideoUrl?: string;
   };
   onClick: () => void;
+  onPlayVideo?: (videoUrl: string) => void;
 }
 
-export default function StoryboardCard({ storyboard, onClick }: StoryboardCardProps) {
+export default function StoryboardCard({ storyboard, onClick, onPlayVideo }: StoryboardCardProps) {
+  const handleClick = () => {
+    // Si hay video compilado y tenemos handler, reproducir video
+    if (storyboard.compiledVideoUrl && onPlayVideo) {
+      onPlayVideo(storyboard.compiledVideoUrl);
+    } else {
+      // Si no, comportamiento normal (abrir modal de storyboard)
+      onClick();
+    }
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className="group relative flex-shrink-0 w-64 cursor-pointer transition-all duration-300 hover:scale-105 select-none"
     >
       {/* Thumbnail */}
@@ -37,15 +49,39 @@ export default function StoryboardCard({ storyboard, onClick }: StoryboardCardPr
           </div>
         )}
 
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-          <p className="text-white text-sm font-medium mb-1">{storyboard.title}</p>
-          <div className="flex items-center gap-2 text-slate-300 text-xs">
-            <span>{storyboard.frameCount} frames</span>
-            <span>•</span>
-            <span>{storyboard.duration}</span>
+        {/* Overlay con Play si hay video compilado */}
+        {storyboard.compiledVideoUrl && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-all">
+            {/* Botón Play */}
+            <button className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 group-hover:scale-110 transition-all">
+              <svg 
+                className="w-8 h-8 text-white ml-1" 
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+            
+            {/* Badge indicador */}
+            <div className="absolute top-2 right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+              <span>🎬</span>
+              <span>VIDEO</span>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Overlay on hover (solo si NO hay video compilado) */}
+        {!storyboard.compiledVideoUrl && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+            <p className="text-white text-sm font-medium mb-1">{storyboard.title}</p>
+            <div className="flex items-center gap-2 text-slate-300 text-xs">
+              <span>{storyboard.frameCount} frames</span>
+              <span>•</span>
+              <span>{storyboard.duration}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Title below (visible on desktop) */}

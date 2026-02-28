@@ -21,13 +21,26 @@ export default function StoryboardEditor() {
   const [isEditingOriginalText, setIsEditingOriginalText] = useState(false);
   const originalTextRef = useRef<HTMLTextAreaElement>(null);
 
-  // Video tab state
-  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   // Video compilation state
   const [isCompiling, setIsCompiling] = useState(false);
   const [compiledVideoUrl, setCompiledVideoUrl] = useState<string | null>(null);
+
+  // Cargar compiledVideoUrl desde el storyboard cuando se carga
+  useEffect(() => {
+    if (editor.id && !compiledVideoUrl) {
+      // Cargar storyboard completo para obtener compiledVideoUrl
+      fetch(`${API_BASE}/storyboards/${editor.id}`, {
+        headers: authHeaders(),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.storyboard?.compiledVideoUrl) {
+            setCompiledVideoUrl(data.storyboard.compiledVideoUrl);
+          }
+        })
+        .catch((err) => console.error('Error cargando compiledVideoUrl:', err));
+    }
+  }, [editor.id, compiledVideoUrl]);
 
   useEffect(() => {
     if (isEditingOriginalText && originalTextRef.current) {
@@ -38,16 +51,6 @@ export default function StoryboardEditor() {
 
   const hasStoryboard = editor.storyboard && editor.storyboard.length > 0;
   const framesWithVideo = editor.storyboard?.filter((f) => f.videoUrl) || [];
-
-  // Handle video ended - go to next video
-  const handleVideoEnded = () => {
-    if (currentFrameIndex < framesWithVideo.length - 1) {
-      setCurrentFrameIndex((prev) => prev + 1);
-    } else {
-      // Loop back to start
-      setCurrentFrameIndex(0);
-    }
-  };
 
   // Check if all frames have video
   const allFramesHaveVideo = editor.storyboard?.every((f) => f.videoUrl) || false;
@@ -84,16 +87,6 @@ export default function StoryboardEditor() {
       setIsCompiling(false);
     }
   };
-
-  // Load and play video when currentFrameIndex changes
-  useEffect(() => {
-    if (videoRef.current && framesWithVideo[currentFrameIndex]) {
-      videoRef.current.load();
-      videoRef.current.play().catch(() => {
-        // Autoplay blocked by browser, user will need to click play
-      });
-    }
-  }, [currentFrameIndex, framesWithVideo]);
 
   const tabs: Array<{ id: EditorTabType; label: string; icon: string; show: boolean }> = [
     { id: 'historia', label: 'Historia', icon: '📖', show: true },
@@ -315,11 +308,99 @@ export default function StoryboardEditor() {
           {/* ── Video Tab ── */}
           {activeTab === 'video' && (
             <div className="max-w-4xl mx-auto">
-              {framesWithVideo.length === 0 ? (
-                <div className="text-center py-20">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
+              <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
+                {/* Header */}
+                <div className="mb-8 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Video Compilado</h2>
+                  <p className="text-slate-400">
+                    {allFramesHaveVideo
+                      ? compiledVideoUrl
+                        ? 'Video compilado disponible'
+                        : 'Genera el video compilado de todos los frames'
+                      : `${framesWithVideo.length} de ${editor.storyboard?.length || 0} frames tienen video`}
+                  </p>
+                </div>
+
+                {/* Preview del video compilado si existe */}
+                {compiledVideoUrl ? (
+                  <div className="mb-6">
+                    <video
+                      src={compiledVideoUrl}
+                      controls
+                      className="w-full rounded-lg border-2 border-green-700 shadow-2xl mb-4"
+                    />
+                    <div className="flex gap-3">
+                      <a
+                        href={compiledVideoUrl}
+                        download="storyboard-compilado.mp4"
+                        className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white text-center rounded-lg font-semibold transition-all shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Descargar Video
+                      </a>
+                      <button
+                        onClick={() => {
+                          setCompiledVideoUrl(null);
+                          toast.info('Video compilado removido de la vista');
+                        }}
+                        className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition-all"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Botón de compilar (solo si todos los frames tienen video) */}
+                {allFramesHaveVideo ? (
+                  <div className={compiledVideoUrl ? 'border-t border-slate-700 pt-6' : ''}>
+                    <button
+                      onClick={handleCompileVideos}
+                      disabled={isCompiling}
+                      className="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-lg shadow-xl transition-all flex items-center justify-center gap-3"
+                    >
+                      {isCompiling ? (
+                        <>
+                          <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          Compilando videos...
+                        </>
+                      ) : compiledVideoUrl ? (
+                        <>🔄 Regenerar Video Compilado</>
+                      ) : (
+                        <>🎬 Generar Video Compilado</>
+                      )}
+                    </button>
+                    <p className="text-slate-400 text-sm mt-2 text-center">
+                      {compiledVideoUrl
+                        ? 'Regenera el video con los frames actuales'
+                        : 'Combina todos los videos en un único archivo MP4'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 px-6 bg-slate-800/50 rounded-lg border border-slate-700">
                     <svg
-                      className="w-10 h-10 text-slate-500"
+                      className="w-12 h-12 mx-auto mb-4 text-slate-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -331,135 +412,15 @@ export default function StoryboardEditor() {
                         d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
                       />
                     </svg>
-                  </div>
-                  <p className="text-slate-400 text-lg mb-2">No hay videos generados.</p>
-                  <p className="text-slate-500 text-sm">
-                    Genera videos para los frames en el tab Frames.
-                  </p>
-                </div>
-              ) : (
-                <section className="p-8 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 shadow-2xl">
-                  {/* Frame info */}
-                  <div className="mb-6 text-center">
-                    <h3 className="text-white font-semibold text-xl mb-1">
-                      Frame {framesWithVideo[currentFrameIndex]?.frame}:{' '}
-                      {framesWithVideo[currentFrameIndex]?.scene}
-                    </h3>
-                    <p className="text-sm text-slate-500">
-                      {currentFrameIndex + 1} de {framesWithVideo.length} videos
+                    <p className="text-slate-400 text-lg mb-2">
+                      Faltan videos por generar
+                    </p>
+                    <p className="text-slate-500 text-sm">
+                      Genera videos para todos los frames en el tab Frames antes de compilar.
                     </p>
                   </div>
-
-                  {/* Video player */}
-                  <video
-                    ref={videoRef}
-                    src={framesWithVideo[currentFrameIndex]?.videoUrl}
-                    onEnded={handleVideoEnded}
-                    controls
-                    className="w-full rounded-lg border-2 border-slate-700 shadow-lg"
-                  />
-
-                  {/* Controles de navegación */}
-                  <div className="flex items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={() => setCurrentFrameIndex((prev) => Math.max(0, prev - 1))}
-                      disabled={currentFrameIndex === 0}
-                      className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all shadow-lg"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
-                      Anterior
-                    </button>
-                    <button
-                      onClick={() =>
-                        setCurrentFrameIndex((prev) =>
-                          Math.min(framesWithVideo.length - 1, prev + 1)
-                        )
-                      }
-                      disabled={currentFrameIndex === framesWithVideo.length - 1}
-                      className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all shadow-lg"
-                    >
-                      Siguiente
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Compilación de videos */}
-                  {allFramesHaveVideo && (
-                    <div className="mt-8 border-t border-slate-700 pt-6">
-                      <button
-                        onClick={handleCompileVideos}
-                        disabled={isCompiling}
-                        className="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-lg shadow-xl transition-all flex items-center justify-center gap-3"
-                      >
-                        {isCompiling ? (
-                          <>
-                            <svg
-                              className="w-6 h-6 animate-spin"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              />
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              />
-                            </svg>
-                            Compilando videos...
-                          </>
-                        ) : (
-                          <>🎬 Generar Video Compilado</>
-                        )}
-                      </button>
-                      <p className="text-slate-400 text-sm mt-2 text-center">
-                        Combinar todos los videos en un único archivo MP4
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Video compilado */}
-                  {compiledVideoUrl && (
-                    <div className="mt-6 p-6 bg-green-900/20 border border-green-700 rounded-lg">
-                      <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
-                        <span>✅</span> Video Compilado Listo
-                      </h4>
-                      <video
-                        src={compiledVideoUrl}
-                        controls
-                        className="w-full rounded-lg border-2 border-green-700 mb-4"
-                      />
-                      <a
-                        href={compiledVideoUrl}
-                        download="storyboard-compilado.mp4"
-                        className="block w-full py-3 bg-green-600 hover:bg-green-500 text-white text-center rounded-lg font-semibold transition-all"
-                      >
-                        📥 Descargar Video Compilado
-                      </a>
-                    </div>
-                  )}
-                </section>
-              )}
+                )}
+              </section>
             </div>
           )}
 

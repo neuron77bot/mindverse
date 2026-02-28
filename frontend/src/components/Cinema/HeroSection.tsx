@@ -18,18 +18,28 @@ interface Storyboard {
   duration: string;
   createdAt: string;
   frames: Frame[];
+  compiledVideoUrl?: string;
 }
 
 interface HeroSectionProps {
   storyboard: Storyboard;
   onViewClick: () => void;
+  onPlayVideo?: (videoUrl: string) => void;
 }
 
-export default function HeroSection({ storyboard, onViewClick }: HeroSectionProps) {
+export default function HeroSection({ storyboard, onViewClick, onPlayVideo }: HeroSectionProps) {
   // Future: Auto-rotate through frames carousel
   useEffect(() => {
     // Placeholder for future carousel implementation
   }, []);
+
+  const handleClick = () => {
+    if (storyboard.compiledVideoUrl && onPlayVideo) {
+      onPlayVideo(storyboard.compiledVideoUrl);
+    } else {
+      onViewClick();
+    }
+  };
 
   return (
     <div className="relative h-[70vh] sm:h-[80vh] mb-8 overflow-hidden">
@@ -90,7 +100,7 @@ export default function HeroSection({ storyboard, onViewClick }: HeroSectionProp
           </div>
 
           <button
-            onClick={onViewClick}
+            onClick={handleClick}
             className="mt-6 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +117,7 @@ export default function HeroSection({ storyboard, onViewClick }: HeroSectionProp
                 d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            Ver Storyboard
+            {storyboard.compiledVideoUrl ? 'Ver Video' : 'Ver Storyboard'}
           </button>
         </div>
       </div>
