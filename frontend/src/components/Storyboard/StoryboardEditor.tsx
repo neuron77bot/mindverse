@@ -196,6 +196,7 @@ export default function StoryboardEditor() {
                 isEditMode={true}
                 openImageModal={editor.openImageModal}
                 setLightboxImage={editor.setLightboxImage}
+                updateFrame={editor.updateFrame}
               />
             </div>
           )}

@@ -7,6 +7,7 @@ interface StoryboardFrameGridProps {
   isEditMode: boolean;
   openImageModal: (frame: StoryboardFrame) => void;
   setLightboxImage: (img: LightboxImage | null) => void;
+  updateFrame: (frameNumber: number, updates: Partial<StoryboardFrame>) => void;
 }
 
 export default function StoryboardFrameGrid({
@@ -16,6 +17,7 @@ export default function StoryboardFrameGrid({
   isEditMode,
   openImageModal,
   setLightboxImage,
+  updateFrame,
 }: StoryboardFrameGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -33,6 +35,7 @@ export default function StoryboardFrameGrid({
               title: `Frame #${frame.frame}: ${frame.scene}`,
             })
           }
+          updateFrame={updateFrame}
         />
       ))}
     </div>
@@ -46,6 +49,7 @@ interface FrameCardProps {
   isEditMode: boolean;
   onGenerateImage: () => void;
   onViewImage: () => void;
+  updateFrame: (frameNumber: number, updates: Partial<StoryboardFrame>) => void;
 }
 
 function FrameCard({
@@ -55,6 +59,7 @@ function FrameCard({
   isEditMode,
   onGenerateImage,
   onViewImage,
+  updateFrame,
 }: FrameCardProps) {
   return (
     <div className="group bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 overflow-hidden hover:border-indigo-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1">
@@ -63,28 +68,41 @@ function FrameCard({
         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg">
           #{frame.frame}
         </div>
-        <h4 className="text-white font-semibold flex-1 group-hover:text-indigo-300 transition-colors">
-          {frame.scene}
-        </h4>
+        <div className="flex-1">
+          <label className="block text-slate-400 text-xs mb-1">Escena/Título</label>
+          <input
+            type="text"
+            value={frame.scene}
+            onChange={(e) => updateFrame(frame.frame, { scene: e.target.value })}
+            className="w-full px-2 py-1 bg-slate-800 text-white rounded border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all text-sm font-semibold"
+            placeholder="Título de la escena"
+          />
+        </div>
       </div>
 
       {/* Content */}
       <div className="p-4 space-y-3">
         <div>
-          <h5 className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">
-            Descripción Visual
-          </h5>
-          <p className="text-slate-300 text-sm leading-relaxed">{frame.visualDescription}</p>
+          <label className="block text-sm text-slate-400 mb-2">Descripción Visual</label>
+          <textarea
+            value={frame.visualDescription}
+            onChange={(e) => updateFrame(frame.frame, { visualDescription: e.target.value })}
+            rows={4}
+            className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm leading-relaxed"
+            placeholder="Descripción visual del frame para generar imagen..."
+          />
         </div>
 
-        {frame.dialogue && (
-          <div className="pt-2 border-t border-slate-700/50">
-            <h5 className="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wide">
-              Diálogo
-            </h5>
-            <p className="text-slate-200 text-sm italic">"{frame.dialogue}"</p>
-          </div>
-        )}
+        <div className="pt-2 border-t border-slate-700/50">
+          <label className="block text-sm text-slate-400 mb-2">Diálogo (opcional)</label>
+          <textarea
+            value={frame.dialogue || ''}
+            onChange={(e) => updateFrame(frame.frame, { dialogue: e.target.value })}
+            rows={2}
+            className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm italic"
+            placeholder="Diálogo del personaje (opcional)..."
+          />
+        </div>
 
         {imageUrl ? (
           <>
