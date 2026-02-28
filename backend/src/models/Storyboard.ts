@@ -10,6 +10,11 @@ export interface IFrame {
   generatedAt?: Date;
 }
 
+export interface IDefaultConfig {
+  galleryTags?: string[];
+  styleTagIds?: string[];
+}
+
 export interface IStoryboard extends Document {
   userId: string;
   title: string;
@@ -20,6 +25,7 @@ export interface IStoryboard extends Document {
   frames: IFrame[];
   mermaidDiagram?: string;
   allowCinema: boolean;
+  defaultConfig?: IDefaultConfig;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +43,14 @@ const FrameSchema = new Schema<IFrame>(
   { _id: false }
 );
 
+const DefaultConfigSchema = new Schema<IDefaultConfig>(
+  {
+    galleryTags: { type: [String] },
+    styleTagIds: { type: [String] },
+  },
+  { _id: false }
+);
+
 const StoryboardSchema = new Schema<IStoryboard>(
   {
     userId: { type: String, required: true, index: true },
@@ -48,6 +62,7 @@ const StoryboardSchema = new Schema<IStoryboard>(
     frames: { type: [FrameSchema], required: true },
     mermaidDiagram: { type: String },
     allowCinema: { type: Boolean, default: false },
+    defaultConfig: { type: DefaultConfigSchema },
   },
   {
     timestamps: true,

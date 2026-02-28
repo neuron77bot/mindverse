@@ -93,6 +93,10 @@ export async function storyboardRoutes(app: FastifyInstance) {
       inputMode: string;
       frames: any[];
       mermaidDiagram?: string;
+      defaultConfig?: {
+        galleryTags?: string[];
+        styleTagIds?: string[];
+      };
     };
   }>(
     '/',
@@ -109,6 +113,13 @@ export async function storyboardRoutes(app: FastifyInstance) {
             inputMode: { type: 'string', enum: ['voice', 'text'] },
             frames: { type: 'array', items: { type: 'object' } },
             mermaidDiagram: { type: 'string' },
+            defaultConfig: {
+              type: 'object',
+              properties: {
+                galleryTags: { type: 'array', items: { type: 'string' } },
+                styleTagIds: { type: 'array', items: { type: 'string' } },
+              },
+            },
           },
         },
         response: {
@@ -129,7 +140,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
         const userId = req.jwtUser?.sub;
         if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
 
-        const { title, originalText, inputMode, frames, mermaidDiagram } = req.body;
+        const { title, originalText, inputMode, frames, mermaidDiagram, defaultConfig } = req.body;
 
         // Validar que frames no esté vacío
         if (!frames || !Array.isArray(frames) || frames.length === 0) {
@@ -144,6 +155,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
           title,
           framesCount: frames.length,
           inputMode,
+          hasDefaultConfig: !!defaultConfig,
         });
 
         const storyboard = await Storyboard.create({
@@ -153,6 +165,7 @@ export async function storyboardRoutes(app: FastifyInstance) {
           inputMode,
           frames,
           mermaidDiagram,
+          defaultConfig,
         });
 
         app.log.info({ msg: 'Storyboard created', storyboardId: storyboard._id });
