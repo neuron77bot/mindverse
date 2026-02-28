@@ -100,24 +100,29 @@ export default function ImageGenerationModal({
         </div>
 
         {/* Mode selector */}
-        <div className="grid grid-cols-2 gap-2 px-6 pb-4 flex-shrink-0 border-b border-slate-800">
-          {MODE_OPTIONS.map((m) => (
-            <button
-              key={m.key}
-              onClick={() => {
-                setImageMode(m.key);
-                setImageError(null);
-              }}
-              className={`py-3 px-4 text-sm font-semibold transition-all flex items-center justify-center gap-2 rounded-lg border ${
-                imageMode === m.key
-                  ? 'bg-violet-600 text-white border-violet-500 shadow-lg'
-                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <span>{m.icon}</span>
-              <span>{m.label}</span>
-            </button>
-          ))}
+        <div className="px-6 pb-4 flex-shrink-0 border-b border-slate-800">
+          <label className="block text-sm text-slate-400 mb-2">Modo de generación</label>
+          <select
+            value={imageMode}
+            onChange={(e) => {
+              setImageMode(e.target.value as ImageMode);
+              setImageError(null);
+            }}
+            className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all appearance-none cursor-pointer hover:bg-slate-750"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+              backgroundPosition: 'right 0.75rem center',
+              backgroundSize: '1.25rem',
+              backgroundRepeat: 'no-repeat',
+              paddingRight: '2.5rem',
+            }}
+          >
+            {MODE_OPTIONS.map((m) => (
+              <option key={m.key} value={m.key}>
+                {m.icon} {m.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Mode content - Scrollable */}
