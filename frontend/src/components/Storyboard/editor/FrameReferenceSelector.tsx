@@ -37,7 +37,7 @@ export default function FrameReferenceSelector({
       <label className="block text-sm text-slate-400 mb-3">
         Selecciona un frame como referencia
       </label>
-      <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto pr-2">
+      <div className="grid grid-cols-3 gap-3 max-h-60 overflow-y-auto pr-2">
         {availableFrames.map((frame) => {
           const isSelected = selectedFrameNumber === frame.frame;
           const isCurrentFrame = frame.frame === currentFrameNumber;

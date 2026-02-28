@@ -75,9 +75,9 @@ export default function ImageGenerationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-slate-900 rounded-2xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl">
+      <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between p-6 pb-4 flex-shrink-0">
           <div>
             <h3 className="text-xl font-bold text-white">
               Generar Imagen - Frame #{selectedFrame.frame}
@@ -100,7 +100,7 @@ export default function ImageGenerationModal({
         </div>
 
         {/* Mode selector */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
+        <div className="grid grid-cols-2 gap-2 px-6 pb-4 flex-shrink-0 border-b border-slate-800">
           {MODE_OPTIONS.map((m) => (
             <button
               key={m.key}
@@ -120,8 +120,8 @@ export default function ImageGenerationModal({
           ))}
         </div>
 
-        {/* Mode content */}
-        <div className="space-y-4 mb-6">
+        {/* Mode content - Scrollable */}
+        <div className="space-y-4 px-6 py-4 overflow-y-auto flex-1">
           {imageMode === 'text' && <PromptField value={imagePrompt} onChange={setImagePrompt} />}
 
           {imageMode === 'img2img' && (
@@ -205,7 +205,7 @@ export default function ImageGenerationModal({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 px-6 py-4 flex-shrink-0 border-t border-slate-800 bg-slate-900/50">
           <button
             onClick={onClose}
             className="flex-1 py-3 px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"
