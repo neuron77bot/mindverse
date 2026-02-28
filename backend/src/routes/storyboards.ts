@@ -116,7 +116,13 @@ export async function storyboardRoutes(app: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              storyboard: { type: 'object' },
+              storyboard: {
+                type: 'object',
+                properties: {
+                  _id: { type: 'string' },
+                },
+                additionalProperties: true,
+              },
             },
           },
           401: errorShape,
