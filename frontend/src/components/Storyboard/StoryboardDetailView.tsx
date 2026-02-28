@@ -607,6 +607,44 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                     controls
                     className="w-full rounded-lg border-2 border-slate-700 shadow-lg"
                   />
+
+                  {/* Controles de navegación */}
+                  <div className="flex items-center justify-center gap-4 mt-6">
+                    <button
+                      onClick={() => setCurrentFrameIndex((prev) => Math.max(0, prev - 1))}
+                      disabled={currentFrameIndex === 0}
+                      className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all shadow-lg"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      Anterior
+                    </button>
+                    <button
+                      onClick={() =>
+                        setCurrentFrameIndex((prev) =>
+                          Math.min(framesWithVideo.length - 1, prev + 1)
+                        )
+                      }
+                      disabled={currentFrameIndex === framesWithVideo.length - 1}
+                      className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all shadow-lg"
+                    >
+                      Siguiente
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </section>
               )}
             </div>
