@@ -1,5 +1,6 @@
 import type { StoryboardFrame, ImageMode } from './types';
 import GalleryTagPicker from '../../shared/GalleryTagPicker';
+import FrameReferenceSelector from './FrameReferenceSelector';
 
 interface ImageGenerationModalProps {
   selectedFrame: StoryboardFrame;
@@ -19,6 +20,9 @@ interface ImageGenerationModalProps {
   galleryTags: string[];
   selectedGalleryTags: string[];
   setSelectedGalleryTags: React.Dispatch<React.SetStateAction<string[]>>;
+  storyboardFrames: StoryboardFrame[];
+  selectedFrameRef: number | null;
+  setSelectedFrameRef: React.Dispatch<React.SetStateAction<number | null>>;
   availableStyleTags: any[];
   selectedStyleTagIds: string[];
   setSelectedStyleTagIds: React.Dispatch<React.SetStateAction<string[]>>;
@@ -33,6 +37,7 @@ const MODE_OPTIONS: { key: ImageMode; label: string; icon: string }[] = [
   { key: 'text', label: 'Text to Image', icon: '✨' },
   { key: 'img2img', label: 'Image to Image', icon: '🖼️' },
   { key: 'gallery', label: 'Gallery Reference', icon: '📸' },
+  { key: 'frame', label: 'Frame Reference', icon: '📷' },
   { key: 'url', label: 'URL', icon: '🔗' },
 ];
 
@@ -54,6 +59,9 @@ export default function ImageGenerationModal({
   galleryTags,
   selectedGalleryTags,
   setSelectedGalleryTags,
+  storyboardFrames,
+  selectedFrameRef,
+  setSelectedFrameRef,
   availableStyleTags,
   selectedStyleTagIds,
   setSelectedStyleTagIds,
@@ -161,6 +169,23 @@ export default function ImageGenerationModal({
                 galleryTags={galleryTags}
                 selectedGalleryTags={selectedGalleryTags}
                 setSelectedGalleryTags={setSelectedGalleryTags}
+              />
+            </>
+          )}
+
+          {imageMode === 'frame' && (
+            <>
+              <PromptField
+                value={imagePrompt}
+                onChange={setImagePrompt}
+                placeholder="Describí qué querés generar usando el frame como referencia..."
+                rows={3}
+              />
+              <FrameReferenceSelector
+                frames={storyboardFrames}
+                currentFrameNumber={selectedFrame.frame}
+                selectedFrameNumber={selectedFrameRef}
+                onSelectFrame={setSelectedFrameRef}
               />
             </>
           )}
