@@ -127,7 +127,8 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
         }
 
         const data = await res.json();
-        const shareUrl = `${window.location.origin}/mindverse${data.shareUrl}`;
+        const basePath = import.meta.env.VITE_BASE || '/';
+        const shareUrl = `${window.location.origin}${basePath}storyboard/shared/${id}?token=${data.shareToken}`;
 
         await navigator.clipboard.writeText(shareUrl);
 
