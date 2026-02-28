@@ -262,6 +262,9 @@ export default function StoryboardEditor() {
           galleryTags={editor.galleryTags}
           selectedGalleryTags={editor.selectedGalleryTags}
           setSelectedGalleryTags={editor.setSelectedGalleryTags}
+          storyboardFrames={editor.storyboard || []}
+          selectedFrameRef={editor.selectedFrameRef}
+          setSelectedFrameRef={editor.setSelectedFrameRef}
           availableStyleTags={editor.availableStyleTags}
           selectedStyleTagIds={editor.selectedStyleTagIds}
           setSelectedStyleTagIds={editor.setSelectedStyleTagIds}

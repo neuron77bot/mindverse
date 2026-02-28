@@ -16,6 +16,6 @@ export interface LightboxImage {
   title: string;
 }
 
-export type ImageMode = 'text' | 'img2img' | 'url' | 'gallery';
+export type ImageMode = 'text' | 'img2img' | 'url' | 'gallery' | 'frame';
 
 export type EditorTabType = 'historia' | 'frames' | 'diagrama';

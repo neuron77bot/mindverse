@@ -1,5 +1,6 @@
 import type { StoryboardFrame, ImageMode } from './types';
 import GalleryTagPicker from '../../shared/GalleryTagPicker';
+import FrameReferenceSelector from './FrameReferenceSelector';
 
 interface ImageGenerationModalProps {
   selectedFrame: StoryboardFrame;
@@ -19,6 +20,9 @@ interface ImageGenerationModalProps {
   galleryTags: string[];
   selectedGalleryTags: string[];
   setSelectedGalleryTags: React.Dispatch<React.SetStateAction<string[]>>;
+  storyboardFrames: StoryboardFrame[];
+  selectedFrameRef: number | null;
+  setSelectedFrameRef: React.Dispatch<React.SetStateAction<number | null>>;
   availableStyleTags: any[];
   selectedStyleTagIds: string[];
   setSelectedStyleTagIds: React.Dispatch<React.SetStateAction<string[]>>;
@@ -33,6 +37,7 @@ const MODE_OPTIONS: { key: ImageMode; label: string; icon: string }[] = [
   { key: 'text', label: 'Text to Image', icon: '✨' },
   { key: 'img2img', label: 'Image to Image', icon: '🖼️' },
   { key: 'gallery', label: 'Gallery Reference', icon: '📸' },
+  { key: 'frame', label: 'Frame Reference', icon: '📷' },
   { key: 'url', label: 'URL', icon: '🔗' },
 ];
 
@@ -54,6 +59,9 @@ export default function ImageGenerationModal({
   galleryTags,
   selectedGalleryTags,
   setSelectedGalleryTags,
+  storyboardFrames,
+  selectedFrameRef,
+  setSelectedFrameRef,
   availableStyleTags,
   selectedStyleTagIds,
   setSelectedStyleTagIds,
@@ -67,9 +75,9 @@ export default function ImageGenerationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-slate-900 rounded-2xl border border-slate-700 p-6 max-w-2xl w-full shadow-2xl">
+      <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-2xl w-full shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between p-6 pb-4 flex-shrink-0">
           <div>
             <h3 className="text-xl font-bold text-white">
               Generar Imagen - Frame #{selectedFrame.frame}
@@ -92,28 +100,33 @@ export default function ImageGenerationModal({
         </div>
 
         {/* Mode selector */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
-          {MODE_OPTIONS.map((m) => (
-            <button
-              key={m.key}
-              onClick={() => {
-                setImageMode(m.key);
-                setImageError(null);
-              }}
-              className={`py-3 px-4 text-sm font-semibold transition-all flex items-center justify-center gap-2 rounded-lg border ${
-                imageMode === m.key
-                  ? 'bg-violet-600 text-white border-violet-500 shadow-lg'
-                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white hover:bg-slate-700'
-              }`}
-            >
-              <span>{m.icon}</span>
-              <span>{m.label}</span>
-            </button>
-          ))}
+        <div className="px-6 pb-4 flex-shrink-0 border-b border-slate-800">
+          <label className="block text-sm text-slate-400 mb-2">Modo de generación</label>
+          <select
+            value={imageMode}
+            onChange={(e) => {
+              setImageMode(e.target.value as ImageMode);
+              setImageError(null);
+            }}
+            className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all appearance-none cursor-pointer hover:bg-slate-750"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+              backgroundPosition: 'right 0.75rem center',
+              backgroundSize: '1.25rem',
+              backgroundRepeat: 'no-repeat',
+              paddingRight: '2.5rem',
+            }}
+          >
+            {MODE_OPTIONS.map((m) => (
+              <option key={m.key} value={m.key}>
+                {m.icon} {m.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Mode content */}
-        <div className="space-y-4 mb-6">
+        {/* Mode content - Scrollable */}
+        <div className="space-y-4 px-6 py-4 overflow-y-auto flex-1">
           {imageMode === 'text' && <PromptField value={imagePrompt} onChange={setImagePrompt} />}
 
           {imageMode === 'img2img' && (
@@ -165,6 +178,23 @@ export default function ImageGenerationModal({
             </>
           )}
 
+          {imageMode === 'frame' && (
+            <>
+              <PromptField
+                value={imagePrompt}
+                onChange={setImagePrompt}
+                placeholder="Describí qué querés generar usando el frame como referencia..."
+                rows={3}
+              />
+              <FrameReferenceSelector
+                frames={storyboardFrames}
+                currentFrameNumber={selectedFrame.frame}
+                selectedFrameNumber={selectedFrameRef}
+                onSelectFrame={setSelectedFrameRef}
+              />
+            </>
+          )}
+
           {/* Style Tags - Available in all modes */}
           <StyleTagPicker
             availableStyleTags={availableStyleTags}
@@ -180,7 +210,7 @@ export default function ImageGenerationModal({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 px-6 py-4 flex-shrink-0 border-t border-slate-800 bg-slate-900/50">
           <button
             onClick={onClose}
             className="flex-1 py-3 px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"
