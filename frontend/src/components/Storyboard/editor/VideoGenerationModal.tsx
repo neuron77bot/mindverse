@@ -5,6 +5,7 @@ interface VideoGenerationModalProps {
   selectedFrame: StoryboardFrame;
   imageUrl: string;
   generatingVideoFrame: number | null;
+  videoPrompt?: string;
   onClose: () => void;
   onGenerate: (prompt: string, duration: number, aspectRatio: string) => void;
 }
@@ -13,10 +14,11 @@ export default function VideoGenerationModal({
   selectedFrame,
   imageUrl,
   generatingVideoFrame,
+  videoPrompt,
   onClose,
   onGenerate,
 }: VideoGenerationModalProps) {
-  const [prompt, setPrompt] = useState(selectedFrame.visualDescription || '');
+  const [prompt, setPrompt] = useState(videoPrompt || selectedFrame.visualDescription || '');
   const [duration, setDuration] = useState<number>(5);
 
   const isGenerating = generatingVideoFrame === selectedFrame.frame;
