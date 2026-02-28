@@ -187,14 +187,10 @@ export async function userRoutes(app: FastifyInstance) {
           return reply.status(404).send({ success: false, error: 'Usuario no encontrado' });
         }
 
-        const baseUrl = process.env.FRONTEND_URL || 'https://devalliance.com.ar/mindverse';
-        const cinemaUrl = `${baseUrl}/cinema?token=${user.cinemaToken}`;
-
         return reply.send({
           success: true,
           data: {
             cinemaToken: user.cinemaToken,
-            cinemaUrl,
           },
         });
       } catch (err: any) {
@@ -248,14 +244,10 @@ export async function userRoutes(app: FastifyInstance) {
           return reply.status(404).send({ success: false, error: 'Usuario no encontrado' });
         }
 
-        const baseUrl = process.env.FRONTEND_URL || 'https://devalliance.com.ar/mindverse';
-        const cinemaUrl = `${baseUrl}/cinema?token=${user.cinemaToken}`;
-
         return reply.send({
           success: true,
           data: {
             cinemaToken: user.cinemaToken,
-            cinemaUrl,
           },
         });
       } catch (err: any) {
