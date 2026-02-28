@@ -20,4 +20,4 @@ export interface LightboxImage {
 
 export type ImageMode = 'text' | 'img2img' | 'url' | 'gallery' | 'frame';
 
-export type EditorTabType = 'historia' | 'frames' | 'diagrama';
+export type EditorTabType = 'historia' | 'frames' | 'video' | 'diagrama';
