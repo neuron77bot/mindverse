@@ -152,6 +152,12 @@ export async function storyboardRoutes(app: FastifyInstance) {
           inputMode,
         });
 
+        // Debug: Log first frame to check movementPrompt
+        if (frames.length > 0) {
+          console.log('[STORYBOARD POST] First frame received:', JSON.stringify(frames[0], null, 2));
+          console.log('[STORYBOARD POST] Has movementPrompt?', !!frames[0].movementPrompt);
+        }
+
         const storyboard = await Storyboard.create({
           userId,
           title,
