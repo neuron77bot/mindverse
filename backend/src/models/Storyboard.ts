@@ -22,6 +22,7 @@ export interface IStoryboard extends Document {
   frames: IFrame[];
   mermaidDiagram?: string;
   allowCinema: boolean;
+  compiledVideoUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +53,7 @@ const StoryboardSchema = new Schema<IStoryboard>(
     frames: { type: [FrameSchema], required: true },
     mermaidDiagram: { type: String },
     allowCinema: { type: Boolean, default: false },
+    compiledVideoUrl: { type: String },
   },
   {
     timestamps: true,
