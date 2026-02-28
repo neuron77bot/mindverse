@@ -6,6 +6,7 @@ import EditorHeader from './editor/EditorHeader';
 import StoryboardFrameGrid from './editor/StoryboardFrameGrid';
 import BatchImageGeneration from './editor/BatchImageGeneration';
 import ImageGenerationModal from './editor/ImageGenerationModal';
+import VideoGenerationModal from './editor/VideoGenerationModal';
 import LightboxModal from './editor/LightboxModal';
 
 const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
@@ -225,9 +226,12 @@ export default function StoryboardEditor() {
               <StoryboardFrameGrid
                 storyboard={editor.storyboard!}
                 frameImages={editor.frameImages}
+                frameVideos={editor.frameVideos}
                 generatingFrame={editor.generatingFrame}
+                generatingVideoFrame={editor.generatingVideoFrame}
                 isEditMode={true}
                 openImageModal={editor.openImageModal}
+                openVideoModal={editor.openVideoModal}
                 setLightboxImage={editor.setLightboxImage}
                 updateFrame={editor.updateFrame}
               />
@@ -307,6 +311,17 @@ export default function StoryboardEditor() {
           onGenerate={editor.handleGenerateFrameImage}
           onFileChange={editor.handleFileChange}
           onRemoveRefImage={editor.removeRefImage}
+        />
+      )}
+
+      {/* Video generation modal */}
+      {editor.isVideoModalOpen && editor.selectedFrameForVideo && (
+        <VideoGenerationModal
+          selectedFrame={editor.selectedFrameForVideo}
+          imageUrl={editor.frameImages.get(editor.selectedFrameForVideo.frame) || ''}
+          generatingVideoFrame={editor.generatingVideoFrame}
+          onClose={editor.closeVideoModal}
+          onGenerate={editor.generateFrameVideo}
         />
       )}
 

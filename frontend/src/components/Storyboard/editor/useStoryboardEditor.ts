@@ -30,6 +30,12 @@ export function useStoryboardEditor() {
   const [frameImages, setFrameImages] = useState<Map<number, string>>(new Map());
   const [generatingFrame, setGeneratingFrame] = useState<number | null>(null);
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
+  
+  // Video generation state
+  const [frameVideos, setFrameVideos] = useState<Map<number, string>>(new Map());
+  const [generatingVideoFrame, setGeneratingVideoFrame] = useState<number | null>(null);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedFrameForVideo, setSelectedFrameForVideo] = useState<StoryboardFrame | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [storyboardTitle, setStoryboardTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -90,10 +96,13 @@ export function useStoryboardEditor() {
 
       if (sb.frames) {
         const newFrameImages = new Map<number, string>();
+        const newFrameVideos = new Map<number, string>();
         sb.frames.forEach((frame: StoryboardFrame) => {
           if (frame.imageUrl) newFrameImages.set(frame.frame, frame.imageUrl);
+          if (frame.videoUrl) newFrameVideos.set(frame.frame, frame.videoUrl);
         });
         setFrameImages(newFrameImages);
+        setFrameVideos(newFrameVideos);
       }
     } catch (err: any) {
       setError('Error al cargar el storyboard: ' + err.message);
@@ -111,6 +120,7 @@ export function useStoryboardEditor() {
       const framesWithImages = storyboard.map((frame) => ({
         ...frame,
         imageUrl: frameImages.get(frame.frame) || frame.imageUrl || undefined,
+        videoUrl: frameVideos.get(frame.frame) || frame.videoUrl || undefined,
       }));
 
       const res = await fetch(`${API_BASE}/storyboards/${id}`, {
@@ -398,6 +408,69 @@ export function useStoryboardEditor() {
     );
   };
 
+  // ── Video generation ────────────────────────────────────────────────────
+
+  const openVideoModal = (frame: StoryboardFrame) => {
+    setSelectedFrameForVideo(frame);
+    setIsVideoModalOpen(true);
+  };
+
+  const closeVideoModal = () => {
+    setIsVideoModalOpen(false);
+    setSelectedFrameForVideo(null);
+  };
+
+  const generateFrameVideo = async (
+    prompt: string,
+    duration: number = 5,
+    aspectRatio: string = '1:1'
+  ) => {
+    if (!selectedFrameForVideo) return;
+    
+    const imageUrl = frameImages.get(selectedFrameForVideo.frame);
+    if (!imageUrl) {
+      setError('No hay imagen para generar video');
+      return;
+    }
+
+    setGeneratingVideoFrame(selectedFrameForVideo.frame);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/videos/generate`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          imageUrl,
+          prompt,
+          duration,
+          aspectRatio,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Error generando video');
+      }
+
+      const data = await res.json();
+      const videoUrl = data.videoUrl;
+
+      if (!videoUrl) {
+        throw new Error('No se recibió URL de video');
+      }
+
+      const newVideos = new Map(frameVideos);
+      newVideos.set(selectedFrameForVideo.frame, videoUrl);
+      setFrameVideos(newVideos);
+      closeVideoModal();
+    } catch (err: any) {
+      setError(`Error generando video: ${err.message}`);
+    } finally {
+      setGeneratingVideoFrame(null);
+    }
+  };
+
   return {
     navigate,
     id,
@@ -411,7 +484,9 @@ export function useStoryboardEditor() {
     mermaidDiagram,
     setMermaidDiagram,
     frameImages,
+    frameVideos,
     generatingFrame,
+    generatingVideoFrame,
     isBatchGenerating,
     isSaving,
     storyboardTitle,
@@ -448,6 +523,9 @@ export function useStoryboardEditor() {
     selectedStyleTagIds,
     setSelectedStyleTagIds,
 
+    isVideoModalOpen,
+    selectedFrameForVideo,
+
     fileInputRef,
 
     saveStoryboard,
@@ -459,6 +537,10 @@ export function useStoryboardEditor() {
     handleBatchGenerate,
     handleFileChange,
     removeRefImage,
+
+    openVideoModal,
+    closeVideoModal,
+    generateFrameVideo,
   };
 }
 
