@@ -50,6 +50,9 @@ export function useStoryboardEditor() {
   const [galleryTags, setGalleryTags] = useState<string[]>([]);
   const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
 
+  // Frame reference state
+  const [selectedFrameRef, setSelectedFrameRef] = useState<number | null>(null);
+
   // Style tags state
   const [availableStyleTags, setAvailableStyleTags] = useState<any[]>([]);
   const [selectedStyleTagIds, setSelectedStyleTagIds] = useState<string[]>([]);
@@ -168,6 +171,7 @@ export function useStoryboardEditor() {
     setRefImageFiles([]);
     setRefImagePreviews([]);
     setSelectedGalleryTags([]);
+    setSelectedFrameRef(null);
     setSelectedStyleTagIds([]);
     setImageError(null);
 
@@ -201,6 +205,7 @@ export function useStoryboardEditor() {
     setRefImageFiles([]);
     setRefImagePreviews([]);
     setSelectedGalleryTags([]);
+    setSelectedFrameRef(null);
     setSelectedStyleTagIds([]);
     setImageError(null);
   };
@@ -226,6 +231,32 @@ export function useStoryboardEditor() {
           body: JSON.stringify({
             prompt: imagePrompt,
             gallery_tags: selectedGalleryTags,
+            styleTagIds: selectedStyleTagIds,
+            aspect_ratio: '1:1',
+          }),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Error generando imagen');
+        }
+        const data = await res.json();
+        imageUrl = data.images?.[0]?.url ?? null;
+        if (!imageUrl) throw new Error('No se recibió URL de imagen');
+      } else if (imageMode === 'frame') {
+        if (!imagePrompt.trim()) throw new Error('Escribí un prompt');
+        if (!selectedFrameRef) throw new Error('Selecciona un frame como referencia');
+        
+        const refFrame = storyboard?.find((f) => f.frame === selectedFrameRef);
+        if (!refFrame || !refFrame.imageUrl) {
+          throw new Error('El frame seleccionado no tiene imagen');
+        }
+
+        const res = await fetch(`${API_BASE}/images/image-to-image`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            image_urls: [refFrame.imageUrl],
             styleTagIds: selectedStyleTagIds,
             aspect_ratio: '1:1',
           }),
@@ -400,6 +431,9 @@ export function useStoryboardEditor() {
     galleryTags,
     selectedGalleryTags,
     setSelectedGalleryTags,
+
+    selectedFrameRef,
+    setSelectedFrameRef,
 
     availableStyleTags,
     selectedStyleTagIds,
