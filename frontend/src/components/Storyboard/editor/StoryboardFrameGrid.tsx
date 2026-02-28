@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import type { StoryboardFrame, LightboxImage } from './types';
 
 interface StoryboardFrameGridProps {
@@ -61,6 +62,38 @@ function FrameCard({
   onViewImage,
   updateFrame,
 }: FrameCardProps) {
+  const [editingField, setEditingField] = useState<'scene' | 'visual' | 'dialogue' | null>(null);
+  const sceneInputRef = useRef<HTMLInputElement>(null);
+  const visualTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const dialogueTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-focus cuando un campo entra en modo edición
+  useEffect(() => {
+    if (editingField === 'scene' && sceneInputRef.current) {
+      sceneInputRef.current.focus();
+      sceneInputRef.current.select();
+    } else if (editingField === 'visual' && visualTextareaRef.current) {
+      visualTextareaRef.current.focus();
+      visualTextareaRef.current.select();
+    } else if (editingField === 'dialogue' && dialogueTextareaRef.current) {
+      dialogueTextareaRef.current.focus();
+      dialogueTextareaRef.current.select();
+    }
+  }, [editingField]);
+
+  const handleBlur = () => {
+    setEditingField(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, field: 'scene' | 'visual' | 'dialogue') => {
+    if (e.key === 'Enter' && (field === 'scene' || e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      setEditingField(null);
+    } else if (e.key === 'Escape') {
+      setEditingField(null);
+    }
+  };
+
   return (
     <div className="group bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 overflow-hidden hover:border-indigo-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1">
       {/* Header */}
@@ -70,13 +103,26 @@ function FrameCard({
         </div>
         <div className="flex-1">
           <label className="block text-slate-400 text-xs mb-1">Escena/Título</label>
-          <input
-            type="text"
-            value={frame.scene}
-            onChange={(e) => updateFrame(frame.frame, { scene: e.target.value })}
-            className="w-full px-2 py-1 bg-slate-800 text-white rounded border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all text-sm font-semibold"
-            placeholder="Título de la escena"
-          />
+          {editingField === 'scene' ? (
+            <input
+              ref={sceneInputRef}
+              type="text"
+              value={frame.scene}
+              onChange={(e) => updateFrame(frame.frame, { scene: e.target.value })}
+              onBlur={handleBlur}
+              onKeyDown={(e) => handleKeyDown(e, 'scene')}
+              className="w-full px-2 py-1 bg-slate-800 text-white rounded border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all text-sm font-semibold"
+              placeholder="Título de la escena"
+            />
+          ) : (
+            <div
+              onDoubleClick={() => setEditingField('scene')}
+              className="w-full px-2 py-1 text-white text-sm font-semibold cursor-text hover:bg-slate-800/50 rounded transition-colors min-h-[28px]"
+              title="Doble clic para editar"
+            >
+              {frame.scene || 'Sin título'}
+            </div>
+          )}
         </div>
       </div>
 
@@ -84,24 +130,50 @@ function FrameCard({
       <div className="p-4 space-y-3">
         <div>
           <label className="block text-sm text-slate-400 mb-2">Descripción Visual</label>
-          <textarea
-            value={frame.visualDescription}
-            onChange={(e) => updateFrame(frame.frame, { visualDescription: e.target.value })}
-            rows={4}
-            className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm leading-relaxed"
-            placeholder="Descripción visual del frame para generar imagen..."
-          />
+          {editingField === 'visual' ? (
+            <textarea
+              ref={visualTextareaRef}
+              value={frame.visualDescription}
+              onChange={(e) => updateFrame(frame.frame, { visualDescription: e.target.value })}
+              onBlur={handleBlur}
+              onKeyDown={(e) => handleKeyDown(e, 'visual')}
+              rows={4}
+              className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm leading-relaxed"
+              placeholder="Descripción visual del frame para generar imagen..."
+            />
+          ) : (
+            <div
+              onDoubleClick={() => setEditingField('visual')}
+              className="w-full px-3 py-2 text-white text-sm leading-relaxed cursor-text hover:bg-slate-800/50 rounded-lg transition-colors min-h-[100px] whitespace-pre-wrap"
+              title="Doble clic para editar"
+            >
+              {frame.visualDescription || 'Sin descripción'}
+            </div>
+          )}
         </div>
 
         <div className="pt-2 border-t border-slate-700/50">
           <label className="block text-sm text-slate-400 mb-2">Diálogo (opcional)</label>
-          <textarea
-            value={frame.dialogue || ''}
-            onChange={(e) => updateFrame(frame.frame, { dialogue: e.target.value })}
-            rows={2}
-            className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm italic"
-            placeholder="Diálogo del personaje (opcional)..."
-          />
+          {editingField === 'dialogue' ? (
+            <textarea
+              ref={dialogueTextareaRef}
+              value={frame.dialogue || ''}
+              onChange={(e) => updateFrame(frame.frame, { dialogue: e.target.value })}
+              onBlur={handleBlur}
+              onKeyDown={(e) => handleKeyDown(e, 'dialogue')}
+              rows={2}
+              className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm italic"
+              placeholder="Diálogo del personaje (opcional)..."
+            />
+          ) : (
+            <div
+              onDoubleClick={() => setEditingField('dialogue')}
+              className="w-full px-3 py-2 text-white text-sm italic cursor-text hover:bg-slate-800/50 rounded-lg transition-colors min-h-[52px] whitespace-pre-wrap"
+              title="Doble clic para editar"
+            >
+              {frame.dialogue || 'Sin diálogo'}
+            </div>
+          )}
         </div>
 
         {imageUrl ? (
