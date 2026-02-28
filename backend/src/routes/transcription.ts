@@ -90,6 +90,7 @@ export async function transcriptionRoutes(app: FastifyInstance) {
                     scene: { type: 'string' },
                     visualDescription: { type: 'string' },
                     dialogue: { type: 'string' },
+                    movementPrompt: { type: 'string' },
                   },
                 },
               },
