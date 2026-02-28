@@ -7,6 +7,7 @@ services:
       - ./backend/.env
     volumes:
       - /root/.openclaw/whisper-models:/app/whisper-models:ro
+      - /var/www/mindverse_dev/storage:/var/www/mindverse_dev/storage
     depends_on:
       mongo:
         condition: service_started
