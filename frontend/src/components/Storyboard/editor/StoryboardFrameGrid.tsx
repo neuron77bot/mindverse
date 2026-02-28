@@ -71,13 +71,16 @@ function FrameCard({
   useEffect(() => {
     if (editingField === 'scene' && sceneInputRef.current) {
       sceneInputRef.current.focus();
-      sceneInputRef.current.select();
+      // Posicionar cursor al inicio
+      sceneInputRef.current.setSelectionRange(0, 0);
     } else if (editingField === 'visual' && visualTextareaRef.current) {
       visualTextareaRef.current.focus();
-      visualTextareaRef.current.select();
+      // Posicionar cursor al inicio
+      visualTextareaRef.current.setSelectionRange(0, 0);
     } else if (editingField === 'dialogue' && dialogueTextareaRef.current) {
       dialogueTextareaRef.current.focus();
-      dialogueTextareaRef.current.select();
+      // Posicionar cursor al inicio
+      dialogueTextareaRef.current.setSelectionRange(0, 0);
     }
   }, [editingField]);
 
@@ -138,7 +141,8 @@ function FrameCard({
               onBlur={handleBlur}
               onKeyDown={(e) => handleKeyDown(e, 'visual')}
               rows={4}
-              className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm leading-relaxed"
+              className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize text-sm leading-relaxed"
+              style={{ resize: 'vertical', minHeight: '100px' }}
               placeholder="Descripción visual del frame para generar imagen..."
             />
           ) : (
@@ -162,7 +166,8 @@ function FrameCard({
               onBlur={handleBlur}
               onKeyDown={(e) => handleKeyDown(e, 'dialogue')}
               rows={2}
-              className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize-y text-sm italic"
+              className="w-full px-3 py-2 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all resize text-sm italic"
+              style={{ resize: 'vertical', minHeight: '52px' }}
               placeholder="Diálogo del personaje (opcional)..."
             />
           ) : (
