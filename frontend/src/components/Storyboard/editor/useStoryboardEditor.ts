@@ -42,13 +42,6 @@ export function useStoryboardEditor(mode: EditorMode) {
   const [isLoading, setIsLoading] = useState(false);
   const [allowCinema, setAllowCinema] = useState(false);
 
-  // Config modal state (nuevo paso de configuración)
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [storyboardConfig, setStoryboardConfig] = useState<{
-    galleryTags: string[];
-    styleTagIds: string[];
-  } | null>(null);
-
   // Image modal state
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedFrameForImage, setSelectedFrameForImage] = useState<StoryboardFrame | null>(null);
@@ -148,74 +141,45 @@ export function useStoryboardEditor(mode: EditorMode) {
   const saveStoryboard = async () => {
     if (!storyboard || storyboard.length === 0) return;
 
-    // Si estamos en modo creación y no se ha mostrado el modal de config aún
-    if (!isEditMode && storyboardConfig === null) {
-      setShowConfigModal(true);
-      return;
-    }
-
-    // En modo edición, guardar directamente sin configuración
-    if (isEditMode) {
-      await performSave({ galleryTags: [], styleTagIds: [] });
-    }
-  };
-
-  const generateImagesWithConfig = async (
-    storyboardId: string,
-    config: { galleryTags: string[]; styleTagIds: string[] }
-  ) => {
-    if (!storyboard || storyboard.length === 0) return;
-
-    setIsBatchGenerating(true);
+    setIsSaving(true);
+    setError(null);
     try {
-      for (const frame of storyboard) {
-        setGeneratingFrame(frame.frame);
+      const framesWithImages = storyboard.map((frame) => ({
+        ...frame,
+        imageUrl: frameImages.get(frame.frame) || frame.imageUrl || undefined,
+      }));
 
-        const prompt = frame.visualDescription || `Frame ${frame.frame}: ${frame.scene}`;
+      const url = isEditMode && id ? `${API_BASE}/storyboards/${id}` : `${API_BASE}/storyboards`;
+      const method = isEditMode && id ? 'PATCH' : 'POST';
 
-        const res = await fetch(`${API_BASE}/images/image-to-image`, {
-          method: 'POST',
-          headers: authHeaders(),
-          body: JSON.stringify({
-            prompt,
-            gallery_tags: config.galleryTags,
-            styleTagIds: config.styleTagIds,
-            aspect_ratio: '1:1',
-          }),
-        });
+      const res = await fetch(url, {
+        method,
+        headers: authHeaders(),
+        body: JSON.stringify({
+          title: storyboardTitle,
+          originalText: inputMode === 'voice' ? transcription : textInput,
+          inputMode,
+          frames: framesWithImages,
+          mermaidDiagram,
+        }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Error guardando storyboard');
+      }
+      const responseData = await res.json();
 
-        if (!res.ok) {
-          console.error(`Error generando frame ${frame.frame}`);
-          continue;
-        }
-
-        const data = await res.json();
-        const imageUrl = data.images?.[0]?.url ?? null;
-
-        if (imageUrl) {
-          setFrameImages((prev) => {
-            const newMap = new Map(prev);
-            newMap.set(frame.frame, imageUrl);
-            return newMap;
-          });
-
-          // Actualizar el frame en el backend
-          await fetch(`${API_BASE}/storyboards/${storyboardId}`, {
-            method: 'PATCH',
-            headers: authHeaders(),
-            body: JSON.stringify({
-              frames: storyboard.map((f) =>
-                f.frame === frame.frame ? { ...f, imageUrl } : f
-              ),
-            }),
-          });
-        }
+      // Redirigir al detalle del storyboard (tanto en modo creación como edición)
+      const storyboardId = isEditMode && id ? id : responseData.storyboard?._id;
+      if (storyboardId) {
+        navigate(`/storyboard/detail/${storyboardId}`);
+      } else {
+        navigate('/storyboards');
       }
     } catch (err: any) {
-      console.error('Error en generación automática:', err);
+      setError('Error al guardar storyboard: ' + err.message);
     } finally {
-      setIsBatchGenerating(false);
-      setGeneratingFrame(null);
+      setIsSaving(false);
     }
   };
 
@@ -566,85 +530,6 @@ export function useStoryboardEditor(mode: EditorMode) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // ── Config Modal ──────────────────────────────────────────────────────
-
-  const handleConfigConfirm = async (config: { galleryTags: string[]; styleTagIds: string[] }) => {
-    setStoryboardConfig(config);
-    setShowConfigModal(false);
-    // Después de configurar, proceder con el guardado
-    await performSave(config);
-  };
-
-  const handleConfigSkip = async () => {
-    setStoryboardConfig({ galleryTags: [], styleTagIds: [] });
-    setShowConfigModal(false);
-    // Guardar sin configuración
-    await performSave({ galleryTags: [], styleTagIds: [] });
-  };
-
-  const handleConfigClose = () => {
-    setShowConfigModal(false);
-  };
-
-  const performSave = async (config: { galleryTags: string[]; styleTagIds: string[] }) => {
-    if (!storyboard || storyboard.length === 0) return;
-
-    setIsSaving(true);
-    setError(null);
-    try {
-      const framesWithImages = storyboard.map((frame) => ({
-        ...frame,
-        imageUrl: frameImages.get(frame.frame) || frame.imageUrl || undefined,
-      }));
-
-      const url = isEditMode && id ? `${API_BASE}/storyboards/${id}` : `${API_BASE}/storyboards`;
-      const method = isEditMode && id ? 'PATCH' : 'POST';
-
-      const payload: any = {
-        title: storyboardTitle,
-        originalText: inputMode === 'voice' ? transcription : textInput,
-        inputMode,
-        frames: framesWithImages,
-        mermaidDiagram,
-      };
-
-      // Agregar configuración solo en modo creación
-      if (!isEditMode && config && (config.galleryTags.length > 0 || config.styleTagIds.length > 0)) {
-        payload.defaultConfig = config;
-      }
-
-      const res = await fetch(url, {
-        method,
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Error guardando storyboard');
-      }
-      const responseData = await res.json();
-      const storyboardId = isEditMode && id ? id : responseData.storyboard?._id;
-
-      if (!storyboardId) {
-        throw new Error('No se recibió ID del storyboard');
-      }
-
-      // Si hay configuración con gallery tags, generar imágenes automáticamente
-      if (!isEditMode && config && config.galleryTags.length > 0) {
-        await generateImagesWithConfig(storyboardId, config);
-      }
-
-      // Redirigir al modo de edición (no al detalle)
-      navigate(`/storyboard/edit/${storyboardId}`);
-    } catch (err: any) {
-      setError('Error al guardar storyboard: ' + err.message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // ── Misc ───────────────────────────────────────────────────────────────
-
   const isSecureContext = window.isSecureContext;
   const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   const hasContent = inputMode === 'voice' ? transcription : textInput;
@@ -675,12 +560,6 @@ export function useStoryboardEditor(mode: EditorMode) {
     isLoading,
     allowCinema,
     setAllowCinema,
-
-    showConfigModal,
-    storyboardConfig,
-    handleConfigConfirm,
-    handleConfigSkip,
-    handleConfigClose,
 
     isImageModalOpen,
     selectedFrameForImage,

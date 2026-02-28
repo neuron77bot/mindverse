@@ -10,7 +10,6 @@ import StoryboardFrameGrid from './editor/StoryboardFrameGrid';
 import BatchImageGeneration from './editor/BatchImageGeneration';
 import ImageGenerationModal from './editor/ImageGenerationModal';
 import LightboxModal from './editor/LightboxModal';
-import StoryboardConfigModal from './editor/StoryboardConfigModal';
 
 const MermaidDiagram = lazy(() => import('../UI/MermaidDiagram'));
 
@@ -474,15 +473,6 @@ export default function StoryboardEditor({ mode }: StoryboardEditorProps) {
           onGenerate={editor.handleGenerateFrameImage}
           onFileChange={editor.handleFileChange}
           onRemoveRefImage={editor.removeRefImage}
-        />
-      )}
-
-      {/* Config Modal (solo en modo creación) */}
-      {!editor.isEditMode && editor.showConfigModal && (
-        <StoryboardConfigModal
-          onConfirm={editor.handleConfigConfirm}
-          onSkip={editor.handleConfigSkip}
-          onClose={editor.handleConfigClose}
         />
       )}
 
