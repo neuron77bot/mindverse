@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { NavigateFunction } from 'react-router-dom';
 import type { StoryboardFrame, InputMode } from './types';
@@ -35,6 +35,14 @@ export default function EditorHeader({
 }: EditorHeaderProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isTogglingCinema, setIsTogglingCinema] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.setSelectionRange(0, 0);
+    }
+  }, [isEditingTitle]);
 
   const handleToggleCinema = async () => {
     if (!id || !onCinemaToggle) return;
@@ -169,57 +177,29 @@ export default function EditorHeader({
         {/* Hero Content */}
         <div className="space-y-4">
           {isEditMode && isEditingTitle ? (
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={storyboardTitle}
-                onChange={(e) => setStoryboardTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') setIsEditingTitle(false);
-                  if (e.key === 'Escape') setIsEditingTitle(false);
-                }}
-                onBlur={() => setIsEditingTitle(false)}
-                autoFocus
-                className="flex-1 text-4xl md:text-5xl font-bold bg-slate-800/50 border-2 border-indigo-500 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Título del storyboard"
-              />
-              <button
-                onClick={() => setIsEditingTitle(false)}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-                title="Finalizar edición (Enter/Esc)"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </button>
-            </div>
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={storyboardTitle}
+              onChange={(e) => setStoryboardTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setIsEditingTitle(false);
+                if (e.key === 'Escape') setIsEditingTitle(false);
+              }}
+              onBlur={() => setIsEditingTitle(false)}
+              className="w-full text-4xl md:text-5xl font-bold bg-slate-800/50 border-2 border-indigo-500 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Título del storyboard"
+            />
           ) : (
-            <div className={isEditMode ? 'group flex items-center gap-3' : ''}>
-              <h1 className="text-4xl md:text-5xl font-bold text-white">
-                {isEditMode ? storyboardTitle || 'Sin título' : 'Crear Storyboard'}
-              </h1>
-              {isEditMode && (
-                <button
-                  onClick={() => setIsEditingTitle(true)}
-                  className="opacity-0 group-hover:opacity-100 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-all"
-                  title="Editar título"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
+            <h1
+              onDoubleClick={() => isEditMode && setIsEditingTitle(true)}
+              className={`text-4xl md:text-5xl font-bold text-white ${
+                isEditMode ? 'cursor-text hover:bg-slate-800/30 rounded-lg px-4 py-2 -mx-4 -my-2 transition-colors' : ''
+              }`}
+              title={isEditMode ? 'Doble clic para editar' : ''}
+            >
+              {isEditMode ? storyboardTitle || 'Sin título' : 'Crear Storyboard'}
+            </h1>
           )}
 
           {/* Metadata Badges */}

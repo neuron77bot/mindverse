@@ -390,12 +390,21 @@ export function useStoryboardEditor() {
     }
   };
 
+  const updateFrame = (frameNumber: number, updates: Partial<StoryboardFrame>) => {
+    setStoryboard((prev) =>
+      prev?.map((f) =>
+        f.frame === frameNumber ? { ...f, ...updates } : f
+      ) || null
+    );
+  };
+
   return {
     navigate,
     id,
 
     inputMode,
     originalText,
+    setOriginalText,
     error,
     storyboard,
     setStoryboard,
@@ -442,6 +451,7 @@ export function useStoryboardEditor() {
     fileInputRef,
 
     saveStoryboard,
+    updateFrame,
 
     openImageModal,
     closeImageModal,
