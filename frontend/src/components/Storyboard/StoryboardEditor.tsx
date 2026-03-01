@@ -552,6 +552,8 @@ export default function StoryboardEditor() {
           selectedStyleTagIds={editor.selectedStyleTagIds}
           setSelectedStyleTagIds={editor.setSelectedStyleTagIds}
           fileInputRef={editor.fileInputRef}
+          aspectRatio={editor.imageAspectRatio}
+          setAspectRatio={editor.setImageAspectRatio}
           onClose={editor.closeImageModal}
           onGenerate={editor.handleGenerateFrameImage}
           onFileChange={editor.handleFileChange}
@@ -564,6 +566,7 @@ export default function StoryboardEditor() {
         <VideoGenerationModal
           selectedFrame={editor.selectedFrameForVideo}
           imageUrl={editor.frameImages.get(editor.selectedFrameForVideo.frame) || ''}
+          imageAspectRatio={editor.selectedFrameForVideo.imageAspectRatio}
           generatingVideoFrame={editor.generatingVideoFrame}
           videoPrompt={editor.videoPrompts.get(editor.selectedFrameForVideo.frame)}
           onClose={editor.closeVideoModal}

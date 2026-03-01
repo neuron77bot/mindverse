@@ -63,6 +63,9 @@ export function useStoryboardEditor() {
   const [availableStyleTags, setAvailableStyleTags] = useState<any[]>([]);
   const [selectedStyleTagIds, setSelectedStyleTagIds] = useState<string[]>([]);
 
+  // Aspect ratio state
+  const [imageAspectRatio, setImageAspectRatio] = useState<string>('16:9');
+
   // Frame tabs state (Imagen/Video tabs per frame)
   const [activeFrameTabs, setActiveFrameTabs] = useState<Map<number, 'image' | 'video'>>(new Map());
   const [videoPrompts, setVideoPrompts] = useState<Map<number, string>>(new Map());
@@ -187,6 +190,7 @@ export function useStoryboardEditor() {
     setSelectedGalleryTags([]);
     setSelectedFrameRef(null);
     setSelectedStyleTagIds([]);
+    setImageAspectRatio(frame.imageAspectRatio || '16:9');
     setImageError(null);
 
     try {
@@ -221,6 +225,7 @@ export function useStoryboardEditor() {
     setSelectedGalleryTags([]);
     setSelectedFrameRef(null);
     setSelectedStyleTagIds([]);
+    setImageAspectRatio('16:9');
     setImageError(null);
   };
 
@@ -246,7 +251,7 @@ export function useStoryboardEditor() {
             prompt: imagePrompt,
             gallery_tags: selectedGalleryTags,
             styleTagIds: selectedStyleTagIds,
-            aspect_ratio: '1:1',
+            aspect_ratio: imageAspectRatio,
           }),
         });
         if (!res.ok) {
@@ -272,7 +277,7 @@ export function useStoryboardEditor() {
             prompt: imagePrompt,
             image_urls: [refFrame.imageUrl],
             styleTagIds: selectedStyleTagIds,
-            aspect_ratio: '1:1',
+            aspect_ratio: imageAspectRatio,
           }),
         });
         if (!res.ok) {
@@ -308,7 +313,7 @@ export function useStoryboardEditor() {
             prompt: imagePrompt,
             image_urls: uploadedUrls,
             styleTagIds: selectedStyleTagIds,
-            aspect_ratio: '1:1',
+            aspect_ratio: imageAspectRatio,
           }),
         });
         if (!res.ok) throw new Error('Error generando imagen');
@@ -323,7 +328,7 @@ export function useStoryboardEditor() {
           body: JSON.stringify({
             prompt: imagePrompt,
             styleTagIds: selectedStyleTagIds,
-            aspect_ratio: '1:1',
+            aspect_ratio: imageAspectRatio,
           }),
         });
         if (!res.ok) throw new Error('Error generando imagen');
@@ -335,6 +340,10 @@ export function useStoryboardEditor() {
       const newImages = new Map(frameImages);
       newImages.set(selectedFrameForImage.frame, imageUrl);
       setFrameImages(newImages);
+      
+      // Update frame with imageAspectRatio
+      updateFrame(selectedFrameForImage.frame, { imageAspectRatio });
+      
       closeImageModal();
     } catch (err: any) {
       setImageError(err?.message ?? 'Error desconocido');
@@ -366,7 +375,7 @@ export function useStoryboardEditor() {
               prompt,
               gallery_tags: galleryTags,
               styleTagIds,
-              aspect_ratio: '1:1',
+              aspect_ratio: imageAspectRatio,
             }),
           });
           if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
@@ -380,7 +389,7 @@ export function useStoryboardEditor() {
             body: JSON.stringify({
               prompt,
               styleTagIds,
-              aspect_ratio: '1:1',
+              aspect_ratio: imageAspectRatio,
             }),
           });
           if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
@@ -479,6 +488,10 @@ export function useStoryboardEditor() {
       const newVideos = new Map(frameVideos);
       newVideos.set(selectedFrameForVideo.frame, videoUrl);
       setFrameVideos(newVideos);
+      
+      // Update frame with videoAspectRatio
+      updateFrame(selectedFrameForVideo.frame, { videoAspectRatio: aspectRatio });
+      
       closeVideoModal();
     } catch (err: any) {
       setError(`Error generando video: ${err.message}`);
@@ -538,6 +551,9 @@ export function useStoryboardEditor() {
     availableStyleTags,
     selectedStyleTagIds,
     setSelectedStyleTagIds,
+
+    imageAspectRatio,
+    setImageAspectRatio,
 
     isVideoModalOpen,
     selectedFrameForVideo,
