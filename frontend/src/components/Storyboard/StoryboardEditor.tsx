@@ -24,21 +24,29 @@ export default function StoryboardEditor() {
   // Video compilation state
   const [isCompiling, setIsCompiling] = useState(false);
   const [compiledVideoUrl, setCompiledVideoUrl] = useState<string | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState<string>('');
+  const [audioStartTime, setAudioStartTime] = useState<string>('0');
 
-  // Cargar compiledVideoUrl desde el storyboard cuando se carga
+  // Cargar compiledVideoUrl y configuración de música desde el storyboard
   useEffect(() => {
     if (editor.id && !compiledVideoUrl) {
-      // Cargar storyboard completo para obtener compiledVideoUrl
+      // Cargar storyboard completo para obtener compiledVideoUrl y música
       fetch(`${API_BASE}/storyboards/${editor.id}`, {
         headers: authHeaders(),
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data.success && data.storyboard?.compiledVideoUrl) {
-            setCompiledVideoUrl(data.storyboard.compiledVideoUrl);
+          if (data.success && data.storyboard) {
+            if (data.storyboard.compiledVideoUrl) {
+              setCompiledVideoUrl(data.storyboard.compiledVideoUrl);
+            }
+            if (data.storyboard.musicYoutubeUrl) {
+              setYoutubeUrl(data.storyboard.musicYoutubeUrl);
+              setAudioStartTime(String(data.storyboard.musicStartTime || 0));
+            }
           }
         })
-        .catch((err) => console.error('Error cargando compiledVideoUrl:', err));
+        .catch((err) => console.error('Error cargando storyboard:', err));
     }
   }, [editor.id, compiledVideoUrl]);
 
@@ -59,18 +67,32 @@ export default function StoryboardEditor() {
   const handleCompileVideos = async () => {
     if (!editor.id || !editor.storyboard) return;
 
+    // Validar URL de YouTube si se proporciona
+    if (youtubeUrl && !isValidYoutubeUrl(youtubeUrl)) {
+      toast.error('URL de YouTube inválida');
+      return;
+    }
+
     setIsCompiling(true);
 
     try {
       const videoUrls = editor.storyboard.map((f) => f.videoUrl).filter(Boolean) as string[];
 
+      const body: any = {
+        storyboardId: editor.id,
+        videoUrls,
+      };
+
+      // Agregar parámetros de música si se proporciona URL
+      if (youtubeUrl) {
+        body.youtubeUrl = youtubeUrl;
+        body.audioStartTime = parseFloat(audioStartTime) || 0;
+      }
+
       const res = await fetch(`${API_BASE}/videos/compile`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({
-          storyboardId: editor.id,
-          videoUrls,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -86,6 +108,12 @@ export default function StoryboardEditor() {
     } finally {
       setIsCompiling(false);
     }
+  };
+
+  // Validar URL de YouTube
+  const isValidYoutubeUrl = (url: string): boolean => {
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+    return youtubeRegex.test(url);
   };
 
   const tabs: Array<{ id: EditorTabType; label: string; icon: string; show: boolean }> = [
@@ -345,6 +373,54 @@ export default function StoryboardEditor() {
                       controls
                       className="w-full rounded-lg border-2 border-green-700 shadow-2xl"
                     />
+                  </div>
+                )}
+
+                {/* Configuración de música de fondo */}
+                {allFramesHaveVideo && (
+                  <div className="space-y-4 p-6 bg-slate-800/50 rounded-lg border border-slate-700">
+                    <h3 className="text-white font-semibold text-lg mb-3 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                      </svg>
+                      Música de Fondo (Opcional)
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-2">
+                          URL de YouTube
+                        </label>
+                        <input
+                          type="text"
+                          value={youtubeUrl}
+                          onChange={(e) => setYoutubeUrl(e.target.value)}
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                        {youtubeUrl && !isValidYoutubeUrl(youtubeUrl) && (
+                          <p className="mt-1 text-sm text-red-400">URL de YouTube inválida</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-2">
+                          Tiempo de inicio (segundos)
+                        </label>
+                        <input
+                          type="number"
+                          value={audioStartTime}
+                          onChange={(e) => setAudioStartTime(e.target.value)}
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                        <p className="mt-1 text-sm text-slate-400">
+                          El audio se extraerá desde este punto (ej: 30 para comenzar a los 30 segundos)
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
