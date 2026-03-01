@@ -264,21 +264,46 @@ export async function videoRoutes(app: FastifyInstance) {
             videoDuration,
           });
 
-          // Mezclar video + audio con volumen balanceado
-          // Video audio: 70%, Music: 30%
-          const ffmpegMixCmd = [
-            'ffmpeg -y',
-            `-i "${baseVideoPath}"`,
-            `-i "${audioPath}"`,
-            '-filter_complex',
-            '"[0:a]volume=0.7[a0];[1:a]volume=0.3[a1];[a0][a1]amix=inputs=2:duration=first[aout]"',
-            '-map 0:v',
-            '-map "[aout]"',
-            '-c:v copy',
-            '-c:a aac',
-            '-shortest',
-            `"${outputPath}"`,
-          ].join(' ');
+          // Detectar si el video base tiene audio
+          const { stdout: audioCheck } = await execAsync(
+            `ffprobe -v error -select_streams a -show_entries stream=codec_type -of csv=p=0 "${baseVideoPath}"`
+          ).catch(() => ({ stdout: '' }));
+          
+          const hasAudio = audioCheck.trim().includes('audio');
+          app.log.info({ msg: 'Video base tiene audio', hasAudio });
+
+          let ffmpegMixCmd: string;
+
+          if (hasAudio) {
+            // Video tiene audio: mezclar ambos audios con volumen balanceado
+            // Video audio: 70%, Music: 30%
+            ffmpegMixCmd = [
+              'ffmpeg -y',
+              `-i "${baseVideoPath}"`,
+              `-i "${audioPath}"`,
+              '-filter_complex',
+              '"[0:a]volume=0.7[a0];[1:a]volume=0.3[a1];[a0][a1]amix=inputs=2:duration=first[aout]"',
+              '-map 0:v',
+              '-map "[aout]"',
+              '-c:v copy',
+              '-c:a aac',
+              '-shortest',
+              `"${outputPath}"`,
+            ].join(' ');
+          } else {
+            // Video NO tiene audio: simplemente agregar el audio de YouTube
+            ffmpegMixCmd = [
+              'ffmpeg -y',
+              `-i "${baseVideoPath}"`,
+              `-i "${audioPath}"`,
+              '-map 0:v',
+              '-map 1:a',
+              '-c:v copy',
+              '-c:a aac',
+              '-shortest',
+              `"${outputPath}"`,
+            ].join(' ');
+          }
 
           await execAsync(ffmpegMixCmd);
 
