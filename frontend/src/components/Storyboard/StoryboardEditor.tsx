@@ -141,17 +141,13 @@ export default function StoryboardEditor() {
       )}
 
       <EditorHeader
-        navigate={editor.navigate}
         isEditMode={true}
-        id={editor.id}
         storyboardTitle={editor.storyboardTitle}
         setStoryboardTitle={editor.setStoryboardTitle}
         storyboard={editor.storyboard}
         inputMode={editor.inputMode}
         isSaving={editor.isSaving}
         saveStoryboard={editor.saveStoryboard}
-        allowCinema={editor.allowCinema}
-        onCinemaToggle={editor.setAllowCinema}
       />
 
       {/* ── Navigation Tabs ── */}

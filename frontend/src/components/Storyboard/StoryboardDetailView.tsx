@@ -216,22 +216,7 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
       <div className="bg-gradient-to-r from-indigo-900/20 via-purple-900/20 to-pink-900/20 border-b border-slate-700/50">
         <div className="max-w-7xl mx-auto p-6">
           {/* Action Bar */}
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => navigate('/storyboards')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-600 transition-all duration-200"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Volver
-            </button>
-
+          <div className="flex items-center justify-end mb-6">
             <div className="relative">
               <button
                 onClick={() => setShowActionsMenu(!showActionsMenu)}
