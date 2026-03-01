@@ -7,18 +7,19 @@ interface StoryboardCardProps {
     duration: string;
     compiledVideoUrl?: string;
   };
-  onClick: () => void;
   onPlayVideo?: (videoUrl: string) => void;
+  onOpenCarousel?: () => void;
 }
 
-export default function StoryboardCard({ storyboard, onClick, onPlayVideo }: StoryboardCardProps) {
+export default function StoryboardCard({ storyboard, onPlayVideo, onOpenCarousel }: StoryboardCardProps) {
   const handleClick = () => {
-    // Si hay video compilado y tenemos handler, reproducir video
+    // Prioridad 1: Video compilado
     if (storyboard.compiledVideoUrl && onPlayVideo) {
       onPlayVideo(storyboard.compiledVideoUrl);
-    } else {
-      // Si no, comportamiento normal (abrir modal de storyboard)
-      onClick();
+    } 
+    // Prioridad 2: Carrusel (fallback)
+    else if (onOpenCarousel) {
+      onOpenCarousel();
     }
   };
 

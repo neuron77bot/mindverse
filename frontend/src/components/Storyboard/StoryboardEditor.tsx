@@ -274,6 +274,32 @@ export default function StoryboardEditor() {
                   )}
                 </dl>
               </section>
+
+              {/* Toggle Cinema */}
+              <section className="p-6 bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg mb-1">Mostrar en Cinema</h3>
+                    <p className="text-slate-400 text-sm">
+                      {editor.allowCinema
+                        ? 'Este storyboard será visible en el modo Cinema'
+                        : 'Habilita este storyboard para que sea visible en Cinema'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => editor.setAllowCinema(!editor.allowCinema)}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                      editor.allowCinema ? 'bg-green-600' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                        editor.allowCinema ? 'translate-x-7' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </section>
             </div>
           )}
 

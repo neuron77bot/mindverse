@@ -26,11 +26,11 @@ interface Storyboard {
 interface StoryboardRowProps {
   title: string;
   storyboards: Storyboard[];
-  onCardClick: (storyboard: Storyboard) => void;
   onPlayVideo?: (videoUrl: string) => void;
+  onOpenCarousel?: (storyboard: Storyboard) => void;
 }
 
-export default function StoryboardRow({ title, storyboards, onCardClick, onPlayVideo }: StoryboardRowProps) {
+export default function StoryboardRow({ title, storyboards, onPlayVideo, onOpenCarousel }: StoryboardRowProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -97,8 +97,8 @@ export default function StoryboardRow({ title, storyboards, onCardClick, onPlayV
             <StoryboardCard 
               key={sb._id} 
               storyboard={sb} 
-              onClick={() => onCardClick(sb)}
               onPlayVideo={onPlayVideo}
+              onOpenCarousel={() => onOpenCarousel?.(sb)}
             />
           ))}
         </div>

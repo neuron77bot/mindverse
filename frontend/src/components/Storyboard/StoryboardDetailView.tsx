@@ -281,38 +281,6 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                     <button
                       onClick={() => {
                         setShowActionsMenu(false);
-                        handleToggleCinema();
-                      }}
-                      disabled={isTogglingCinema}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-purple-600/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <svg
-                        className="w-5 h-5 text-purple-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
-                        />
-                      </svg>
-                      <span>
-                        {isTogglingCinema
-                          ? 'Actualizando...'
-                          : storyboard?.allowCinema
-                          ? '🎬 Ocultar de Cinema'
-                          : '🎬 Mostrar en Cinema'}
-                      </span>
-                    </button>
-
-                    <div className="border-t border-slate-700" />
-
-                    <button
-                      onClick={() => {
-                        setShowActionsMenu(false);
                         setShowDeleteConfirm(true);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-red-600/20 transition-colors"
@@ -545,6 +513,33 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                     </div>
                   )}
                 </dl>
+              </section>
+
+              {/* Toggle Cinema */}
+              <section className="p-6 bg-slate-900/50 backdrop-blur rounded-xl border border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg mb-1">Mostrar en Cinema</h3>
+                    <p className="text-slate-400 text-sm">
+                      {storyboard.allowCinema
+                        ? 'Este storyboard es visible en el modo Cinema'
+                        : 'Habilita este storyboard para que sea visible en Cinema'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleToggleCinema}
+                    disabled={isTogglingCinema}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      storyboard.allowCinema ? 'bg-green-600' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                        storyboard.allowCinema ? 'translate-x-7' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </section>
             </div>
           )}

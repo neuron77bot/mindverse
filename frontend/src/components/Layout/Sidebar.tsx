@@ -13,6 +13,7 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
   const menuItems = [
     { path: '/storyboards', label: 'Storyboards', icon: '📚' },
     { path: '/gallery', label: 'Galería', icon: '🖼️' },
+    { path: '/cinema', label: 'Cinema', icon: '🎬' },
     { path: '/prompt-styles', label: 'Estilos', icon: '🎨' },
     { path: '/perfil', label: 'Perfil', icon: '👤' },
   ];
