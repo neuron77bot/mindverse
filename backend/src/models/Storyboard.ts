@@ -23,6 +23,8 @@ export interface IStoryboard extends Document {
   mermaidDiagram?: string;
   allowCinema: boolean;
   compiledVideoUrl?: string;
+  musicYoutubeUrl?: string;
+  musicStartTime?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +56,8 @@ const StoryboardSchema = new Schema<IStoryboard>(
     mermaidDiagram: { type: String },
     allowCinema: { type: Boolean, default: false },
     compiledVideoUrl: { type: String },
+    musicYoutubeUrl: { type: String },
+    musicStartTime: { type: Number, default: 0 },
   },
   {
     timestamps: true,
