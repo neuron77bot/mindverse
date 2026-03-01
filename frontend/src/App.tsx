@@ -38,7 +38,7 @@ export default function App() {
           {/* Públicas */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Protegidas — envueltas en AppLayout (Header + NodeEditor) */}
+          {/* Protegidas — envueltas en AppLayout (Header + Sidebar) */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route index element={<StoryboardListPage />} />
@@ -47,10 +47,12 @@ export default function App() {
               <Route path="/storyboard/edit/:id" element={<StoryboardEditPage />} />
               <Route path="/storyboards" element={<StoryboardListPage />} />
               <Route path="/gallery" element={<GalleryPage />} />
-              <Route path="/cinema" element={<CinemaPage />} />
               <Route path="/prompt-styles" element={<PromptStylesPage />} />
               <Route path="/perfil" element={<ProfilePage />} />
             </Route>
+
+            {/* Cinema - Layout separado sin header/sidebar */}
+            <Route path="/cinema" element={<CinemaPage />} />
           </Route>
 
           {/* Fallback */}
