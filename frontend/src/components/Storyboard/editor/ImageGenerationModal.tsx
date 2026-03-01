@@ -27,6 +27,8 @@ interface ImageGenerationModalProps {
   selectedStyleTagIds: string[];
   setSelectedStyleTagIds: React.Dispatch<React.SetStateAction<string[]>>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  aspectRatio: string;
+  setAspectRatio: (ratio: string) => void;
   onClose: () => void;
   onGenerate: () => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -40,6 +42,26 @@ const MODE_OPTIONS: { key: ImageMode; label: string; icon: string }[] = [
   { key: 'frame', label: 'Frame Reference', icon: '📷' },
   { key: 'url', label: 'URL', icon: '🔗' },
 ];
+
+const ASPECT_RATIO_OPTIONS: { value: string; label: string; description: string }[] = [
+  { value: '16:9', label: '16:9', description: 'Horizontal - YouTube' },
+  { value: '9:16', label: '9:16', description: 'Vertical - TikTok/Reels' },
+  { value: '1:1', label: '1:1', description: 'Cuadrado - Instagram' },
+  { value: '4:3', label: '4:3', description: 'Clásico' },
+  { value: '3:2', label: '3:2', description: 'Fotografía' },
+];
+
+// Calcular dimensiones aproximadas para un aspect ratio (~1M píxeles)
+function getDimensionsForAspectRatio(ratio: string): string {
+  const dimensions: Record<string, string> = {
+    '16:9': '1024 × 576 px',
+    '9:16': '576 × 1024 px',
+    '1:1': '1024 × 1024 px',
+    '4:3': '1024 × 768 px',
+    '3:2': '1024 × 683 px',
+  };
+  return dimensions[ratio] || '1024 × 1024 px';
+}
 
 export default function ImageGenerationModal({
   selectedFrame,
@@ -66,6 +88,8 @@ export default function ImageGenerationModal({
   selectedStyleTagIds,
   setSelectedStyleTagIds,
   fileInputRef,
+  aspectRatio,
+  setAspectRatio,
   onClose,
   onGenerate,
   onFileChange,
@@ -123,6 +147,30 @@ export default function ImageGenerationModal({
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Aspect Ratio selector */}
+        <div className="px-6 pb-4 flex-shrink-0 border-b border-slate-800">
+          <label className="block text-sm text-slate-400 mb-2">Aspect Ratio</label>
+          <div className="flex gap-2 flex-wrap">
+            {ASPECT_RATIO_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setAspectRatio(opt.value)}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                  aspectRatio === opt.value
+                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg'
+                    : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
+                }`}
+              >
+                {opt.label}
+                <span className="block text-xs opacity-75">{opt.description}</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">
+            Dimensiones: {getDimensionsForAspectRatio(aspectRatio)}
+          </p>
         </div>
 
         {/* Mode content - Scrollable */}

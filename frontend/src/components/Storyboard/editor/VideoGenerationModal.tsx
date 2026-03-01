@@ -4,15 +4,23 @@ import type { StoryboardFrame } from './types';
 interface VideoGenerationModalProps {
   selectedFrame: StoryboardFrame;
   imageUrl: string;
+  imageAspectRatio?: string; // aspect ratio de la imagen base
   generatingVideoFrame: number | null;
   videoPrompt?: string;
   onClose: () => void;
   onGenerate: (prompt: string, duration: number, aspectRatio: string) => void;
 }
 
+const VIDEO_ASPECT_RATIO_OPTIONS: { value: string; label: string; description: string }[] = [
+  { value: '16:9', label: '16:9', description: 'Horizontal - YouTube' },
+  { value: '9:16', label: '9:16', description: 'Vertical - TikTok/Reels' },
+  { value: '1:1', label: '1:1', description: 'Cuadrado' },
+];
+
 export default function VideoGenerationModal({
   selectedFrame,
   imageUrl,
+  imageAspectRatio,
   generatingVideoFrame,
   videoPrompt,
   onClose,
@@ -20,12 +28,13 @@ export default function VideoGenerationModal({
 }: VideoGenerationModalProps) {
   const [prompt, setPrompt] = useState(videoPrompt || selectedFrame.movementPrompt || selectedFrame.visualDescription || '');
   const [duration, setDuration] = useState<number>(5);
+  const [aspectRatio, setAspectRatio] = useState<string>(imageAspectRatio || '1:1');
 
   const isGenerating = generatingVideoFrame === selectedFrame.frame;
 
   const handleGenerate = () => {
     if (!prompt.trim()) return;
-    onGenerate(prompt, duration, '1:1');
+    onGenerate(prompt, duration, aspectRatio);
   };
 
   return (
@@ -98,6 +107,35 @@ export default function VideoGenerationModal({
             </select>
           </div>
 
+          {/* Aspect Ratio Select */}
+          <div>
+            <label className="block text-slate-300 text-sm font-medium mb-2">
+              Aspect Ratio
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {VIDEO_ASPECT_RATIO_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setAspectRatio(opt.value)}
+                  disabled={isGenerating}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${
+                    aspectRatio === opt.value
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                      : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
+                  }`}
+                >
+                  {opt.label}
+                  <span className="block text-xs opacity-75">{opt.description}</span>
+                </button>
+              ))}
+            </div>
+            {imageAspectRatio && aspectRatio !== imageAspectRatio && (
+              <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-amber-300 text-xs">
+                ⚠️ El aspect ratio del video ({aspectRatio}) difiere de la imagen ({imageAspectRatio}). Puede haber recorte o distorsión.
+              </div>
+            )}
+          </div>
+
           {/* Info Box */}
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
@@ -122,7 +160,8 @@ export default function VideoGenerationModal({
           {/* Technical Info */}
           <div className="text-slate-500 text-xs space-y-1 border-t border-slate-700 pt-3">
             <p>• Modelo: Kling AI v2.5 Turbo (Image-to-Video)</p>
-            <p>• Aspect Ratio: 1:1 (Square)</p>
+            <p>• Aspect Ratio: {aspectRatio}</p>
+            <p>• Duración: {duration} segundos</p>
             <p>• Formato de salida: MP4</p>
           </div>
         </div>

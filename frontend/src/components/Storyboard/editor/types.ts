@@ -9,8 +9,10 @@ export interface StoryboardFrame {
   dialogue?: string;
   imageUrl?: string;
   imagePrompt?: string;
+  imageAspectRatio?: string; // '16:9', '9:16', '1:1', etc.
   videoUrl?: string;
   movementPrompt?: string;
+  videoAspectRatio?: string; // aspect ratio del video generado
 }
 
 export interface LightboxImage {

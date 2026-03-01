@@ -7,8 +7,10 @@ export interface IFrame {
   dialogue?: string;
   imageUrl?: string;
   imagePrompt?: string;
+  imageAspectRatio?: string; // '16:9', '9:16', '1:1', etc.
   videoUrl?: string;
   movementPrompt?: string;
+  videoAspectRatio?: string; // aspect ratio del video generado
   generatedAt?: Date;
 }
 
@@ -37,8 +39,10 @@ const FrameSchema = new Schema<IFrame>(
     dialogue: { type: String },
     imageUrl: { type: String },
     imagePrompt: { type: String },
+    imageAspectRatio: { type: String },
     videoUrl: { type: String },
     movementPrompt: { type: String },
+    videoAspectRatio: { type: String },
     generatedAt: { type: Date },
   },
   { _id: false }
