@@ -211,11 +211,6 @@ export default function CinemaPage() {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="py-8 text-center text-slate-500 text-sm border-t border-slate-900">
-        <p>Creado con Mindverse • Cinema Experience</p>
-      </footer>
-
       {/* Modal */}
       {selectedStoryboard && (
         <StoryboardModal storyboard={selectedStoryboard} onClose={() => setSelectedStoryboard(null)} />
