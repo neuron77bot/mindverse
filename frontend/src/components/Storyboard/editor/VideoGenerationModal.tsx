@@ -112,23 +112,25 @@ export default function VideoGenerationModal({
             <label className="block text-slate-300 text-sm font-medium mb-2">
               Aspect Ratio
             </label>
-            <div className="flex gap-2 flex-wrap">
+            <select
+              value={aspectRatio}
+              onChange={(e) => setAspectRatio(e.target.value)}
+              disabled={isGenerating}
+              className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all appearance-none cursor-pointer hover:bg-slate-750 disabled:opacity-50"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundPosition: 'right 0.75rem center',
+                backgroundSize: '1.25rem',
+                backgroundRepeat: 'no-repeat',
+                paddingRight: '2.5rem',
+              }}
+            >
               {VIDEO_ASPECT_RATIO_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setAspectRatio(opt.value)}
-                  disabled={isGenerating}
-                  className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${
-                    aspectRatio === opt.value
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                      : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
-                  }`}
-                >
-                  {opt.label}
-                  <span className="block text-xs opacity-75">{opt.description}</span>
-                </button>
+                <option key={opt.value} value={opt.value}>
+                  {opt.label} - {opt.description}
+                </option>
               ))}
-            </div>
+            </select>
             {imageAspectRatio && aspectRatio !== imageAspectRatio && (
               <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-amber-300 text-xs">
                 ⚠️ El aspect ratio del video ({aspectRatio}) difiere de la imagen ({imageAspectRatio}). Puede haber recorte o distorsión.

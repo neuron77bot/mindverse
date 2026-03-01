@@ -152,22 +152,24 @@ export default function ImageGenerationModal({
         {/* Aspect Ratio selector */}
         <div className="px-6 pb-4 flex-shrink-0 border-b border-slate-800">
           <label className="block text-sm text-slate-400 mb-2">Aspect Ratio</label>
-          <div className="flex gap-2 flex-wrap">
+          <select
+            value={aspectRatio}
+            onChange={(e) => setAspectRatio(e.target.value)}
+            className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg border border-slate-700 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all appearance-none cursor-pointer hover:bg-slate-750"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a1a1aa'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+              backgroundPosition: 'right 0.75rem center',
+              backgroundSize: '1.25rem',
+              backgroundRepeat: 'no-repeat',
+              paddingRight: '2.5rem',
+            }}
+          >
             {ASPECT_RATIO_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setAspectRatio(opt.value)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  aspectRatio === opt.value
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg'
-                    : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700'
-                }`}
-              >
-                {opt.label}
-                <span className="block text-xs opacity-75">{opt.description}</span>
-              </button>
+              <option key={opt.value} value={opt.value}>
+                {opt.label} - {opt.description}
+              </option>
             ))}
-          </div>
+          </select>
           <p className="text-xs text-slate-500 mt-2">
             Dimensiones: {getDimensionsForAspectRatio(aspectRatio)}
           </p>
