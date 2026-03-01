@@ -4,6 +4,11 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import { Storyboard } from '../models/Storyboard';
+import {
+  downloadYoutubeAudio,
+  cleanupAudioFile,
+  isValidYoutubeUrl,
+} from '../services/youtube-audio';
 
 const execAsync = promisify(exec);
 
@@ -23,6 +28,8 @@ interface VideoGenerationBody {
 interface VideoCompilationBody {
   storyboardId: string;
   videoUrls: string[];
+  youtubeUrl?: string;
+  audioStartTime?: number;
 }
 
 export async function videoRoutes(app: FastifyInstance) {
@@ -150,10 +157,13 @@ export async function videoRoutes(app: FastifyInstance) {
   /**
    * POST /videos/compile
    * Compila múltiples videos en un único MP4 usando ffmpeg.
+   * Opcionalmente agrega música de fondo desde YouTube.
    *
    * Body:
-   *   storyboardId — ID del storyboard (requerido)
-   *   videoUrls    — Array de URLs de videos a compilar (requerido)
+   *   storyboardId   — ID del storyboard (requerido)
+   *   videoUrls      — Array de URLs de videos a compilar (requerido)
+   *   youtubeUrl     — URL de YouTube para música de fondo (opcional)
+   *   audioStartTime — Tiempo de inicio en segundos para el audio (opcional, default: 0)
    */
   app.post<{ Body: VideoCompilationBody }>(
     '/compile',
@@ -167,22 +177,36 @@ export async function videoRoutes(app: FastifyInstance) {
           properties: {
             storyboardId: { type: 'string' },
             videoUrls: { type: 'array', items: { type: 'string' } },
+            youtubeUrl: { type: 'string', description: 'URL de YouTube para música de fondo' },
+            audioStartTime: {
+              type: 'number',
+              description: 'Tiempo de inicio del audio en segundos',
+              default: 0,
+            },
           },
         },
       },
     },
     async (request, reply) => {
-      const { storyboardId, videoUrls } = request.body;
+      const { storyboardId, videoUrls, youtubeUrl, audioStartTime = 0 } = request.body;
 
       if (!videoUrls || videoUrls.length === 0) {
         return reply.status(400).send({ error: 'No videos to compile' });
       }
+
+      // Validar URL de YouTube si se proporciona
+      if (youtubeUrl && !isValidYoutubeUrl(youtubeUrl)) {
+        return reply.status(400).send({ error: 'URL de YouTube inválida' });
+      }
+
+      let audioPath: string | null = null;
 
       try {
         app.log.info({
           msg: 'Iniciando compilación de videos',
           storyboardId,
           videoCount: videoUrls.length,
+          withMusic: !!youtubeUrl,
         });
 
         // 1. Crear directorio de storage
@@ -207,30 +231,90 @@ export async function videoRoutes(app: FastifyInstance) {
         const listContent = tempFiles.map((f) => `file '${f}'`).join('\n');
         await fs.writeFile(listPath, listContent);
 
-        // 4. Compilar con ffmpeg
+        // 4. Compilar videos base (sin música aún)
+        const baseVideoPath = `/tmp/base_${storyboardId}_${Date.now()}.mp4`;
+        app.log.info({ msg: 'Concatenando videos base' });
+
+        await execAsync(`ffmpeg -y -f concat -safe 0 -i ${listPath} -c copy ${baseVideoPath}`);
+
+        // 5. Obtener duración del video compilado
+        const { stdout: durationOutput } = await execAsync(
+          `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${baseVideoPath}"`
+        );
+        const videoDuration = parseFloat(durationOutput.trim());
+        app.log.info({ msg: 'Duración del video', duration: videoDuration });
+
+        // 6. Si hay música de YouTube, descargarla y mezclarla
         const outputPath = `${STORAGE_DIR}/${storyboardId}.mp4`;
-        app.log.info({ msg: 'Ejecutando ffmpeg', outputPath });
 
-        await execAsync(`ffmpeg -y -f concat -safe 0 -i ${listPath} -c copy ${outputPath}`);
+        if (youtubeUrl) {
+          app.log.info({ msg: 'Descargando audio de YouTube', youtubeUrl, audioStartTime });
 
-        // 5. Generar URL pública
+          const audioResult = await downloadYoutubeAudio({
+            youtubeUrl,
+            startTime: audioStartTime,
+            duration: videoDuration,
+          });
+
+          audioPath = audioResult.path;
+
+          app.log.info({
+            msg: 'Mezclando audio con video',
+            audioDuration: audioResult.duration,
+            videoDuration,
+          });
+
+          // Mezclar video + audio con volumen balanceado
+          // Video audio: 70%, Music: 30%
+          const ffmpegMixCmd = [
+            'ffmpeg -y',
+            `-i "${baseVideoPath}"`,
+            `-i "${audioPath}"`,
+            '-filter_complex',
+            '"[0:a]volume=0.7[a0];[1:a]volume=0.3[a1];[a0][a1]amix=inputs=2:duration=first[aout]"',
+            '-map 0:v',
+            '-map "[aout]"',
+            '-c:v copy',
+            '-c:a aac',
+            '-shortest',
+            `"${outputPath}"`,
+          ].join(' ');
+
+          await execAsync(ffmpegMixCmd);
+
+          // Limpiar video base
+          await fs.unlink(baseVideoPath).catch(() => {});
+        } else {
+          // Sin música, solo mover el video base al output final
+          await execAsync(`mv "${baseVideoPath}" "${outputPath}"`);
+        }
+
+        // 7. Generar URL pública
         const publicUrl = `${PUBLIC_URL_BASE}/${storyboardId}.mp4`;
 
-        // 6. Guardar en DB
+        // 8. Guardar en DB
         const storyboard = await Storyboard.findById(storyboardId);
         if (storyboard) {
           storyboard.compiledVideoUrl = publicUrl;
+          if (youtubeUrl) {
+            storyboard.musicYoutubeUrl = youtubeUrl;
+            storyboard.musicStartTime = audioStartTime;
+          }
           await storyboard.save();
           app.log.info({ msg: 'Video compilado guardado en DB', publicUrl });
         } else {
           app.log.warn({ msg: 'Storyboard no encontrado en DB', storyboardId });
         }
 
-        // 7. Limpiar archivos temporales
+        // 9. Limpiar archivos temporales
         await Promise.all([
           ...tempFiles.map((f) => fs.unlink(f).catch(() => {})),
           fs.unlink(listPath).catch(() => {}),
         ]);
+
+        if (audioPath) {
+          await cleanupAudioFile(audioPath);
+        }
 
         app.log.info({ msg: 'Compilación exitosa', videoUrl: publicUrl });
 
@@ -241,6 +325,11 @@ export async function videoRoutes(app: FastifyInstance) {
           error: err?.message,
           stack: err?.stack,
         });
+
+        // Limpiar audio en caso de error
+        if (audioPath) {
+          await cleanupAudioFile(audioPath);
+        }
 
         return reply.status(500).send({
           error: 'Error compilando videos',
