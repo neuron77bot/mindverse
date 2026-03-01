@@ -43,38 +43,64 @@ export default function CinemaPage() {
   const [selectedStoryboard, setSelectedStoryboard] = useState<Storyboard | null>(null);
   const [playingVideo, setPlayingVideo] = useState<string | null>(null);
 
-  const playCompiledVideo = (videoUrl: string) => {
+  // Handler para reproducir video compilado
+  const handlePlayVideo = (videoUrl: string) => {
     setPlayingVideo(videoUrl);
+    setSelectedStoryboard(null); // Asegurar que carrusel esté cerrado
+  };
+
+  // Handler para abrir carrusel
+  const handleOpenCarousel = (storyboard: Storyboard) => {
+    setSelectedStoryboard(storyboard);
+    setPlayingVideo(null); // Asegurar que video esté cerrado
   };
 
   // Cerrar modal de video con ESC
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && playingVideo) {
-        setPlayingVideo(null);
+      if (e.key === 'Escape') {
+        if (playingVideo) {
+          setPlayingVideo(null);
+        }
+        if (selectedStoryboard) {
+          setSelectedStoryboard(null);
+        }
       }
     };
     
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [playingVideo]);
+  }, [playingVideo, selectedStoryboard]);
 
   useEffect(() => {
     const fetchCinema = async () => {
       const token = searchParams.get('token');
 
-      if (!token) {
-        setError('Token de acceso no proporcionado');
-        setLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(`${API_BASE}/cinema/${token}`);
+        let response;
+        
+        if (token) {
+          // Acceso público con token
+          response = await fetch(`${API_BASE}/cinema/${token}`);
+        } else {
+          // Acceso autenticado
+          const authToken = localStorage.getItem('token');
+          if (!authToken) {
+            throw new Error('No autenticado');
+          }
+          
+          response = await fetch(`${API_BASE}/cinema/me`, {
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+            },
+          });
+        }
+
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || 'Token inválido o expirado');
+          throw new Error(errData.error || 'Error al cargar cinema');
         }
+        
         const result = await response.json();
         setData(result.data);
       } catch (err) {
@@ -160,8 +186,8 @@ export default function CinemaPage() {
       {/* Hero Section */}
       <HeroSection
         storyboard={data.storyboards[0]}
-        onViewClick={() => setSelectedStoryboard(data.storyboards[0])}
-        onPlayVideo={playCompiledVideo}
+        onPlayVideo={handlePlayVideo}
+        onOpenCarousel={() => handleOpenCarousel(data.storyboards[0])}
       />
 
       {/* Storyboard Rows */}
@@ -170,8 +196,8 @@ export default function CinemaPage() {
           <StoryboardRow
             title="Proyectos Recientes"
             storyboards={recentStoryboards.slice(1)}
-            onCardClick={(sb) => setSelectedStoryboard(sb)}
-            onPlayVideo={playCompiledVideo}
+            onPlayVideo={handlePlayVideo}
+            onOpenCarousel={handleOpenCarousel}
           />
         )}
 
@@ -179,8 +205,8 @@ export default function CinemaPage() {
           <StoryboardRow
             title="Todos los Storyboards"
             storyboards={allStoryboards}
-            onCardClick={(sb) => setSelectedStoryboard(sb)}
-            onPlayVideo={playCompiledVideo}
+            onPlayVideo={handlePlayVideo}
+            onOpenCarousel={handleOpenCarousel}
           />
         )}
       </div>

@@ -23,21 +23,24 @@ interface Storyboard {
 
 interface HeroSectionProps {
   storyboard: Storyboard;
-  onViewClick: () => void;
   onPlayVideo?: (videoUrl: string) => void;
+  onOpenCarousel?: () => void;
 }
 
-export default function HeroSection({ storyboard, onViewClick, onPlayVideo }: HeroSectionProps) {
+export default function HeroSection({ storyboard, onPlayVideo, onOpenCarousel }: HeroSectionProps) {
   // Future: Auto-rotate through frames carousel
   useEffect(() => {
     // Placeholder for future carousel implementation
   }, []);
 
   const handleClick = () => {
+    // Prioridad 1: Video compilado
     if (storyboard.compiledVideoUrl && onPlayVideo) {
       onPlayVideo(storyboard.compiledVideoUrl);
-    } else {
-      onViewClick();
+    } 
+    // Prioridad 2: Carrusel (fallback)
+    else if (onOpenCarousel) {
+      onOpenCarousel();
     }
   };
 
