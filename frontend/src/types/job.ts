@@ -6,8 +6,8 @@ export interface Job {
   name: JobName;
   status: JobStatus;
   progress: number;
-  data: {
-    userId: string;
+  data?: {
+    userId?: string;
     storyboardId?: string;
     frameIndices?: number[];
     aspectRatio?: string;

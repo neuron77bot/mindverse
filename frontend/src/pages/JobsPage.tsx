@@ -65,7 +65,7 @@ export default function JobsPage() {
   };
 
   const handleViewDetails = (job: Job) => {
-    if (job.data.storyboardId) {
+    if (job.data?.storyboardId) {
       navigate(`/storyboard/detail/${job.data.storyboardId}`);
     }
   };
@@ -240,13 +240,13 @@ export default function JobsPage() {
 
                     {/* Metadata */}
                     <div className="space-y-1 text-sm text-slate-400">
-                      {job.data.frameIndices && (
+                      {job.data?.frameIndices && (
                         <div>📸 {job.data.frameIndices.length} imágenes</div>
                       )}
-                      {job.data.videoUrls && (
+                      {job.data?.videoUrls && (
                         <div>🎬 {job.data.videoUrls.length} videos</div>
                       )}
-                      {job.data.aspectRatio && (
+                      {job.data?.aspectRatio && (
                         <div>📐 Aspect ratio: {job.data.aspectRatio}</div>
                       )}
                       
@@ -274,7 +274,7 @@ export default function JobsPage() {
 
                   {/* Acciones */}
                   <div className="flex gap-2 ml-4">
-                    {job.status === 'completed' && job.data.storyboardId && (
+                    {job.status === 'completed' && job.data?.storyboardId && (
                       <button
                         onClick={() => handleViewDetails(job)}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-all"
