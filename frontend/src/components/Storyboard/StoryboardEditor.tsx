@@ -26,6 +26,7 @@ export default function StoryboardEditor() {
   const [compiledVideoUrl, setCompiledVideoUrl] = useState<string | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState<string>('');
   const [audioStartTime, setAudioStartTime] = useState<string>('0');
+  const [compilationProgress, setCompilationProgress] = useState(0);
 
   // Cargar compiledVideoUrl y configuración de música desde el storyboard
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function StoryboardEditor() {
     }
 
     setIsCompiling(true);
+    setCompilationProgress(0);
 
     try {
       const videoUrls = editor.storyboard.map((f) => f.videoUrl).filter(Boolean) as string[];
@@ -101,12 +103,64 @@ export default function StoryboardEditor() {
       }
 
       const data = await res.json();
-      setCompiledVideoUrl(data.videoUrl);
-      toast.success('Video compilado generado exitosamente');
+      const jobId = data.jobId;
+
+      console.log(`Job de compilación creado: ${jobId}`);
+      toast.info('Compilación iniciada. Por favor espera...');
+
+      // Polling para consultar estado del job
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`${API_BASE}/jobs/${jobId}`, {
+            headers: authHeaders(),
+          });
+
+          if (!statusRes.ok) {
+            clearInterval(pollInterval);
+            throw new Error('Error consultando estado del job');
+          }
+
+          const statusData = await statusRes.json();
+          const job = statusData.job;
+
+          console.log(`Job ${jobId} status:`, job.status, `progress: ${job.progress}%`);
+
+          // Actualizar progreso
+          setCompilationProgress(job.progress || 0);
+
+          // Si el job terminó
+          if (job.status === 'completed' || job.status === 'failed') {
+            clearInterval(pollInterval);
+            setIsCompiling(false);
+            setCompilationProgress(0);
+
+            if (job.status === 'completed') {
+              // Recargar storyboard para obtener el compiledVideoUrl
+              const refreshRes = await fetch(`${API_BASE}/storyboards/${editor.id}`, {
+                headers: authHeaders(),
+              });
+              if (refreshRes.ok) {
+                const refreshData = await refreshRes.json();
+                if (refreshData.success && refreshData.storyboard.compiledVideoUrl) {
+                  setCompiledVideoUrl(refreshData.storyboard.compiledVideoUrl);
+                  toast.success('Video compilado generado exitosamente');
+                }
+              }
+            } else if (job.status === 'failed') {
+              toast.error(`Error compilando videos: ${job.failReason || 'Unknown error'}`);
+            }
+          }
+        } catch (err: any) {
+          clearInterval(pollInterval);
+          toast.error(`Error consultando job: ${err.message}`);
+          setIsCompiling(false);
+          setCompilationProgress(0);
+        }
+      }, 2000); // Poll cada 2 segundos
     } catch (err: any) {
       toast.error('Error al compilar videos: ' + err.message);
-    } finally {
       setIsCompiling(false);
+      setCompilationProgress(0);
     }
   };
 
@@ -334,6 +388,7 @@ export default function StoryboardEditor() {
                 onGenerate={editor.handleBatchGenerate}
                 isGenerating={editor.isBatchGenerating}
                 hasFrames={editor.storyboard !== null && editor.storyboard.length > 0}
+                generationProgress={editor.batchGenerationProgress}
               />
 
               <StoryboardFrameGrid
@@ -426,36 +481,54 @@ export default function StoryboardEditor() {
 
                 {/* Botón de compilar/regenerar */}
                 {allFramesHaveVideo ? (
-                  <button
-                    onClick={handleCompileVideos}
-                    disabled={isCompiling}
-                    className="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-lg shadow-xl transition-all flex items-center justify-center gap-3"
-                  >
-                    {isCompiling ? (
-                      <>
-                        <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleCompileVideos}
+                      disabled={isCompiling}
+                      className="w-full px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold text-lg shadow-xl transition-all flex items-center justify-center gap-3"
+                    >
+                      {isCompiling ? (
+                        <>
+                          <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          Compilando videos...
+                        </>
+                      ) : compiledVideoUrl ? (
+                        <>🔄 Regenerar Video Compilado</>
+                      ) : (
+                        <>🎬 Compilar Video</>
+                      )}
+                    </button>
+
+                    {/* Progress bar durante compilación */}
+                    {isCompiling && compilationProgress > 0 && (
+                      <div className="w-full">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-slate-400">Progreso de compilación</span>
+                          <span className="text-sm font-semibold text-green-400">{compilationProgress}%</span>
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-green-600 to-emerald-500 h-full rounded-full transition-all duration-300"
+                            style={{ width: `${compilationProgress}%` }}
                           />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                        Compilando videos...
-                      </>
-                    ) : compiledVideoUrl ? (
-                      <>🔄 Regenerar Video Compilado</>
-                    ) : (
-                      <>🎬 Compilar Video</>
+                        </div>
+                      </div>
                     )}
-                  </button>
+                  </div>
                 ) : (
                   <div className="text-center py-8 px-6 bg-slate-800/50 rounded-lg border border-slate-700">
                     <svg
