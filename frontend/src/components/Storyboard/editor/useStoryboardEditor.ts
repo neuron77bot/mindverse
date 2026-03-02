@@ -30,6 +30,7 @@ export function useStoryboardEditor() {
   const [frameImages, setFrameImages] = useState<Map<number, string>>(new Map());
   const [generatingFrame, setGeneratingFrame] = useState<number | null>(null);
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
+  const [batchGenerationProgress, setBatchGenerationProgress] = useState(0);
   
   // Video generation state
   const [frameVideos, setFrameVideos] = useState<Map<number, string>>(new Map());
@@ -353,62 +354,97 @@ export function useStoryboardEditor() {
   };
 
   const handleBatchGenerate = async (galleryTags: string[], styleTagIds: string[]) => {
-    if (!storyboard || storyboard.length === 0) return;
+    if (!storyboard || storyboard.length === 0 || !id) return;
     if (galleryTags.length === 0 && styleTagIds.length === 0) return;
 
     setIsBatchGenerating(true);
+    setBatchGenerationProgress(0);
     setError(null);
 
     try {
-      for (const frame of storyboard) {
-        setGeneratingFrame(frame.frame);
+      // Crear índices de frames a generar (solo los que no tienen imagen)
+      const frameIndices = storyboard
+        .filter((frame) => !frameImages.has(frame.frame))
+        .map((frame) => frame.frame - 1); // 0-based index
 
-        let imageUrl: string;
-        const prompt = frame.visualDescription || `Frame ${frame.frame}: ${frame.scene}`;
-
-        if (galleryTags.length > 0) {
-          // Image-to-image con gallery tags
-          const res = await fetch(`${API_BASE}/images/image-to-image`, {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({
-              prompt,
-              gallery_tags: galleryTags,
-              styleTagIds,
-              aspect_ratio: imageAspectRatio,
-            }),
-          });
-          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
-          const data = await res.json();
-          imageUrl = data.images?.[0]?.url ?? null;
-        } else {
-          // Text-to-image solo con style tags
-          const res = await fetch(`${API_BASE}/images/text-to-image`, {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({
-              prompt,
-              styleTagIds,
-              aspect_ratio: imageAspectRatio,
-            }),
-          });
-          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
-          const data = await res.json();
-          imageUrl = data.images?.[0]?.url ?? null;
-        }
-
-        if (!imageUrl) throw new Error(`No se recibió URL para frame ${frame.frame}`);
-
-        setFrameImages((prev) => {
-          const newMap = new Map(prev);
-          newMap.set(frame.frame, imageUrl);
-          return newMap;
-        });
+      if (frameIndices.length === 0) {
+        setError('Todos los frames ya tienen imágenes generadas');
+        setIsBatchGenerating(false);
+        return;
       }
+
+      // Crear job de batch generation
+      const res = await fetch(`${API_BASE}/jobs/batch-generate-images`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          storyboardId: id,
+          frameIndices,
+          aspectRatio: imageAspectRatio,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Error creando job de batch generation');
+      const data = await res.json();
+      const jobId = data.jobId;
+
+      console.log(`Job de batch generation creado: ${jobId}`);
+
+      // Polling para consultar estado del job
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`${API_BASE}/jobs/${jobId}`, {
+            headers: authHeadersOnly(),
+          });
+
+          if (!statusRes.ok) {
+            clearInterval(pollInterval);
+            throw new Error('Error consultando estado del job');
+          }
+
+          const statusData = await statusRes.json();
+          const job = statusData.job;
+
+          console.log(`Job ${jobId} status:`, job.status, `progress: ${job.progress}%`);
+
+          // Actualizar progreso
+          setBatchGenerationProgress(job.progress || 0);
+
+          // Actualizar frame siendo generado basado en progreso
+          if (job.status === 'running') {
+            const currentFrameIndex = Math.floor((job.progress / 100) * frameIndices.length);
+            if (currentFrameIndex < frameIndices.length) {
+              setGeneratingFrame(frameIndices[currentFrameIndex] + 1); // Convert back to 1-based
+            }
+          }
+
+          // Si el job terminó
+          if (job.status === 'completed' || job.status === 'failed') {
+            clearInterval(pollInterval);
+            setGeneratingFrame(null);
+            setIsBatchGenerating(false);
+            setBatchGenerationProgress(0);
+
+            if (job.status === 'completed') {
+              // Recargar storyboard para obtener las nuevas imágenes
+              await loadStoryboard(id);
+              console.log('Batch generation completado exitosamente');
+            } else if (job.status === 'failed') {
+              setError(`Error en generación masiva: ${job.failReason || 'Unknown error'}`);
+            }
+          }
+        } catch (err: any) {
+          clearInterval(pollInterval);
+          setError(`Error consultando job: ${err.message}`);
+          setIsBatchGenerating(false);
+          setBatchGenerationProgress(0);
+          setGeneratingFrame(null);
+        }
+      }, 2000); // Poll cada 2 segundos
     } catch (err: any) {
       setError(`Error en generación masiva: ${err.message}`);
-    } finally {
       setIsBatchGenerating(false);
+      setBatchGenerationProgress(0);
       setGeneratingFrame(null);
     }
   };
@@ -517,6 +553,7 @@ export function useStoryboardEditor() {
     generatingFrame,
     generatingVideoFrame,
     isBatchGenerating,
+    batchGenerationProgress,
     isSaving,
     storyboardTitle,
     setStoryboardTitle,

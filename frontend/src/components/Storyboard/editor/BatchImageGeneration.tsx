@@ -7,12 +7,14 @@ interface BatchImageGenerationProps {
   onGenerate: (galleryTags: string[], styleTagIds: string[]) => void;
   isGenerating: boolean;
   hasFrames: boolean;
+  generationProgress?: number;
 }
 
 export default function BatchImageGeneration({
   onGenerate,
   isGenerating,
   hasFrames,
+  generationProgress = 0,
 }: BatchImageGenerationProps) {
   const [galleryTags, setGalleryTags] = useState<string[]>([]);
   const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
@@ -190,36 +192,54 @@ export default function BatchImageGeneration({
           )}
 
           {/* Generate Button */}
-          <button
-            onClick={handleGenerate}
-            disabled={isGenerating || !hasFrames || !hasSelection}
-            className="w-full py-3 px-6 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-500/20"
-          >
-            {isGenerating ? (
-              <>
-                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Generando imágenes...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-                Generar todas las imágenes
-              </>
-            )}
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating || !hasFrames || !hasSelection}
+              className="w-full py-3 px-6 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-500/20"
+            >
+              {isGenerating ? (
+                <>
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Generando imágenes...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                  Generar todas las imágenes
+                </>
+              )}
+            </button>
 
-          {!hasSelection && hasFrames && (
-            <p className="text-center text-xs text-amber-400">
-              Selecciona al menos un tag de referencia o estilo para continuar
-            </p>
-          )}
+            {/* Progress bar durante generación */}
+            {isGenerating && generationProgress > 0 && (
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">Progreso de generación</span>
+                  <span className="text-sm font-semibold text-violet-400">{generationProgress}%</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-violet-600 to-purple-500 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${generationProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {!hasSelection && hasFrames && (
+              <p className="text-center text-xs text-amber-400">
+                Selecciona al menos un tag de referencia o estilo para continuar
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
