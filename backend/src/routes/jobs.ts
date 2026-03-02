@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { agenda } from '../services/job-queue';
-import { Job } from 'agenda';
+import type { JobWithState } from 'agenda';
 
 const errorShape = {
   type: 'object',
@@ -8,33 +8,38 @@ const errorShape = {
 };
 
 // Helper para serializar jobs con información útil
-function serializeJob(job: Job) {
-  const attrs = job.attrs;
+function serializeJob(job: JobWithState) {
   return {
-    jobId: attrs._id?.toString(),
-    name: attrs.name,
-    data: attrs.data,
-    priority: attrs.priority,
-    progress: attrs.progress || 0,
-    nextRunAt: attrs.nextRunAt,
-    lastRunAt: attrs.lastRunAt,
-    lastFinishedAt: attrs.lastFinishedAt,
-    failedAt: attrs.failedAt,
-    failReason: attrs.failReason,
-    lockedAt: attrs.lockedAt,
-    status: getJobStatus(job),
+    jobId: job._id?.toString(),
+    name: job.name,
+    data: job.data,
+    priority: job.priority,
+    progress: job.progress || 0,
+    nextRunAt: job.nextRunAt,
+    lastRunAt: job.lastRunAt,
+    lastFinishedAt: job.lastFinishedAt,
+    failedAt: job.failedAt,
+    failReason: job.failReason,
+    lockedAt: job.lockedAt,
+    state: job.state,
+    status: mapStateToStatus(job.state),
   };
 }
 
-function getJobStatus(job: Job): string {
-  const attrs = job.attrs;
-
-  if (attrs.failedAt) return 'failed';
-  if (attrs.lastFinishedAt) return 'completed';
-  if (attrs.lockedAt) return 'running';
-  if (attrs.nextRunAt && attrs.nextRunAt <= new Date()) return 'pending';
-
-  return 'scheduled';
+function mapStateToStatus(state: string): string {
+  switch (state) {
+    case 'failed':
+      return 'failed';
+    case 'completed':
+      return 'completed';
+    case 'running':
+      return 'running';
+    case 'queued':
+    case 'scheduled':
+      return 'pending';
+    default:
+      return state;
+  }
 }
 
 export async function jobRoutes(app: FastifyInstance) {
@@ -76,25 +81,24 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const { status, limit = 50 } = req.query as { status?: string; limit?: number };
 
-        // Query base: jobs del usuario
-        const query: any = { 'data.userId': userId };
+        // Construir opciones de query para Agenda 6
+        const queryOptions: any = { limit };
 
-        // Filtrar por estado si se especifica
+        // Mapear estado de filtro
         if (status === 'failed') {
-          query.failedAt = { $exists: true };
+          queryOptions.state = 'failed';
         } else if (status === 'completed') {
-          query.lastFinishedAt = { $exists: true };
-          query.failedAt = { $exists: false };
+          queryOptions.state = 'completed';
         } else if (status === 'running') {
-          query.lockedAt = { $exists: true };
-          query.lastFinishedAt = { $exists: false };
+          queryOptions.state = 'running';
         } else if (status === 'pending') {
-          query.nextRunAt = { $lte: new Date() };
-          query.lockedAt = { $exists: false };
-          query.lastFinishedAt = { $exists: false };
+          queryOptions.state = 'queued';
         }
 
-        const jobs = await agenda.jobs(query, { lastModifiedDate: -1 }, limit);
+        const jobsResult = await agenda.queryJobs(queryOptions);
+        
+        // Filtrar por userId en los datos
+        const jobs = jobsResult.jobs.filter((j: JobWithState) => j.data && (j.data as any).userId === userId);
 
         const serialized = jobs.map(serializeJob);
 
@@ -139,7 +143,10 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const { jobId } = req.params;
 
-        const jobs = await agenda.jobs({ _id: jobId as any, 'data.userId': userId });
+        const jobsResult = await agenda.queryJobs({ id: jobId });
+        const jobs = jobsResult.jobs.filter((j: JobWithState) => {
+          return j.data && (j.data as any).userId === userId;
+        });
 
         if (jobs.length === 0) {
           return reply.status(404).send({ success: false, error: 'Job no encontrado' });
@@ -190,7 +197,10 @@ export async function jobRoutes(app: FastifyInstance) {
         const { jobId } = req.params;
 
         // Verificar que el job pertenece al usuario
-        const jobs = await agenda.jobs({ _id: jobId as any, 'data.userId': userId });
+        const jobsResult = await agenda.queryJobs({ id: jobId });
+        const jobs = jobsResult.jobs.filter((j: JobWithState) => {
+          return j.data && (j.data as any).userId === userId;
+        });
 
         if (jobs.length === 0) {
           return reply.status(404).send({ success: false, error: 'Job no encontrado' });
@@ -199,14 +209,14 @@ export async function jobRoutes(app: FastifyInstance) {
         const job = jobs[0];
 
         // Verificar que no esté completado
-        if (job.attrs.lastFinishedAt) {
+        if (job.state === 'completed') {
           return reply
             .status(400)
             .send({ success: false, error: 'No se puede cancelar un job completado' });
         }
 
-        // Cancelar job
-        await agenda.cancel({ _id: jobId as any });
+        // Cancelar job usando el método del backend
+        await agenda.db.removeJobs({ id: jobId });
 
         app.log.info({ msg: 'Job cancelado', jobId, userId });
 

@@ -1,4 +1,5 @@
-import Agenda, { Job } from 'agenda';
+import { Agenda, Job } from 'agenda';
+import { MongoBackend } from '@agendajs/mongo-backend';
 import { fal } from '@fal-ai/client';
 import { Storyboard } from '../models/Storyboard';
 import { exec } from 'child_process';
@@ -22,11 +23,13 @@ const STORAGE_DIR = '/var/www/mindverse_dev/storage/compiled-videos';
 const PUBLIC_URL_BASE = 'https://devalliance.com.ar/storage/compiled-videos';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
+type AspectRatio = '21:9' | '16:9' | '3:2' | '4:3' | '5:4' | '1:1' | '4:5' | '3:4' | '2:3' | '9:16';
+
 interface BatchGenerateImagesData {
   userId: string;
   storyboardId: string;
   frameIndices: number[]; // índices de los frames a generar
-  aspectRatio?: string;
+  aspectRatio?: AspectRatio;
 }
 
 interface CompileVideoData {
@@ -39,7 +42,7 @@ interface CompileVideoData {
 
 // ── Agenda Instance ───────────────────────────────────────────────────────────
 const agenda = new Agenda({
-  db: { address: MONGO_URI, collection: 'jobs' },
+  backend: new MongoBackend({ address: MONGO_URI, collection: 'jobs' }),
   processEvery: '5 seconds',
   maxConcurrency: 5,
   defaultConcurrency: 2,
@@ -49,7 +52,6 @@ const agenda = new Agenda({
 // ── Job: Batch Generate Images ───────────────────────────────────────────────
 agenda.define<BatchGenerateImagesData>(
   'batch-generate-images',
-  { concurrency: 3 },
   async (job: Job<BatchGenerateImagesData>) => {
     const { userId, storyboardId, frameIndices, aspectRatio = '1:1' } = job.attrs.data;
 
@@ -85,7 +87,7 @@ agenda.define<BatchGenerateImagesData>(
             input: {
               prompt,
               num_images: 1,
-              aspect_ratio: aspectRatio,
+              aspect_ratio: aspectRatio as AspectRatio,
               output_format: 'png',
             },
           });
@@ -113,7 +115,8 @@ agenda.define<BatchGenerateImagesData>(
 
         completed++;
         const progress = Math.round((completed / total) * 100);
-        await job.progress(progress);
+        job.attrs.progress = progress;
+        await job.save();
       }
 
       // Guardar storyboard con las imágenes generadas
@@ -132,7 +135,6 @@ agenda.define<BatchGenerateImagesData>(
 // ── Job: Compile Video ────────────────────────────────────────────────────────
 agenda.define<CompileVideoData>(
   'compile-video',
-  { concurrency: 2 }, // Máximo 2 compilaciones simultáneas
   async (job: Job<CompileVideoData>) => {
     const { userId, storyboardId, videoUrls, youtubeUrl, audioStartTime = 0 } = job.attrs.data;
 
@@ -141,7 +143,8 @@ agenda.define<CompileVideoData>(
     let audioPath: string | null = null;
 
     try {
-      await job.progress(5);
+      job.attrs.progress = 5;
+      await job.save();
 
       // Validar URL de YouTube si se proporciona
       if (youtubeUrl && !isValidYoutubeUrl(youtubeUrl)) {
@@ -150,7 +153,8 @@ agenda.define<CompileVideoData>(
 
       // 1. Crear directorio de storage
       await fs.mkdir(STORAGE_DIR, { recursive: true });
-      await job.progress(10);
+      job.attrs.progress = 10;
+      await job.save();
 
       // 2. Descargar videos a /tmp
       const tempFiles: string[] = [];
@@ -172,21 +176,24 @@ agenda.define<CompileVideoData>(
         tempFiles.push(tempPath);
 
         const progress = 10 + Math.round((index / total) * 30);
-        await job.progress(progress);
+        job.attrs.progress = progress;
+        await job.save();
       }
 
       // 3. Crear lista de concatenación para ffmpeg
       const listPath = `/tmp/concat_${Date.now()}.txt`;
       const listContent = tempFiles.map((f) => `file '${f}'`).join('\n');
       await fs.writeFile(listPath, listContent);
-      await job.progress(45);
+      job.attrs.progress = 45;
+      await job.save();
 
       // 4. Compilar videos base
       const baseVideoPath = `/tmp/base_${storyboardId}_${Date.now()}.mp4`;
       console.log(`[Job ${job.attrs._id}] Concatenando videos...`);
 
       await execAsync(`ffmpeg -y -f concat -safe 0 -i ${listPath} -c copy ${baseVideoPath}`);
-      await job.progress(60);
+      job.attrs.progress = 60;
+      await job.save();
 
       // 5. Obtener duración del video compilado
       const { stdout: durationOutput } = await execAsync(
@@ -194,7 +201,8 @@ agenda.define<CompileVideoData>(
       );
       const videoDuration = parseFloat(durationOutput.trim());
       console.log(`[Job ${job.attrs._id}] Duración del video: ${videoDuration}s`);
-      await job.progress(65);
+      job.attrs.progress = 65;
+      await job.save();
 
       // 6. Procesar audio si existe YouTube URL
       const outputPath = `${STORAGE_DIR}/${storyboardId}.mp4`;
@@ -208,7 +216,8 @@ agenda.define<CompileVideoData>(
           duration: videoDuration,
         });
         audioPath = audioResult.path;
-        await job.progress(75);
+        job.attrs.progress = 75;
+        await job.save();
 
         // Detectar si el video base tiene audio
         let hasAudio = false;
@@ -256,14 +265,16 @@ agenda.define<CompileVideoData>(
         }
 
         await execAsync(ffmpegMixCmd);
-        await job.progress(90);
+        job.attrs.progress = 90;
+        await job.save();
 
         // Limpiar video base
         await fs.unlink(baseVideoPath).catch(() => {});
       } else {
         // Sin música, mover video base al output final
         await execAsync(`mv "${baseVideoPath}" "${outputPath}"`);
-        await job.progress(90);
+        job.attrs.progress = 90;
+        await job.save();
       }
 
       // 7. Generar URL pública
@@ -293,7 +304,8 @@ agenda.define<CompileVideoData>(
         await cleanupAudioFile(audioPath);
       }
 
-      await job.progress(100);
+      job.attrs.progress = 100;
+      await job.save();
       console.log(`[Job ${job.attrs._id}] ✅ Compilación exitosa: ${publicUrl}`);
     } catch (err: any) {
       console.error(`[Job ${job.attrs._id}] ❌ Error en compilación:`, err.message);
@@ -310,12 +322,8 @@ agenda.define<CompileVideoData>(
 
 // ── Cleanup Job (eliminar jobs completados >24h) ──────────────────────────────
 agenda.define('cleanup-old-jobs', async () => {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 horas atrás
-  const result = await agenda.cancel({
-    lastFinishedAt: { $lt: cutoff },
-    $or: [{ lastRunAt: { $exists: true } }, { failedAt: { $exists: true } }],
-  });
-  console.log(`[Cleanup] Eliminados ${result} jobs completados hace >24h`);
+  // TODO: Implementar cleanup con la nueva API de Agenda 6
+  console.log(`[Cleanup] Job de limpieza ejecutado (pendiente implementación en v6)`);
 });
 
 // ── Event Handlers ────────────────────────────────────────────────────────────
@@ -323,19 +331,19 @@ agenda.on('ready', () => {
   console.log('✅ Agenda ready - Job queue iniciado');
 });
 
-agenda.on('error', (error) => {
+agenda.on('error', (error: Error) => {
   console.error('❌ Agenda error:', error);
 });
 
-agenda.on('start', (job) => {
+agenda.on('start', (job: Job) => {
   console.log(`[Agenda] Job iniciado: ${job.attrs.name} (${job.attrs._id})`);
 });
 
-agenda.on('complete', (job) => {
+agenda.on('complete', (job: Job) => {
   console.log(`[Agenda] Job completado: ${job.attrs.name} (${job.attrs._id})`);
 });
 
-agenda.on('fail', (err, job) => {
+agenda.on('fail', (err: Error, job: Job) => {
   console.error(`[Agenda] Job falló: ${job.attrs.name} (${job.attrs._id})`, err.message);
 });
 
