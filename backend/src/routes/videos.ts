@@ -1,20 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { fal } from '@fal-ai/client';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs/promises';
-import { Storyboard } from '../models/Storyboard';
-import {
-  downloadYoutubeAudio,
-  cleanupAudioFile,
-  isValidYoutubeUrl,
-} from '../services/youtube-audio';
-
-const execAsync = promisify(exec);
+import { agenda } from '../services/job-queue';
+import { isValidYoutubeUrl } from '../services/youtube-audio';
 
 const KLING_VIDEO_MODEL = 'fal-ai/kling-video/v2.5-turbo/standard/image-to-video';
-const STORAGE_DIR = '/var/www/mindverse_dev/storage/compiled-videos';
-const PUBLIC_URL_BASE = 'https://devalliance.com.ar/storage/compiled-videos';
 
 // ── Video Generation Body ─────────────────────────────────────────────────────
 interface VideoGenerationBody {
@@ -156,8 +145,8 @@ export async function videoRoutes(app: FastifyInstance) {
 
   /**
    * POST /videos/compile
-   * Compila múltiples videos en un único MP4 usando ffmpeg.
-   * Opcionalmente agrega música de fondo desde YouTube.
+   * Crea un job para compilar múltiples videos en un único MP4.
+   * Retorna el jobId que se puede usar para consultar el progreso.
    *
    * Body:
    *   storyboardId   — ID del storyboard (requerido)
@@ -170,7 +159,7 @@ export async function videoRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['videos'],
-        summary: 'Compilar videos de frames en un único MP4',
+        summary: 'Crear job para compilar videos en background',
         body: {
           type: 'object',
           required: ['storyboardId', 'videoUrls'],
@@ -185,13 +174,40 @@ export async function videoRoutes(app: FastifyInstance) {
             },
           },
         },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              jobId: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            type: 'object',
+            properties: { error: { type: 'string' } },
+          },
+          401: {
+            type: 'object',
+            properties: { error: { type: 'string' } },
+          },
+          500: {
+            type: 'object',
+            properties: { error: { type: 'string' } },
+          },
+        },
       },
     },
     async (request, reply) => {
+      const userId = request.jwtUser?.sub;
+      if (!userId) {
+        return reply.status(401).send({ error: 'No autorizado' });
+      }
+
       const { storyboardId, videoUrls, youtubeUrl, audioStartTime = 0 } = request.body;
 
       if (!videoUrls || videoUrls.length === 0) {
-        return reply.status(400).send({ error: 'No videos to compile' });
+        return reply.status(400).send({ error: 'videoUrls no puede estar vacío' });
       }
 
       // Validar URL de YouTube si se proporciona
@@ -199,170 +215,41 @@ export async function videoRoutes(app: FastifyInstance) {
         return reply.status(400).send({ error: 'URL de YouTube inválida' });
       }
 
-      let audioPath: string | null = null;
-
       try {
+        // Crear job para compilación en background
+        const job = await agenda.now('compile-video', {
+          userId,
+          storyboardId,
+          videoUrls,
+          youtubeUrl,
+          audioStartTime,
+        });
+
+        const jobId = job.attrs._id?.toString();
+
         app.log.info({
-          msg: 'Iniciando compilación de videos',
+          msg: 'Job de compilación creado',
+          jobId,
+          userId,
           storyboardId,
           videoCount: videoUrls.length,
           withMusic: !!youtubeUrl,
         });
 
-        // 1. Crear directorio de storage
-        await fs.mkdir(STORAGE_DIR, { recursive: true });
-
-        // 2. Descargar videos a /tmp
-        const tempFiles: string[] = [];
-        for (const [index, url] of videoUrls.entries()) {
-          app.log.info({ msg: `Descargando video ${index + 1}/${videoUrls.length}`, url });
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Error descargando video ${index + 1}: ${response.statusText}`);
-          }
-          const buffer = await response.arrayBuffer();
-          const tempPath = `/tmp/video_${index}_${Date.now()}.mp4`;
-          await fs.writeFile(tempPath, Buffer.from(buffer));
-          tempFiles.push(tempPath);
-        }
-
-        // 3. Crear lista de concatenación para ffmpeg
-        const listPath = `/tmp/concat_${Date.now()}.txt`;
-        const listContent = tempFiles.map((f) => `file '${f}'`).join('\n');
-        await fs.writeFile(listPath, listContent);
-
-        // 4. Compilar videos base (sin música aún)
-        const baseVideoPath = `/tmp/base_${storyboardId}_${Date.now()}.mp4`;
-        app.log.info({ msg: 'Concatenando videos base' });
-
-        await execAsync(`ffmpeg -y -f concat -safe 0 -i ${listPath} -c copy ${baseVideoPath}`);
-
-        // 5. Obtener duración del video compilado
-        const { stdout: durationOutput } = await execAsync(
-          `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${baseVideoPath}"`
-        );
-        const videoDuration = parseFloat(durationOutput.trim());
-        app.log.info({ msg: 'Duración del video', duration: videoDuration });
-
-        // 6. Si hay música de YouTube, descargarla y mezclarla
-        const outputPath = `${STORAGE_DIR}/${storyboardId}.mp4`;
-
-        if (youtubeUrl) {
-          app.log.info({ msg: 'Descargando audio de YouTube', youtubeUrl, audioStartTime });
-
-          const audioResult = await downloadYoutubeAudio({
-            youtubeUrl,
-            startTime: audioStartTime,
-            duration: videoDuration,
-          });
-
-          audioPath = audioResult.path;
-
-          app.log.info({
-            msg: 'Mezclando audio con video',
-            audioDuration: audioResult.duration,
-            videoDuration,
-          });
-
-          // Detectar si el video base tiene audio
-          let hasAudio = false;
-          try {
-            const { stdout: audioCheck } = await execAsync(
-              `ffprobe -v error -select_streams a -show_entries stream=codec_type -of default=noprint_wrappers=1:nokey=1 "${baseVideoPath}"`
-            );
-            hasAudio = audioCheck.trim() === 'audio';
-          } catch {
-            hasAudio = false;
-          }
-
-          app.log.info({ msg: 'Detección de audio en video base', hasAudio });
-
-          let ffmpegMixCmd: string;
-
-          if (hasAudio) {
-            // Video tiene audio → mezclar ambos
-            // Video audio: 70%, Music: 30%
-            ffmpegMixCmd = [
-              'ffmpeg -y',
-              `-i "${baseVideoPath}"`,
-              `-i "${audioPath}"`,
-              '-filter_complex',
-              '"[0:a]volume=0.7[a0];[1:a]volume=0.3[a1];[a0][a1]amix=inputs=2:duration=first[aout]"',
-              '-map 0:v',
-              '-map "[aout]"',
-              '-c:v copy',
-              '-c:a aac',
-              '-shortest',
-              `"${outputPath}"`,
-            ].join(' ');
-          } else {
-            // Video NO tiene audio → agregar audio directo
-            ffmpegMixCmd = [
-              'ffmpeg -y',
-              `-i "${baseVideoPath}"`,
-              `-i "${audioPath}"`,
-              '-map 0:v',
-              '-map 1:a',
-              '-c:v copy',
-              '-c:a aac',
-              '-shortest',
-              `"${outputPath}"`,
-            ].join(' ');
-          }
-
-          await execAsync(ffmpegMixCmd);
-
-          // Limpiar video base
-          await fs.unlink(baseVideoPath).catch(() => {});
-        } else {
-          // Sin música, solo mover el video base al output final
-          await execAsync(`mv "${baseVideoPath}" "${outputPath}"`);
-        }
-
-        // 7. Generar URL pública
-        const publicUrl = `${PUBLIC_URL_BASE}/${storyboardId}.mp4`;
-
-        // 8. Guardar en DB
-        const storyboard = await Storyboard.findById(storyboardId);
-        if (storyboard) {
-          storyboard.compiledVideoUrl = publicUrl;
-          if (youtubeUrl) {
-            storyboard.musicYoutubeUrl = youtubeUrl;
-            storyboard.musicStartTime = audioStartTime;
-          }
-          await storyboard.save();
-          app.log.info({ msg: 'Video compilado guardado en DB', publicUrl });
-        } else {
-          app.log.warn({ msg: 'Storyboard no encontrado en DB', storyboardId });
-        }
-
-        // 9. Limpiar archivos temporales
-        await Promise.all([
-          ...tempFiles.map((f) => fs.unlink(f).catch(() => {})),
-          fs.unlink(listPath).catch(() => {}),
-        ]);
-
-        if (audioPath) {
-          await cleanupAudioFile(audioPath);
-        }
-
-        app.log.info({ msg: 'Compilación exitosa', videoUrl: publicUrl });
-
-        return reply.send({ success: true, videoUrl: publicUrl });
+        return reply.send({
+          success: true,
+          jobId,
+          message: `Job creado para compilar ${videoUrls.length} videos. Usa /jobs/${jobId} para consultar el progreso.`,
+        });
       } catch (err: any) {
         app.log.error({
-          msg: 'Error compilando videos',
+          msg: 'Error creando job de compilación',
           error: err?.message,
           stack: err?.stack,
         });
 
-        // Limpiar audio en caso de error
-        if (audioPath) {
-          await cleanupAudioFile(audioPath);
-        }
-
         return reply.status(500).send({
-          error: 'Error compilando videos',
+          error: 'Error creando job de compilación',
           detail: err?.message ?? 'Unknown error',
         });
       }
