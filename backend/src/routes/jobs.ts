@@ -9,20 +9,21 @@ const errorShape = {
 
 // Helper para serializar jobs con información útil
 function serializeJob(job: JobWithState) {
+  const attrs = (job as any).attrs;
   return {
-    jobId: job.attrs._id?.toString(),
-    name: job.attrs.name,
-    data: job.attrs.data,
-    priority: job.attrs.priority,
-    progress: job.attrs.progress || 0,
-    nextRunAt: job.attrs.nextRunAt,
-    lastRunAt: job.attrs.lastRunAt,
-    lastFinishedAt: job.attrs.lastFinishedAt,
-    failedAt: job.attrs.failedAt,
-    failReason: job.attrs.failReason,
-    lockedAt: job.attrs.lockedAt,
-    state: job.state,
-    status: mapStateToStatus(job.state),
+    jobId: attrs._id?.toString(),
+    name: attrs.name,
+    data: attrs.data,
+    priority: attrs.priority,
+    progress: attrs.progress || 0,
+    nextRunAt: attrs.nextRunAt,
+    lastRunAt: attrs.lastRunAt,
+    lastFinishedAt: attrs.lastFinishedAt,
+    failedAt: attrs.failedAt,
+    failReason: attrs.failReason,
+    lockedAt: attrs.lockedAt,
+    state: (job as any).state,
+    status: mapStateToStatus((job as any).state),
   };
 }
 
@@ -98,7 +99,7 @@ export async function jobRoutes(app: FastifyInstance) {
         const jobsResult = await agenda.queryJobs(queryOptions);
         
         // Filtrar por userId en los datos
-        const jobs = jobsResult.jobs.filter((j: JobWithState) => j.attrs.data && (j.attrs.data as any).userId === userId);
+        const jobs = jobsResult.jobs.filter((j: JobWithState) => (j as any).attrs.data && ((j as any).attrs.data as any).userId === userId);
 
         const serialized = jobs.map(serializeJob);
 
@@ -145,7 +146,7 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const jobsResult = await agenda.queryJobs({ id: jobId });
         const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          return j.attrs.data && (j.attrs.data as any).userId === userId;
+          return (j as any).attrs.data && ((j as any).attrs.data as any).userId === userId;
         });
 
         if (jobs.length === 0) {
@@ -199,7 +200,7 @@ export async function jobRoutes(app: FastifyInstance) {
         // Verificar que el job pertenece al usuario
         const jobsResult = await agenda.queryJobs({ id: jobId });
         const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          return j.attrs.data && (j.attrs.data as any).userId === userId;
+          return (j as any).attrs.data && ((j as any).attrs.data as any).userId === userId;
         });
 
         if (jobs.length === 0) {
@@ -209,7 +210,7 @@ export async function jobRoutes(app: FastifyInstance) {
         const job = jobs[0];
 
         // Verificar que no esté completado
-        if (job.attrs.state === 'completed') {
+        if ((job as any).attrs.state === 'completed') {
           return reply
             .status(400)
             .send({ success: false, error: 'No se puede cancelar un job completado' });
@@ -256,6 +257,16 @@ export async function jobRoutes(app: FastifyInstance) {
               default: '1:1',
               description: 'Aspect ratio para las imágenes',
             },
+            galleryTags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Tags de galería para image-to-image',
+            },
+            styleTagIds: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'IDs de estilos a aplicar',
+            },
           },
         },
         response: {
@@ -277,7 +288,8 @@ export async function jobRoutes(app: FastifyInstance) {
         const userId = req.jwtUser?.sub;
         if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
 
-        const { storyboardId, frameIndices, aspectRatio = '1:1' } = req.body;
+        const body = req.body as any;
+        const { storyboardId, frameIndices, aspectRatio = '1:1', galleryTags = [], styleTagIds = [] } = body;
 
         if (!frameIndices || frameIndices.length === 0) {
           return reply
@@ -291,9 +303,11 @@ export async function jobRoutes(app: FastifyInstance) {
           storyboardId,
           frameIndices,
           aspectRatio,
+          galleryTags,
+          styleTagIds,
         });
 
-        const jobId = job.attrs._id?.toString();
+        const jobId = (job as any).attrs._id?.toString();
 
         app.log.info({
           msg: 'Job de batch generation creado',
@@ -380,7 +394,7 @@ export async function jobRoutes(app: FastifyInstance) {
           audioStartTime,
         });
 
-        const jobId = job.attrs._id?.toString();
+        const jobId = (job as any).attrs._id?.toString();
 
         app.log.info({
           msg: 'Job de compilación de video creado',

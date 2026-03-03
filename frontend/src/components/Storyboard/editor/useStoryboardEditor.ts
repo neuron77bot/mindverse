@@ -354,7 +354,7 @@ export function useStoryboardEditor() {
   };
 
   const handleBatchGenerate = async (galleryTags: string[], styleTagIds: string[], aspectRatio: string) => {
-    if (!storyboard || storyboard.length === 0) return;
+    if (!id || !storyboard || storyboard.length === 0) return;
     if (galleryTags.length === 0 && styleTagIds.length === 0) return;
 
     setIsBatchGenerating(true);
@@ -362,42 +362,9 @@ export function useStoryboardEditor() {
     setError(null);
 
     try {
-      for (const frame of storyboard) {
-        setGeneratingFrame(frame.frame);
-
-        let imageUrl: string;
-        const prompt = frame.visualDescription || `Frame ${frame.frame}: ${frame.scene}`;
-
-        if (galleryTags.length > 0) {
-          // Image-to-image con gallery tags
-          const res = await fetch(`${API_BASE}/images/image-to-image`, {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({
-              prompt,
-              gallery_tags: galleryTags,
-              styleTagIds,
-              aspect_ratio: aspectRatio,
-            }),
-          });
-          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
-          const data = await res.json();
-          imageUrl = data.images?.[0]?.url ?? null;
-        } else {
-          // Text-to-image solo con style tags
-          const res = await fetch(`${API_BASE}/images/text-to-image`, {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({
-              prompt,
-              styleTagIds,
-              aspect_ratio: aspectRatio,
-            }),
-          });
-          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
-          const data = await res.json();
-          imageUrl = data.images?.[0]?.url ?? null;
-        }
+      // Determinar frames a generar (TODOS los frames, incluso con imágenes existentes)
+      const frameIndices = storyboard
+        .map(f => f.frame - 1); // Convert to 0-based indices
 
       // Crear job de batch generation
       const res = await fetch(`${API_BASE}/jobs/batch-generate-images`, {
@@ -406,7 +373,9 @@ export function useStoryboardEditor() {
         body: JSON.stringify({
           storyboardId: id,
           frameIndices,
-          aspectRatio: imageAspectRatio,
+          aspectRatio,
+          galleryTags,
+          styleTagIds,
         }),
       });
 
