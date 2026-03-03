@@ -14,8 +14,10 @@ import { storyboardRoutes } from './routes/storyboards';
 import { galleryRoutes } from './routes/gallery';
 import { promptStyleRoutes } from './routes/promptStyles';
 import { cinemaRoutes } from './routes/cinema';
+import { jobRoutes } from './routes/jobs';
 import { connectDatabase } from './services/database';
 import { authMiddleware } from './middleware/auth';
+import { startAgenda, stopAgenda } from './services/job-queue';
 
 const FAL_KEY = process.env.FAL_KEY;
 const PORT = Number(process.env.PORT) || 3001;
@@ -108,6 +110,9 @@ async function main() {
   // Rutas de Cinema Mode (pública)
   await app.register(cinemaRoutes, { prefix: '/cinema' });
 
+  // Rutas de jobs
+  await app.register(jobRoutes, { prefix: '/jobs' });
+
   // Health check
   app.get(
     '/health',
@@ -128,8 +133,20 @@ async function main() {
 
   try {
     await connectDatabase();
+    await startAgenda();
     await app.listen({ port: PORT, host: '0.0.0.0' });
     console.log(`🚀 Backend corriendo en http://localhost:${PORT}`);
+
+    // Graceful shutdown
+    const shutdown = async () => {
+      console.log('\n⏳ Deteniendo servidor...');
+      await stopAgenda();
+      await app.close();
+      process.exit(0);
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

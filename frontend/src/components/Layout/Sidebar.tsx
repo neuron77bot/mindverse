@@ -1,4 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { fetchJobs } from '../../services/jobs';
 
 interface SidebarProps {
   onLogout: () => void;
@@ -9,14 +11,37 @@ interface SidebarProps {
 export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [jobsInProgress, setJobsInProgress] = useState(0);
 
   const menuItems = [
     { path: '/storyboards', label: 'Storyboards', icon: '📚' },
     { path: '/gallery', label: 'Galería', icon: '🖼️' },
     { path: '/cinema', label: 'Cinema', icon: '🎬' },
+    { path: '/jobs', label: 'Jobs', icon: '⚙️', badge: jobsInProgress },
     { path: '/prompt-styles', label: 'Estilos', icon: '🎨' },
     { path: '/perfil', label: 'Perfil', icon: '👤' },
   ];
+
+  // Cargar jobs y actualizar badge
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        const data = await fetchJobs();
+        const inProgress = data.jobs.filter(
+          (j) => j.status === 'pending' || j.status === 'running'
+        ).length;
+        setJobsInProgress(inProgress);
+      } catch (err) {
+        console.error('Error cargando jobs para badge:', err);
+      }
+    };
+
+    loadJobs();
+
+    // Polling cada 10 segundos para actualizar el badge
+    const interval = setInterval(loadJobs, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -89,7 +114,7 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
               aria-current={isActive(item.path) ? 'page' : undefined}
               className={`
                 w-full flex items-center gap-3 px-4 py-3 rounded-lg
-                text-sm font-medium transition-all
+                text-sm font-medium transition-all relative
                 ${
                   isActive(item.path)
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
@@ -100,7 +125,12 @@ export default function Sidebar({ onLogout, isOpen, onClose }: SidebarProps) {
               <span className="text-xl" aria-hidden="true">
                 {item.icon}
               </span>
-              <span>{item.label}</span>
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>
