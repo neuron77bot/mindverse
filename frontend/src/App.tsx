@@ -15,6 +15,7 @@ const StoryboardListPage = lazy(() => import('./pages/StoryboardListPage'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 const PromptStylesPage = lazy(() => import('./pages/PromptStylesPage'));
 const CinemaPage = lazy(() => import('./pages/CinemaPage'));
+const JobsPage = lazy(() => import('./pages/JobsPage'));
 
 export default function App() {
   return (
@@ -47,6 +48,7 @@ export default function App() {
               <Route path="/storyboard/edit/:id" element={<StoryboardEditPage />} />
               <Route path="/storyboards" element={<StoryboardListPage />} />
               <Route path="/gallery" element={<GalleryPage />} />
+              <Route path="/jobs" element={<JobsPage />} />
               <Route path="/prompt-styles" element={<PromptStylesPage />} />
               <Route path="/perfil" element={<ProfilePage />} />
             </Route>
