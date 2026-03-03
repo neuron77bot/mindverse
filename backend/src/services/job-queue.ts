@@ -41,8 +41,10 @@ interface CompileVideoData {
 }
 
 // ── Agenda Instance ───────────────────────────────────────────────────────────
+const mongoBackend = new MongoBackend({ address: MONGO_URI, collection: 'jobs' });
+
 const agenda = new Agenda({
-  backend: new MongoBackend({ address: MONGO_URI, collection: 'jobs' }),
+  backend: mongoBackend,
   processEvery: '5 seconds',
   maxConcurrency: 5,
   defaultConcurrency: 2,
@@ -348,7 +350,7 @@ agenda.on('fail', (err: Error, job: Job) => {
 });
 
 // ── Export ────────────────────────────────────────────────────────────────────
-export { agenda };
+export { agenda, mongoBackend };
 
 export async function startAgenda() {
   await agenda.start();
@@ -362,4 +364,9 @@ export async function startAgenda() {
 export async function stopAgenda() {
   await agenda.stop();
   console.log('🛑 Agenda detenido');
+}
+
+// Helper para obtener la colección de MongoDB directamente
+export async function getJobsCollection() {
+  return (mongoBackend as any)._collection;
 }
