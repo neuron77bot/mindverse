@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { agenda } from '../services/job-queue';
+import { agenda, getJobsCollection } from '../services/job-queue';
 import type { JobWithState } from 'agenda';
+import { ObjectId } from 'mongodb';
 
 const errorShape = {
   type: 'object',
@@ -43,6 +44,15 @@ function mapStateToStatus(state: string): string {
   }
 }
 
+// Helper para determinar el estado de un job desde el documento de MongoDB
+function determineJobState(jobDoc: any): string {
+  if (jobDoc.failedAt) return 'failed';
+  if (jobDoc.lastFinishedAt) return 'completed';
+  if (jobDoc.lockedAt) return 'running';
+  if (jobDoc.nextRunAt) return 'queued';
+  return 'unknown';
+}
+
 export async function jobRoutes(app: FastifyInstance) {
   // GET /jobs - Listar todos los jobs del usuario
   app.get(
@@ -82,6 +92,8 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const { status, limit = 50 } = req.query as { status?: string; limit?: number };
 
+        app.log.info({ msg: 'Listando jobs', userId, status, limit });
+
         // Construir opciones de query para Agenda 6
         const queryOptions: any = { limit };
 
@@ -98,8 +110,23 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const jobsResult = await agenda.queryJobs(queryOptions);
         
-        // Filtrar por userId en los datos
-        const jobs = jobsResult.jobs.filter((j: JobWithState) => (j as any).attrs.data && ((j as any).attrs.data as any).userId === userId);
+        app.log.info({ msg: 'Jobs obtenidos de Agenda', count: jobsResult.jobs?.length || 0 });
+        
+        // Filtrar por userId en los datos con defensive checks
+        const jobs = jobsResult.jobs.filter((j: JobWithState) => {
+          const attrs = (j as any).attrs;
+          if (!attrs) {
+            app.log.warn({ msg: 'Job sin attrs', job: j });
+            return false;
+          }
+          if (!attrs.data) {
+            app.log.warn({ msg: 'Job sin data', jobId: attrs._id });
+            return false;
+          }
+          return attrs.data.userId === userId;
+        });
+
+        app.log.info({ msg: 'Jobs filtrados por userId', count: jobs.length });
 
         const serialized = jobs.map(serializeJob);
 
@@ -144,21 +171,68 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const { jobId } = req.params;
 
-        const jobsResult = await agenda.queryJobs({ id: jobId });
-        const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          return (j as any).attrs.data && ((j as any).attrs.data as any).userId === userId;
-        });
+        app.log.info({ msg: 'Consultando job', jobId, userId });
 
-        if (jobs.length === 0) {
+        // Validar ObjectId
+        if (!ObjectId.isValid(jobId)) {
+          app.log.warn({ msg: 'JobId inválido', jobId });
+          return reply.status(400).send({ success: false, error: 'ID de job inválido' });
+        }
+
+        // Consultar directamente desde MongoDB
+        const collection = await getJobsCollection();
+        const jobDoc = await collection.findOne({ _id: new ObjectId(jobId) });
+
+        if (!jobDoc) {
+          app.log.warn({ msg: 'Job no encontrado en MongoDB', jobId });
           return reply.status(404).send({ success: false, error: 'Job no encontrado' });
         }
 
-        const job = jobs[0];
-        const serialized = serializeJob(job);
+        // Verificar pertenencia al usuario
+        if (!jobDoc.data || jobDoc.data.userId !== userId) {
+          app.log.warn({ 
+            msg: 'Job no pertenece al usuario', 
+            jobId, 
+            jobUserId: jobDoc.data?.userId, 
+            requestUserId: userId 
+          });
+          return reply.status(404).send({ success: false, error: 'Job no encontrado' });
+        }
+
+        // Serializar el documento de MongoDB
+        const state = determineJobState(jobDoc);
+        const serialized = {
+          jobId: jobDoc._id.toString(),
+          name: jobDoc.name,
+          data: jobDoc.data,
+          priority: jobDoc.priority,
+          progress: jobDoc.progress || 0,
+          nextRunAt: jobDoc.nextRunAt,
+          lastRunAt: jobDoc.lastRunAt,
+          lastFinishedAt: jobDoc.lastFinishedAt,
+          failedAt: jobDoc.failedAt,
+          failReason: jobDoc.failReason,
+          lockedAt: jobDoc.lockedAt,
+          state,
+          status: mapStateToStatus(state),
+        };
+
+        app.log.info({ 
+          msg: 'Job encontrado', 
+          jobId, 
+          status: serialized.status, 
+          progress: serialized.progress,
+          state: serialized.state
+        });
 
         return reply.send({ success: true, job: serialized });
       } catch (err: any) {
-        app.log.error(err);
+        app.log.error({ 
+          msg: 'Error consultando job', 
+          jobId: req.params.jobId, 
+          error: err.message, 
+          stack: err.stack 
+        });
         return reply.status(500).send({ success: false, error: err.message });
       }
     }
@@ -197,13 +271,18 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const { jobId } = req.params;
 
+        app.log.info({ msg: 'Intentando cancelar job', jobId, userId });
+
         // Verificar que el job pertenece al usuario
         const jobsResult = await agenda.queryJobs({ id: jobId });
         const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          return (j as any).attrs.data && ((j as any).attrs.data as any).userId === userId;
+          const attrs = (j as any).attrs;
+          if (!attrs || !attrs.data) return false;
+          return attrs.data.userId === userId;
         });
 
         if (jobs.length === 0) {
+          app.log.warn({ msg: 'Job no encontrado para cancelar', jobId, userId });
           return reply.status(404).send({ success: false, error: 'Job no encontrado' });
         }
 
@@ -223,7 +302,7 @@ export async function jobRoutes(app: FastifyInstance) {
 
         return reply.send({ success: true, message: 'Job cancelado exitosamente' });
       } catch (err: any) {
-        app.log.error(err);
+        app.log.error({ msg: 'Error cancelando job', jobId: req.params.jobId, error: err.message });
         return reply.status(500).send({ success: false, error: err.message });
       }
     }
@@ -297,6 +376,14 @@ export async function jobRoutes(app: FastifyInstance) {
             .send({ success: false, error: 'frameIndices no puede estar vacío' });
         }
 
+        app.log.info({
+          msg: 'Creando job de batch generation',
+          userId,
+          storyboardId,
+          frameCount: frameIndices.length,
+          aspectRatio,
+        });
+
         // Crear job
         const job = await agenda.now('batch-generate-images', {
           userId,
@@ -309,13 +396,27 @@ export async function jobRoutes(app: FastifyInstance) {
 
         const jobId = (job as any).attrs._id?.toString();
 
+        if (!jobId) {
+          app.log.error({ msg: 'Job creado pero sin ID', job: job });
+          throw new Error('Job creado pero no se pudo obtener el ID');
+        }
+
         app.log.info({
           msg: 'Job de batch generation creado',
           jobId,
           userId,
           storyboardId,
           frameCount: frameIndices.length,
+          jobState: (job as any).attrs.state,
         });
+
+        // Verificar que el job se puede consultar inmediatamente
+        const verifyResult = await agenda.queryJobs({ id: jobId });
+        if (verifyResult.jobs.length === 0) {
+          app.log.warn({ msg: 'Job creado pero no se puede consultar inmediatamente', jobId });
+        } else {
+          app.log.info({ msg: 'Job verificado después de creación', jobId });
+        }
 
         return reply.send({
           success: true,
@@ -323,7 +424,7 @@ export async function jobRoutes(app: FastifyInstance) {
           message: `Job creado para generar ${frameIndices.length} imágenes`,
         });
       } catch (err: any) {
-        app.log.error(err);
+        app.log.error({ msg: 'Error creando job de batch generation', error: err.message, stack: err.stack });
         return reply.status(500).send({ success: false, error: err.message });
       }
     }
