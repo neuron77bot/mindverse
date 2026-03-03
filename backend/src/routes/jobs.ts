@@ -8,9 +8,34 @@ const errorShape = {
   properties: { success: { type: 'boolean' }, error: { type: 'string' } },
 };
 
+// Schema completo para un job serializado
+const jobSchema = {
+  type: 'object',
+  properties: {
+    jobId: { type: ['string', 'null'] },
+    name: { type: ['string', 'null'] },
+    data: { 
+      type: 'object',
+      additionalProperties: true,
+      description: 'Datos específicos del job (userId, storyboardId, etc.)'
+    },
+    priority: { type: ['number', 'null'] },
+    progress: { type: 'number' },
+    nextRunAt: { type: ['string', 'null'], description: 'Fecha ISO del próximo run' },
+    lastRunAt: { type: ['string', 'null'], description: 'Fecha ISO del último run' },
+    lastFinishedAt: { type: ['string', 'null'], description: 'Fecha ISO de finalización' },
+    failedAt: { type: ['string', 'null'], description: 'Fecha ISO de fallo' },
+    failReason: { type: ['string', 'null'], description: 'Razón del fallo si existe' },
+    lockedAt: { type: ['string', 'null'], description: 'Fecha ISO de bloqueo (running)' },
+    state: { type: ['string', 'null'], description: 'Estado interno de Agenda' },
+    status: { type: 'string', enum: ['pending', 'running', 'completed', 'failed'], description: 'Estado normalizado' },
+  },
+};
+
 // Helper para serializar jobs con información útil
 function serializeJob(job: JobWithState) {
-  const attrs = (job as any).attrs;
+  // En Agenda 6, los jobs pueden venir con attrs o directamente
+  const attrs = (job as any).attrs || job;
   return {
     jobId: attrs._id?.toString(),
     name: attrs.name,
@@ -23,8 +48,8 @@ function serializeJob(job: JobWithState) {
     failedAt: attrs.failedAt,
     failReason: attrs.failReason,
     lockedAt: attrs.lockedAt,
-    state: (job as any).state,
-    status: mapStateToStatus((job as any).state),
+    state: attrs.state || (job as any).state,
+    status: mapStateToStatus(attrs.state || (job as any).state),
   };
 }
 
@@ -77,7 +102,7 @@ export async function jobRoutes(app: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              jobs: { type: 'array', items: { type: 'object' } },
+              jobs: { type: 'array', items: jobSchema },
             },
           },
           401: errorShape,
@@ -109,21 +134,31 @@ export async function jobRoutes(app: FastifyInstance) {
         }
 
         const jobsResult = await agenda.queryJobs(queryOptions);
-        
+
         app.log.info({ msg: 'Jobs obtenidos de Agenda', count: jobsResult.jobs?.length || 0 });
-        
+
         // Filtrar por userId en los datos con defensive checks
+        // En Agenda 6, los jobs pueden venir con attrs o directamente
         const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          const attrs = (j as any).attrs;
+          const attrs = (j as any).attrs || j;
           if (!attrs) {
-            app.log.warn({ msg: 'Job sin attrs', job: j });
+            app.log.warn({ msg: 'Job sin attrs ni propiedades directas', job: j });
             return false;
           }
           if (!attrs.data) {
             app.log.warn({ msg: 'Job sin data', jobId: attrs._id });
             return false;
           }
-          return attrs.data.userId === userId;
+          const hasUserId = attrs.data.userId === userId;
+          if (!hasUserId) {
+            app.log.debug({
+              msg: 'Job filtrado - userId no coincide',
+              jobId: attrs._id,
+              jobUserId: attrs.data.userId,
+              requestUserId: userId,
+            });
+          }
+          return hasUserId;
         });
 
         app.log.info({ msg: 'Jobs filtrados por userId', count: jobs.length });
@@ -155,7 +190,7 @@ export async function jobRoutes(app: FastifyInstance) {
             type: 'object',
             properties: {
               success: { type: 'boolean' },
-              job: { type: 'object' },
+              job: jobSchema,
             },
           },
           401: errorShape,
@@ -190,11 +225,11 @@ export async function jobRoutes(app: FastifyInstance) {
 
         // Verificar pertenencia al usuario
         if (!jobDoc.data || jobDoc.data.userId !== userId) {
-          app.log.warn({ 
-            msg: 'Job no pertenece al usuario', 
-            jobId, 
-            jobUserId: jobDoc.data?.userId, 
-            requestUserId: userId 
+          app.log.warn({
+            msg: 'Job no pertenece al usuario',
+            jobId,
+            jobUserId: jobDoc.data?.userId,
+            requestUserId: userId,
           });
           return reply.status(404).send({ success: false, error: 'Job no encontrado' });
         }
@@ -217,21 +252,21 @@ export async function jobRoutes(app: FastifyInstance) {
           status: mapStateToStatus(state),
         };
 
-        app.log.info({ 
-          msg: 'Job encontrado', 
-          jobId, 
-          status: serialized.status, 
+        app.log.info({
+          msg: 'Job encontrado',
+          jobId,
+          status: serialized.status,
           progress: serialized.progress,
-          state: serialized.state
+          state: serialized.state,
         });
 
         return reply.send({ success: true, job: serialized });
       } catch (err: any) {
-        app.log.error({ 
-          msg: 'Error consultando job', 
-          jobId: req.params.jobId, 
-          error: err.message, 
-          stack: err.stack 
+        app.log.error({
+          msg: 'Error consultando job',
+          jobId: req.params.jobId,
+          error: err.message,
+          stack: err.stack,
         });
         return reply.status(500).send({ success: false, error: err.message });
       }
@@ -276,7 +311,7 @@ export async function jobRoutes(app: FastifyInstance) {
         // Verificar que el job pertenece al usuario
         const jobsResult = await agenda.queryJobs({ id: jobId });
         const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          const attrs = (j as any).attrs;
+          const attrs = (j as any).attrs || j;
           if (!attrs || !attrs.data) return false;
           return attrs.data.userId === userId;
         });
@@ -287,9 +322,10 @@ export async function jobRoutes(app: FastifyInstance) {
         }
 
         const job = jobs[0];
+        const jobAttrs = (job as any).attrs || job;
 
         // Verificar que no esté completado
-        if ((job as any).attrs.state === 'completed') {
+        if (jobAttrs.state === 'completed') {
           return reply
             .status(400)
             .send({ success: false, error: 'No se puede cancelar un job completado' });
@@ -368,7 +404,13 @@ export async function jobRoutes(app: FastifyInstance) {
         if (!userId) return reply.status(401).send({ success: false, error: 'No autorizado' });
 
         const body = req.body as any;
-        const { storyboardId, frameIndices, aspectRatio = '1:1', galleryTags = [], styleTagIds = [] } = body;
+        const {
+          storyboardId,
+          frameIndices,
+          aspectRatio = '1:1',
+          galleryTags = [],
+          styleTagIds = [],
+        } = body;
 
         if (!frameIndices || frameIndices.length === 0) {
           return reply
@@ -424,7 +466,11 @@ export async function jobRoutes(app: FastifyInstance) {
           message: `Job creado para generar ${frameIndices.length} imágenes`,
         });
       } catch (err: any) {
-        app.log.error({ msg: 'Error creando job de batch generation', error: err.message, stack: err.stack });
+        app.log.error({
+          msg: 'Error creando job de batch generation',
+          error: err.message,
+          stack: err.stack,
+        });
         return reply.status(500).send({ success: false, error: err.message });
       }
     }
@@ -483,7 +529,9 @@ export async function jobRoutes(app: FastifyInstance) {
         const { storyboardId, videoUrls, youtubeUrl, audioStartTime = 0 } = req.body;
 
         if (!videoUrls || videoUrls.length === 0) {
-          return reply.status(400).send({ success: false, error: 'videoUrls no puede estar vacío' });
+          return reply
+            .status(400)
+            .send({ success: false, error: 'videoUrls no puede estar vacío' });
         }
 
         // Crear job
