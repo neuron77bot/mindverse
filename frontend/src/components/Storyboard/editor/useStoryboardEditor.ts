@@ -362,16 +362,9 @@ export function useStoryboardEditor() {
     setError(null);
 
     try {
-      // Determinar frames a generar (sin imagen)
+      // Determinar frames a generar (TODOS los frames, incluso con imágenes existentes)
       const frameIndices = storyboard
-        .filter(f => !f.imageUrl)
         .map(f => f.frame - 1); // Convert to 0-based indices
-
-      if (frameIndices.length === 0) {
-        setError('Todos los frames ya tienen imágenes');
-        setIsBatchGenerating(false);
-        return;
-      }
 
       // Crear job de batch generation
       const res = await fetch(`${API_BASE}/jobs/batch-generate-images`, {
