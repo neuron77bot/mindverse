@@ -4,7 +4,7 @@ import { authHeaders } from '../../../services/authHeaders';
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
 interface BatchImageGenerationProps {
-  onGenerate: (galleryTags: string[], styleTagIds: string[]) => void;
+  onGenerate: (galleryTags: string[], styleTagIds: string[], aspectRatio: string) => void;
   isGenerating: boolean;
   hasFrames: boolean;
 }
@@ -18,6 +18,7 @@ export default function BatchImageGeneration({
   const [selectedGalleryTags, setSelectedGalleryTags] = useState<string[]>([]);
   const [styleTags, setStyleTags] = useState<any[]>([]);
   const [selectedStyleTagIds, setSelectedStyleTagIds] = useState<string[]>([]);
+  const [aspectRatio, setAspectRatio] = useState<string>('16:9');
   const [expanded, setExpanded] = useState(false);
 
   const loadTags = async () => {
@@ -48,7 +49,7 @@ export default function BatchImageGeneration({
 
   const handleGenerate = () => {
     if (!hasFrames) return;
-    onGenerate(selectedGalleryTags, selectedStyleTagIds);
+    onGenerate(selectedGalleryTags, selectedStyleTagIds, aspectRatio);
   };
 
   const hasSelection = selectedGalleryTags.length > 0 || selectedStyleTagIds.length > 0;
@@ -162,6 +163,33 @@ export default function BatchImageGeneration({
                   {selectedStyleTagIds.length} estilo(s) seleccionado(s)
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Aspect Ratio Selector */}
+          {(galleryTags.length > 0 || styleTags.length > 0) && (
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Aspect Ratio
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {['16:9', '9:16', '1:1', '4:3', '3:2'].map((ratio) => (
+                  <button
+                    key={ratio}
+                    onClick={() => setAspectRatio(ratio)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      aspectRatio === ratio
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600'
+                    }`}
+                  >
+                    📐 {ratio}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Todas las imágenes se generarán con aspect ratio: {aspectRatio}
+              </p>
             </div>
           )}
 

@@ -352,7 +352,7 @@ export function useStoryboardEditor() {
     }
   };
 
-  const handleBatchGenerate = async (galleryTags: string[], styleTagIds: string[]) => {
+  const handleBatchGenerate = async (galleryTags: string[], styleTagIds: string[], aspectRatio: string) => {
     if (!storyboard || storyboard.length === 0) return;
     if (galleryTags.length === 0 && styleTagIds.length === 0) return;
 
@@ -375,7 +375,7 @@ export function useStoryboardEditor() {
               prompt,
               gallery_tags: galleryTags,
               styleTagIds,
-              aspect_ratio: imageAspectRatio,
+              aspect_ratio: aspectRatio,
             }),
           });
           if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
@@ -389,7 +389,7 @@ export function useStoryboardEditor() {
             body: JSON.stringify({
               prompt,
               styleTagIds,
-              aspect_ratio: imageAspectRatio,
+              aspect_ratio: aspectRatio,
             }),
           });
           if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
