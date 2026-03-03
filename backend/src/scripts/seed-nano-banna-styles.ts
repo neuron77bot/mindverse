@@ -183,7 +183,9 @@ async function seedNanoBannaStyles() {
     if (existingStyles.length > 0) {
       console.log(`⚠️  Advertencia: ${existingStyles.length} estilos ya existen:`);
       existingStyles.forEach((s) => console.log(`  - ${s.name}`));
-      console.log('\n¿Deseas continuar y crear los estilos faltantes? (los existentes se omitirán)');
+      console.log(
+        '\n¿Deseas continuar y crear los estilos faltantes? (los existentes se omitirán)'
+      );
     }
 
     // Filtrar estilos que ya existen

@@ -5,13 +5,9 @@ import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001';
 
-interface ProfileViewProps {
-  // breadcrumb moved to ProfilePage
-}
-
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
-export default function ProfileView({}: ProfileViewProps) {
+export default function ProfileView() {
   const user = getStoredUser();
 
   const [name, setName] = useState(user?.name ?? '');
