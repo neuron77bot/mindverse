@@ -353,8 +353,8 @@ export function useStoryboardEditor() {
     }
   };
 
-  const handleBatchGenerate = async (galleryTags: string[], styleTagIds: string[]) => {
-    if (!storyboard || storyboard.length === 0 || !id) return;
+  const handleBatchGenerate = async (galleryTags: string[], styleTagIds: string[], aspectRatio: string) => {
+    if (!storyboard || storyboard.length === 0) return;
     if (galleryTags.length === 0 && styleTagIds.length === 0) return;
 
     setIsBatchGenerating(true);
@@ -362,16 +362,42 @@ export function useStoryboardEditor() {
     setError(null);
 
     try {
-      // Crear índices de frames a generar (solo los que no tienen imagen)
-      const frameIndices = storyboard
-        .filter((frame) => !frameImages.has(frame.frame))
-        .map((frame) => frame.frame - 1); // 0-based index
+      for (const frame of storyboard) {
+        setGeneratingFrame(frame.frame);
 
-      if (frameIndices.length === 0) {
-        setError('Todos los frames ya tienen imágenes generadas');
-        setIsBatchGenerating(false);
-        return;
-      }
+        let imageUrl: string;
+        const prompt = frame.visualDescription || `Frame ${frame.frame}: ${frame.scene}`;
+
+        if (galleryTags.length > 0) {
+          // Image-to-image con gallery tags
+          const res = await fetch(`${API_BASE}/images/image-to-image`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+              prompt,
+              gallery_tags: galleryTags,
+              styleTagIds,
+              aspect_ratio: aspectRatio,
+            }),
+          });
+          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
+          const data = await res.json();
+          imageUrl = data.images?.[0]?.url ?? null;
+        } else {
+          // Text-to-image solo con style tags
+          const res = await fetch(`${API_BASE}/images/text-to-image`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+              prompt,
+              styleTagIds,
+              aspect_ratio: aspectRatio,
+            }),
+          });
+          if (!res.ok) throw new Error(`Error generando frame ${frame.frame}`);
+          const data = await res.json();
+          imageUrl = data.images?.[0]?.url ?? null;
+        }
 
       // Crear job de batch generation
       const res = await fetch(`${API_BASE}/jobs/batch-generate-images`, {
