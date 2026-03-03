@@ -10,7 +10,8 @@ const errorShape = {
 
 // Helper para serializar jobs con información útil
 function serializeJob(job: JobWithState) {
-  const attrs = (job as any).attrs;
+  // En Agenda 6, los jobs pueden venir con attrs o directamente
+  const attrs = (job as any).attrs || job;
   return {
     jobId: attrs._id?.toString(),
     name: attrs.name,
@@ -23,8 +24,8 @@ function serializeJob(job: JobWithState) {
     failedAt: attrs.failedAt,
     failReason: attrs.failReason,
     lockedAt: attrs.lockedAt,
-    state: (job as any).state,
-    status: mapStateToStatus((job as any).state),
+    state: attrs.state || (job as any).state,
+    status: mapStateToStatus(attrs.state || (job as any).state),
   };
 }
 
@@ -113,17 +114,27 @@ export async function jobRoutes(app: FastifyInstance) {
         app.log.info({ msg: 'Jobs obtenidos de Agenda', count: jobsResult.jobs?.length || 0 });
         
         // Filtrar por userId en los datos con defensive checks
+        // En Agenda 6, los jobs pueden venir con attrs o directamente
         const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          const attrs = (j as any).attrs;
+          const attrs = (j as any).attrs || j;
           if (!attrs) {
-            app.log.warn({ msg: 'Job sin attrs', job: j });
+            app.log.warn({ msg: 'Job sin attrs ni propiedades directas', job: j });
             return false;
           }
           if (!attrs.data) {
             app.log.warn({ msg: 'Job sin data', jobId: attrs._id });
             return false;
           }
-          return attrs.data.userId === userId;
+          const hasUserId = attrs.data.userId === userId;
+          if (!hasUserId) {
+            app.log.debug({ 
+              msg: 'Job filtrado - userId no coincide', 
+              jobId: attrs._id, 
+              jobUserId: attrs.data.userId, 
+              requestUserId: userId 
+            });
+          }
+          return hasUserId;
         });
 
         app.log.info({ msg: 'Jobs filtrados por userId', count: jobs.length });
@@ -276,7 +287,7 @@ export async function jobRoutes(app: FastifyInstance) {
         // Verificar que el job pertenece al usuario
         const jobsResult = await agenda.queryJobs({ id: jobId });
         const jobs = jobsResult.jobs.filter((j: JobWithState) => {
-          const attrs = (j as any).attrs;
+          const attrs = (j as any).attrs || j;
           if (!attrs || !attrs.data) return false;
           return attrs.data.userId === userId;
         });
@@ -287,9 +298,10 @@ export async function jobRoutes(app: FastifyInstance) {
         }
 
         const job = jobs[0];
+        const jobAttrs = (job as any).attrs || job;
 
         // Verificar que no esté completado
-        if ((job as any).attrs.state === 'completed') {
+        if (jobAttrs.state === 'completed') {
           return reply
             .status(400)
             .send({ success: false, error: 'No se puede cancelar un job completado' });

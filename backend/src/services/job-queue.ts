@@ -2,6 +2,8 @@ import { Agenda, Job } from 'agenda';
 import { MongoBackend } from '@agendajs/mongo-backend';
 import { fal } from '@fal-ai/client';
 import { Storyboard } from '../models/Storyboard';
+import { GalleryImage } from '../models/GalleryImage';
+import { PromptStyleTag } from '../models/PromptStyleTag';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
@@ -30,6 +32,8 @@ interface BatchGenerateImagesData {
   storyboardId: string;
   frameIndices: number[]; // índices de los frames a generar
   aspectRatio?: AspectRatio;
+  galleryTags?: string[]; // Tags de galería para image-to-image
+  styleTagIds?: string[]; // IDs de estilos a aplicar
 }
 
 interface CompileVideoData {
@@ -55,16 +59,62 @@ const agenda = new Agenda({
 agenda.define<BatchGenerateImagesData>(
   'batch-generate-images',
   async (job: Job<BatchGenerateImagesData>) => {
-    const { userId, storyboardId, frameIndices, aspectRatio = '1:1' } = job.attrs.data;
+    const { 
+      userId, 
+      storyboardId, 
+      frameIndices, 
+      aspectRatio = '1:1',
+      galleryTags = [],
+      styleTagIds = []
+    } = job.attrs.data;
 
     console.log(
-      `[Job ${job.attrs._id}] Iniciando batch generation para storyboard ${storyboardId}`
+      `[Job ${job.attrs._id}] Iniciando batch generation para storyboard ${storyboardId}`,
+      { 
+        frameCount: frameIndices.length, 
+        aspectRatio, 
+        galleryTags, 
+        styleTagIds 
+      }
     );
 
     try {
       const storyboard = await Storyboard.findOne({ _id: storyboardId, userId });
       if (!storyboard) {
         throw new Error(`Storyboard ${storyboardId} no encontrado para el usuario ${userId}`);
+      }
+
+      // Obtener imágenes de galería si se especificaron tags
+      let galleryImageUrls: string[] = [];
+      if (galleryTags.length > 0) {
+        const galleryImages = await GalleryImage.find({
+          userId,
+          tag: { $in: galleryTags },
+        })
+          .select('imageUrl')
+          .limit(5)
+          .lean();
+
+        galleryImageUrls = galleryImages.map((img) => img.imageUrl);
+        console.log(
+          `[Job ${job.attrs._id}] Encontradas ${galleryImageUrls.length} imágenes de galería para image-to-image`
+        );
+      }
+
+      // Obtener estilos si se especificaron IDs
+      let stylePromptText = '';
+      if (styleTagIds.length > 0) {
+        const tags = await PromptStyleTag.find({
+          _id: { $in: styleTagIds },
+          userId,
+        }).lean();
+
+        if (tags.length > 0) {
+          stylePromptText = tags.map((t) => t.promptText).join(', ');
+          console.log(
+            `[Job ${job.attrs._id}] Aplicando estilos: ${stylePromptText}`
+          );
+        }
       }
 
       const total = frameIndices.length;
@@ -77,27 +127,49 @@ agenda.define<BatchGenerateImagesData>(
           continue;
         }
 
-        // Generar prompt desde visualDescription
-        const prompt = frame.visualDescription;
+        // Generar prompt desde visualDescription y agregar estilos
+        let finalPrompt = frame.visualDescription;
+        if (stylePromptText) {
+          finalPrompt = `${finalPrompt}\n\nStyle: ${stylePromptText}`;
+        }
 
         console.log(
-          `[Job ${job.attrs._id}] Generando imagen para frame ${frameIndex + 1}/${total}: ${prompt.substring(0, 50)}...`
+          `[Job ${job.attrs._id}] Generando imagen para frame ${frameIndex + 1}/${total}: ${finalPrompt.substring(0, 50)}...`
         );
 
         try {
-          const result = await fal.subscribe(TEXT_TO_IMAGE_MODEL, {
-            input: {
-              prompt,
-              num_images: 1,
-              aspect_ratio: aspectRatio as AspectRatio,
-              output_format: 'png',
-            },
-          });
+          let result;
+
+          // Si hay imágenes de galería, usar image-to-image
+          if (galleryImageUrls.length > 0) {
+            console.log(
+              `[Job ${job.attrs._id}] Usando image-to-image con ${galleryImageUrls.length} imágenes de referencia`
+            );
+            result = await fal.subscribe('fal-ai/nano-banana/edit', {
+              input: {
+                prompt: finalPrompt,
+                image_urls: galleryImageUrls,
+                num_images: 1,
+                aspect_ratio: aspectRatio as AspectRatio,
+                output_format: 'png',
+              },
+            });
+          } else {
+            // Generación text-to-image normal
+            result = await fal.subscribe(TEXT_TO_IMAGE_MODEL, {
+              input: {
+                prompt: finalPrompt,
+                num_images: 1,
+                aspect_ratio: aspectRatio as AspectRatio,
+                output_format: 'png',
+              },
+            });
+          }
 
           const images = (result.data as any)?.images ?? [];
           if (images.length > 0) {
             frame.imageUrl = images[0].url;
-            frame.imagePrompt = prompt;
+            frame.imagePrompt = finalPrompt;
             frame.imageAspectRatio = aspectRatio;
             frame.generatedAt = new Date();
 
@@ -368,5 +440,10 @@ export async function stopAgenda() {
 
 // Helper para obtener la colección de MongoDB directamente
 export async function getJobsCollection() {
-  return (mongoBackend as any)._collection;
+  // Asegurar que el backend esté conectado
+  if (!(mongoBackend as any)._repository) {
+    await mongoBackend.connect();
+  }
+  const repository = (mongoBackend as any)._repository || mongoBackend.repository;
+  return repository.collection;
 }
