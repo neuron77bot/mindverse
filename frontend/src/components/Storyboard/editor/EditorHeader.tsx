@@ -59,9 +59,7 @@ export default function EditorHeader({
 
         onCinemaToggle(newValue);
 
-        return newValue
-          ? 'Storyboard visible en Cinema Mode'
-          : 'Storyboard oculto de Cinema Mode';
+        return newValue ? 'Storyboard visible en Cinema Mode' : 'Storyboard oculto de Cinema Mode';
       },
       {
         loading: 'Actualizando visibilidad...',
@@ -119,9 +117,7 @@ export default function EditorHeader({
                 ) : (
                   <span>{allowCinema ? '🎬' : '🎬'}</span>
                 )}
-                <span className="hidden sm:inline">
-                  {allowCinema ? 'En Cinema' : 'Cinema'}
-                </span>
+                <span className="hidden sm:inline">{allowCinema ? 'En Cinema' : 'Cinema'}</span>
               </button>
 
               <button

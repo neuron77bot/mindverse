@@ -171,7 +171,10 @@ export default function CinemaPage() {
 
       {/* Modal */}
       {selectedStoryboard && (
-        <StoryboardModal storyboard={selectedStoryboard} onClose={() => setSelectedStoryboard(null)} />
+        <StoryboardModal
+          storyboard={selectedStoryboard}
+          onClose={() => setSelectedStoryboard(null)}
+        />
       )}
     </div>
   );

@@ -169,9 +169,7 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
         const data = await res.json();
         setStoryboard(data.storyboard);
 
-        return newValue
-          ? 'Storyboard visible en Cinema Mode'
-          : 'Storyboard oculto de Cinema Mode';
+        return newValue ? 'Storyboard visible en Cinema Mode' : 'Storyboard oculto de Cinema Mode';
       },
       {
         loading: 'Actualizando visibilidad...',
@@ -335,8 +333,8 @@ export default function StoryboardDetailView({ id }: StoryboardDetailViewProps) 
                         {isTogglingCinema
                           ? 'Actualizando...'
                           : storyboard?.allowCinema
-                          ? '🎬 Ocultar de Cinema'
-                          : '🎬 Mostrar en Cinema'}
+                            ? '🎬 Ocultar de Cinema'
+                            : '🎬 Mostrar en Cinema'}
                       </span>
                     </button>
 
