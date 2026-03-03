@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { getStoredUser, type GoogleUser } from '../../services/auth';
 import { authHeaders, authHeadersOnly } from '../../services/authHeaders';
@@ -31,33 +31,6 @@ export default function ProfileView() {
     ? `${window.location.origin}${basePath}cinema?token=${cinemaToken}`
     : null;
 
-  if (!loadedExtra && user?.sub) {
-    setLoadedExtra(true);
-    fetch(`${API_BASE}/users/${user.sub}`, { headers: authHeadersOnly() })
-      .then((r) => r.json())
-      .then(({ data }) => {
-        if (data) {
-          setBio(data.bio ?? '');
-          setLocation(data.location ?? '');
-          if (data.name) setName(data.name);
-        }
-      })
-      .catch(() => {});
-
-    // Fetch cinema token
-    fetch(`${API_BASE}/users/me/cinema-token`, { headers: authHeadersOnly() })
-      .then((r) => r.json())
-      .then(({ data }) => {
-        if (data?.cinemaToken) {
-          setCinemaToken(data.cinemaToken);
-        }
-      })
-      .catch(() => {});
-
-    // Fetch API Keys
-    loadApiKeys();
-  }
-
   const loadApiKeys = async () => {
     try {
       const res = await fetch(`${API_BASE}/users/api-keys`, {
@@ -71,6 +44,37 @@ export default function ProfileView() {
       // Silently fail
     }
   };
+
+  useEffect(() => {
+    if (!loadedExtra && user?.sub) {
+      setLoadedExtra(true);
+      
+      // Fetch user data
+      fetch(`${API_BASE}/users/${user.sub}`, { headers: authHeadersOnly() })
+        .then((r) => r.json())
+        .then(({ data }) => {
+          if (data) {
+            setBio(data.bio ?? '');
+            setLocation(data.location ?? '');
+            if (data.name) setName(data.name);
+          }
+        })
+        .catch(() => {});
+
+      // Fetch cinema token
+      fetch(`${API_BASE}/users/me/cinema-token`, { headers: authHeadersOnly() })
+        .then((r) => r.json())
+        .then(({ data }) => {
+          if (data?.cinemaToken) {
+            setCinemaToken(data.cinemaToken);
+          }
+        })
+        .catch(() => {});
+
+      // Fetch API Keys
+      loadApiKeys();
+    }
+  }, [loadedExtra, user?.sub]);
 
   const handleGenerateApiKey = async () => {
     if (!newKeyName.trim()) {

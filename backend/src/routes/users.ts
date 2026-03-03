@@ -303,8 +303,10 @@ export async function userRoutes(app: FastifyInstance) {
               },
             },
           },
-          401: errorShape,
           400: errorShape,
+          401: errorShape,
+          404: errorShape,
+          500: errorShape,
         },
       },
     },
@@ -349,7 +351,7 @@ export async function userRoutes(app: FastifyInstance) {
         // Crear API Key en DB
         const apiKey = await ApiKey.create({
           key: hashedKey,
-          userId: user._id,
+          userId: user._id as any,
           name: name.trim(),
           expiresAt,
           enabled: true,
@@ -406,6 +408,8 @@ export async function userRoutes(app: FastifyInstance) {
             },
           },
           401: errorShape,
+          404: errorShape,
+          500: errorShape,
         },
       },
     },
@@ -423,7 +427,7 @@ export async function userRoutes(app: FastifyInstance) {
           });
         }
 
-        const apiKeys = await ApiKey.find({ userId: user._id }).sort({ createdAt: -1 });
+        const apiKeys = await ApiKey.find({ userId: user._id as any }).sort({ createdAt: -1 });
 
         const data = apiKeys.map((key) => ({
           id: key._id.toString(),
@@ -477,6 +481,7 @@ export async function userRoutes(app: FastifyInstance) {
           401: errorShape,
           403: errorShape,
           404: errorShape,
+          500: errorShape,
         },
       },
     },
@@ -550,6 +555,7 @@ export async function userRoutes(app: FastifyInstance) {
           401: errorShape,
           403: errorShape,
           404: errorShape,
+          500: errorShape,
         },
       },
     },
